@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, TrendingUp } from 'lucide-react'
+import { LogOut, Search, TrendingUp } from 'lucide-react'
 import { useGym } from '../data/store'
 import { dueInfo, normalizeCarnet, pendingClients, summarize } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
@@ -30,9 +30,22 @@ export function Home() {
 
   return (
     <Screen
-      eyebrow={g.shiftOpen ? `Turno abierto · desde ${formatTime(g.shift.openedAt, g.settings.locale)}` : 'Turno cerrado'}
-      title={`Hola, ${g.settings.worker}`}
+      eyebrow={g.shiftOpen ? `Turno abierto · desde ${formatTime(g.shift.openedAt, g.settings.locale)}` : 'Sin turno abierto'}
+      title={`Hola, ${g.session?.name}`}
+      action={
+        <button onClick={g.logout} aria-label="Salir" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line text-muted active:scale-95">
+          <LogOut size={20} aria-hidden />
+        </button>
+      }
     >
+      {!g.shiftOpen && (
+        <div className="mb-3 rounded-3xl border border-amber bg-surface p-4">
+          <p className="font-extrabold">Todavía no abriste tu turno</p>
+          <p className="mb-3 text-sm text-muted">Ábrelo para poder cobrar. Todo lo que registres quedará a tu nombre.</p>
+          <Button block onClick={() => g.openShift()}>Abrir mi turno</Button>
+        </div>
+      )}
+
       {/* Tasa del día: lo primero que se necesita para cobrar en MN */}
       {g.rateFresh ? (
         <div className="flex items-center gap-4 rounded-3xl border border-amber/50 bg-surface p-4">

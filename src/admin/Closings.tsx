@@ -3,7 +3,7 @@ import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
 import { METHODS, shiftDifference, summarize, type CashStatus } from '../lib/domain'
 import { formatTime, makeMoney } from '../lib/format'
-import { Card, cx, Pill } from '../components/ui'
+import { Button, Card, Field, cx, inputCls, Pill, Sheet, useToast } from '../components/ui'
 import { AdminHeader, Stat, td, th } from './AdminLayout'
 
 type Range = 'hoy' | 'semana' | 'mes'
@@ -15,6 +15,10 @@ export function Closings() {
   const money = makeMoney(g.settings)
   const [range, setRange] = useState<Range>('semana')
   const [sel, setSel] = useState<string | null>(null)
+  const toast = useToast()
+  const [forcing, setForcing] = useState(false)
+  const [mnRaw, setMnRaw] = useState('')
+  const [usdRaw, setUsdRaw] = useState('')
 
   const rows = useMemo(() => {
     const from = range === 'hoy' ? g.today : range === 'semana' ? addDays(g.today, -6) : addDays(g.today, -29)
@@ -76,7 +80,14 @@ export function Closings() {
         {current && (
           <Card className="!p-5">
             <h2 className="text-lg font-extrabold">Detalle · {current.s.worker}, {formatShortDate(toISODate(new Date(current.s.openedAt)), g.settings.locale)}</h2>
-            <p className="mb-3 text-sm text-muted">Movimientos del turno</p>
+            <p className="mb-3 text-sm text-muted">
+              Movimientos del turno{current.s.closedBy && current.s.closedBy !== current.s.worker ? ` · cerrado por ${current.s.closedBy}` : ''}
+            </p>
+            {!current.s.closedAt && current.s.id === g.shift.id && (
+              <Button size="sm" variant="outline" className="mb-3" onClick={() => { setMnRaw(''); setUsdRaw(''); setForcing(true) }}>
+                Cerrar este turno
+              </Button>
+            )}
             <ul className="divide-y divide-line">
               {[...current.mv].sort((a, b) => a.at.localeCompare(b.at)).map((m) => (
                 <li key={m.id} className="flex items-center gap-3 py-3">
@@ -90,6 +101,23 @@ export function Closings() {
           </Card>
         )}
       </div>
+
+      <Sheet open={forcing} onClose={() => setForcing(false)} title={`Cerrar el turno de ${g.shift.worker}`}>
+        <p className="mb-4 text-sm text-muted">
+          Úsalo si el trabajador no pudo cerrar su turno. Cuenta el efectivo y escríbelo; el cierre quedará registrado a tu nombre.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="MN contados"><input className={inputCls} inputMode="decimal" value={mnRaw} onChange={(e) => setMnRaw(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="0" /></Field>
+          <Field label="USD contados"><input className={inputCls} inputMode="decimal" value={usdRaw} onChange={(e) => setUsdRaw(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="0.00" /></Field>
+        </div>
+        <Button
+          block className="mt-5"
+          disabled={mnRaw === '' || usdRaw === '' || !Number.isFinite(Number(mnRaw.replace(',', '.'))) || !Number.isFinite(Number(usdRaw.replace(',', '.')))}
+          onClick={() => { g.closeShift({ mn: Number(mnRaw.replace(',', '.')), usd: Number(usdRaw.replace(',', '.')) }); setForcing(false); toast('Turno cerrado') }}
+        >
+          Cerrar turno
+        </Button>
+      </Sheet>
     </>
   )
 }

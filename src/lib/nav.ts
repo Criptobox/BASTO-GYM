@@ -31,3 +31,16 @@ export function useRouteReset() {
 
 /** Vibración corta al confirmar (solo Android; en iOS no hace nada). */
 export const haptic = (ms = 12) => { try { navigator.vibrate?.(ms) } catch { /* sin soporte */ } }
+
+/** Cierra la sesión tras un rato sin tocar nada, para que nadie use el cobro de otra persona. El turno sigue abierto. */
+export function useIdleLogout(onIdle: () => void, ms = 5 * 60_000) {
+  const cb = useRef(onIdle)
+  cb.current = onIdle
+  useEffect(() => {
+    let t = window.setTimeout(() => cb.current(), ms)
+    const reset = () => { window.clearTimeout(t); t = window.setTimeout(() => cb.current(), ms) }
+    const evs = ['pointerdown', 'keydown', 'touchstart', 'scroll'] as const
+    evs.forEach((e) => window.addEventListener(e, reset, { passive: true }))
+    return () => { window.clearTimeout(t); evs.forEach((e) => window.removeEventListener(e, reset)) }
+  }, [ms])
+}

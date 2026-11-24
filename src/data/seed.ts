@@ -1,5 +1,5 @@
 import { addDays, toISODate } from '../lib/dates'
-import type { Client, Movement, Product, Settings, Shift } from '../lib/types'
+import type { Client, Movement, Product, Settings, Shift, Worker } from '../lib/types'
 
 export const today = () => toISODate(new Date())
 
@@ -12,7 +12,6 @@ export const defaultSettings: Settings = {
   // Tasa de ejemplo fijada hoy; en uso real se actualiza cada día.
   usdRate: 120,
   usdRateDate: today(),
-  worker: 'Daniela',
 }
 
 export function seedClients(): Client[] {
@@ -39,9 +38,15 @@ export const seedProducts: Product[] = [
   { id: 'p7', name: 'Guantes de gym', variant: 'Talla L', category: 'Accesorios', price: 7, stock: 6 },
 ]
 
-export function newShift(worker: string): Shift {
-  return { id: crypto.randomUUID(), worker, openedAt: new Date().toISOString() }
+export function newShift(w: Pick<Worker, 'id' | 'name'>): Shift {
+  return { id: crypto.randomUUID(), worker: w.name, workerId: w.id, openedAt: new Date().toISOString() }
 }
+
+/** Trabajadores de ejemplo, sin clave: el administrador se la asigna en Trabajadores. */
+export const seedWorkers = (): Worker[] => [
+  { id: 'w-daniela', name: 'Daniela', role: 'worker', active: true, salt: '', pinHash: null },
+  { id: 'w-jorge', name: 'Jorge', role: 'worker', active: true, salt: '', pinHash: null },
+]
 
 const at = (date: string, h: number, m = 0) => {
   const [y, mo, d] = date.split('-').map(Number)
@@ -68,6 +73,7 @@ export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
     const mv = (n: number, kind: Movement['kind'], label: string, amount: number, method: Movement['method'], hh: number, mm: number) =>
       movements.push({
         id: `${id}-${n}`, shiftId: id, kind, label, amount, method,
+        worker, workerId: worker === 'Daniela' ? 'w-daniela' : 'w-jorge',
         paid: method === 'usd' ? amount : Math.round(amount * rate),
         rate: method === 'usd' ? undefined : rate,
         at: at(date, hh, mm),
@@ -79,7 +85,7 @@ export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
     const expectedMN = Math.round(20 * rate) + Math.round(0.5 * rate)
     const expectedUSD = 20
     shifts.push({
-      id, worker, openedAt: at(date, h0), closedAt: at(date, h1),
+      id, worker, workerId: worker === 'Daniela' ? 'w-daniela' : 'w-jorge', openedAt: at(date, h0), closedAt: at(date, h1), closedBy: worker,
       expectedMN, expectedUSD, countedMN: expectedMN + dMN, countedUSD: expectedUSD + dUSD,
     })
   })

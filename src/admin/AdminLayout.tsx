@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, ExternalLink, Package, Receipt, Settings, Users } from 'lucide-react'
+import { BarChart3, LogOut, Package, Receipt, Settings, UserCog, Users } from 'lucide-react'
+import { LogoMark } from '../components/Logo'
 import { useGym } from '../data/store'
 import { cx } from '../components/ui'
 import { useRouteReset, useViewNavigate } from '../lib/nav'
@@ -10,11 +11,12 @@ const items = [
   { to: '/admin/clientes', label: 'Clientes', Icon: Users },
   { to: '/admin/productos', label: 'Productos', Icon: Package },
   { to: '/admin/cierres', label: 'Cierres', Icon: Receipt },
+  { to: '/admin/trabajadores', label: 'Trabajadores', Icon: UserCog },
   { to: '/admin/ajustes', label: 'Ajustes', Icon: Settings },
 ]
 
 export function AdminLayout() {
-  const { settings } = useGym()
+  const { settings, session, logout } = useGym()
   const { pathname } = useLocation()
   const go = useViewNavigate()
   useRouteReset()
@@ -24,9 +26,12 @@ export function AdminLayout() {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
       <aside className="vt-static border-b border-line bg-[#0f0f0f] lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
-        <div className="px-6 pt-6 lg:pt-8">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">Administrador</p>
-          <p className="mt-1 text-2xl font-extrabold tracking-tight">{settings.gymName}</p>
+        <div className="flex items-center gap-3 px-6 pt-6 lg:pt-8">
+          <LogoMark size={44} />
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{session?.name ?? 'Administrador'}</p>
+            <p className="truncate text-xl font-extrabold leading-tight tracking-tight">{settings.gymName}</p>
+          </div>
         </div>
         <nav aria-label="Administración" className="no-scrollbar flex gap-1 overflow-x-auto p-3 lg:mt-4 lg:flex-col lg:p-4">
           {items.map(({ to, label, Icon, end }) => (
@@ -43,9 +48,9 @@ export function AdminLayout() {
               <Icon size={18} aria-hidden /> {label}
             </NavLink>
           ))}
-          <NavLink to="/" className="flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold text-muted hover:text-white lg:mt-6">
-            <ExternalLink size={18} aria-hidden /> App del trabajador
-          </NavLink>
+          <button onClick={logout} className="flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold text-muted hover:text-white lg:mt-6">
+            <LogOut size={18} aria-hidden /> Salir
+          </button>
         </nav>
       </aside>
       <main className="min-w-0 px-5 py-8 lg:px-10">

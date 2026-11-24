@@ -37,13 +37,28 @@ export interface Movement {
   /** Tasa MN por 1 USD usada al cobrar (no aplica si method='usd'). */
   rate?: number
   at: string // ISO datetime
+  /** Quién registró el cobro. */
+  workerId?: string
+  worker?: string
+}
+
+export interface Worker {
+  id: string
+  name: string
+  role: 'admin' | 'worker'
+  active: boolean
+  salt: string
+  /** null = todavía sin clave: no puede entrar hasta que el administrador la asigne. */
+  pinHash: string | null
 }
 
 export interface Shift {
   id: string
-  worker: string
+  worker: string // nombre, para el historial
+  workerId?: string
   openedAt: string
   closedAt?: string
+  closedBy?: string // quién cerró el turno (el dueño, o el administrador)
   countedMN?: number
   countedUSD?: number
   expectedMN?: number
@@ -59,5 +74,4 @@ export interface Settings {
   /** MN por 1 USD, y el día (YYYY-MM-DD) para el que se fijó. Debe actualizarse cada día. */
   usdRate: number
   usdRateDate: string
-  worker: string
 }

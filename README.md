@@ -15,6 +15,16 @@ npm test         # lógica de negocio (src/lib)
 npm run build    # typecheck + build PWA
 ```
 
+## Acceso por clave
+- Primer uso: la app pide crear la clave del **administrador** (no hay claves de fábrica). Él da de alta a cada trabajador con su clave (4 a 6 números) en *Trabajadores*.
+- Cada trabajador entra con su nombre y clave, **abre su turno** y todo cobro y cierre queda a su nombre (`worker` / `workerId` en cada movimiento y turno).
+- Un trabajador solo ve la caja de **su** turno. Si otro tiene un turno abierto no se puede entrar; el administrador puede cerrarlo desde *Cierres*.
+- 5 claves incorrectas seguidas bloquean la cuenta 30 s (se duplica en cada fallo, máx. 10 min). La sesión se cierra tras 5 min sin actividad.
+- Las claves se guardan con PBKDF2-SHA256 y sal propia, nunca en claro. **Aun así esto es solo responsabilidad, no seguridad real:** los datos viven en el navegador y cualquiera con acceso al dispositivo puede leerlos o alterarlos. La seguridad real llega con Supabase Auth y reglas por rol.
+
+## Logo
+`public/icon.svg` (una B atravesada por una barra con discos). Los PNG de `public/` (192, 512, maskable 512, apple-touch) se generan a partir de ese SVG.
+
 ## Monedas
 - Los **precios están en USD**. Se cobra en **USD**, **MN** o **tarjeta** (la tarjeta se cobra en MN).
 - MN y tarjeta = precio × **tasa del día** (MN por 1 USD), a pesos enteros. La tasa se fija cada día en Inicio o en Ajustes;

@@ -103,3 +103,6 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+@media (prefers-reduced-motion: reduce) { [class*="animation:shake"] { animation: none !important; } }

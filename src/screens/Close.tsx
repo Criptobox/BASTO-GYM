@@ -19,6 +19,19 @@ export function Close() {
   const [confirm, setConfirm] = useState(false)
   const sum = summarize(g.shiftMovements)
 
+  // Sin turno propio: nada que cerrar todavía.
+  const mine = g.shift.id !== 'none' && g.shift.workerId === g.session?.id
+  if (!mine) {
+    return (
+      <Screen eyebrow="Cierre de caja" title="Sin turno abierto">
+        <Card className="text-center !py-8">
+          <p className="text-muted">No tienes un turno abierto. Ábrelo para empezar a cobrar.</p>
+        </Card>
+        <Button block className="mt-6" onClick={() => g.openShift()}>Abrir mi turno</Button>
+      </Screen>
+    )
+  }
+
   // Turno cerrado: solo lectura (no se puede modificar).
   if (!g.shiftOpen) {
     const d = shiftDifference(g.shift)
@@ -26,7 +39,7 @@ export function Close() {
       <Screen eyebrow="Cierre de caja" title="Turno cerrado">
         <Card className="text-center !py-8">
           <Lock className="mx-auto text-amber" aria-hidden />
-          <p className="mt-3 text-sm text-muted">Cerrado a las {formatTime(g.shift.closedAt!, g.settings.locale)}</p>
+          <p className="mt-3 text-sm text-muted">Cerrado a las {formatTime(g.shift.closedAt!, g.settings.locale)}{g.shift.closedBy && g.shift.closedBy !== g.shift.worker ? ` por ${g.shift.closedBy}` : ''}</p>
           <p className="mt-1 text-4xl font-extrabold tracking-tight">{money.usd(sum.total)}</p>
           <p className="text-sm text-muted">cobrado en el turno (valor en USD)</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -38,7 +51,8 @@ export function Close() {
             )}
           </div>
         </Card>
-        <Button block className="mt-6" onClick={g.openShift}>Abrir nuevo turno</Button>
+        <Button block className="mt-6" onClick={() => g.openShift()}>Abrir nuevo turno</Button>
+        <Button block variant="outline" className="mt-3" onClick={g.logout}>Salir</Button>
       </Screen>
     )
   }

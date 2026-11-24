@@ -70,7 +70,7 @@ export function Enroll() {
         </Card>
 
         <Button type="submit" block disabled={!g.shiftOpen || !ch}>Inscribir y cobrar</Button>
-        {!g.shiftOpen && <p className="text-center text-sm text-muted">Abre un turno en “Cierre” para registrar cobros.</p>}
+        {!g.shiftOpen && <p className="text-center text-sm text-muted">Abre tu turno en Inicio para registrar cobros.</p>}
       </form>
 
       <Sheet open={!!done} onClose={reset} title="¡Cliente inscrito!">
