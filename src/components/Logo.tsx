@@ -1,4 +1,5 @@
 import { cx } from './ui'
+import logoUrl from '../../brand/logo.svg'
 
 /**
  * Logo de BASTO GYM (brand/logo.svg → public/logo.svg) con sus estados:
@@ -42,7 +43,7 @@ export function LogoMark({
         </svg>
       )}
       <img
-        src="/logo.svg" width={inner} height={inner} alt={loading ? 'Cargando' : text}
+        src={logoUrl} width={inner} height={inner} alt={loading ? 'Cargando' : text}
         className={cx(state === 'active' && 'logo-active', state === 'inactive' && 'logo-inactive')}
       />
       {state === 'active' && (

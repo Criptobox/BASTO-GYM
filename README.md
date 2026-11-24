@@ -7,6 +7,9 @@ App de gestión de gimnasio (PWA). React + Vite + Tailwind; Supabase previsto pa
 - ✅ Panel del administrador (`/admin`): Resumen, Clientes, Productos, Cierres y Ajustes. Sin login todavía.
 - ⏳ Supabase: hoy los datos viven en `localStorage` (`src/data/store.tsx`), con datos de ejemplo.
 
+## Demo navegable
+`npm run build:artifact` genera `dist-artifact/page.html`: la app completa en **un solo archivo** (CSS, JS y logo incrustados), con enrutado en memoria, sin PWA y con datos de ejemplo. Incluye al administrador y a dos trabajadores con claves públicas de prueba (`9999`, `1111`, `2222`) que **solo existen en esa compilación** (`MODE=artifact`, ver `src/data/demo.ts`); la compilación normal no las trae. En la demo el convertidor WebP de respaldo (Safari) no está disponible.
+
 ## Desarrollo
 ```
 npm install

@@ -1,5 +1,6 @@
 import { addDays, toISODate } from '../lib/dates'
 import type { Client, Movement, Product, Settings, Shift, Worker } from '../lib/types'
+import { DEMO, demoWorkers } from './demo'
 
 export const today = () => toISODate(new Date())
 
@@ -43,7 +44,7 @@ export function newShift(w: Pick<Worker, 'id' | 'name'>): Shift {
 }
 
 /** Trabajadores de ejemplo, sin clave: el administrador se la asigna en Trabajadores. */
-export const seedWorkers = (): Worker[] => [
+export const seedWorkers = (): Worker[] => DEMO ? demoWorkers() : [
   { id: 'w-daniela', name: 'Daniela', role: 'worker', active: true, salt: '', pinHash: null },
   { id: 'w-jorge', name: 'Jorge', role: 'worker', active: true, salt: '', pinHash: null },
 ]

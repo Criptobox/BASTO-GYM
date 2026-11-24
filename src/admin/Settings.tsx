@@ -63,7 +63,11 @@ export function SettingsPage() {
               </li>
             ))}
           </ul>
-          <img src="/icon-192.png" alt="Icono de la app" width={96} height={96} className="mt-5 rounded-[22%]" />
+          <div aria-label="Icono de la app" role="img" className="mt-5 grid size-24 place-items-center rounded-[22%] bg-gold p-[3.5%]">
+            <div className="grid size-full place-items-center rounded-[19%] bg-[linear-gradient(160deg,#25272b,#121315)] shadow-[inset_0_0_14px_rgb(0_0_0/0.6)]">
+              <LogoMark size={64} />
+            </div>
+          </div>
         </Card>
         <Card className="!p-6">
           <h2 className="mb-4 font-bold">Precio de los planes (USD)</h2>

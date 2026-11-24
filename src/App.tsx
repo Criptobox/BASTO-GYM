@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { DEMO } from './data/demo'
 import { GymProvider, useGym } from './data/store'
 import { BottomNav } from './components/BottomNav'
 import { ToastProvider } from './components/ui'
@@ -41,11 +42,14 @@ function WorkerShell() {
   )
 }
 
+// La demo publicada no puede usar rutas en la URL (el visor solo admite #nombre): navega en memoria.
+const Router = DEMO ? MemoryRouter : BrowserRouter
+
 export default function App() {
   return (
     <GymProvider>
       <ToastProvider>
-        <BrowserRouter>
+        <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route element={<RequireRole role="worker" />}>
@@ -69,7 +73,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
+        </Router>
       </ToastProvider>
     </GymProvider>
   )

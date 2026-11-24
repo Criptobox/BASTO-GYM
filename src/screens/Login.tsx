@@ -6,6 +6,7 @@ import { Avatar, Button, Field, inputCls } from '../components/ui'
 import { LogoMark, type LogoState } from '../components/Logo'
 import { isValidPin } from '../lib/pin'
 import { haptic } from '../lib/nav'
+import { DEMO, DEMO_LOGINS } from '../data/demo'
 import type { Worker } from '../lib/types'
 
 const home = (role: Worker['role']) => (role === 'admin' ? '/admin' : '/')
@@ -179,6 +180,15 @@ export function Login() {
               </li>
             ))}
           </ul>
+          {DEMO && (
+            <aside className="mt-6 rounded-2xl border border-amber/40 bg-amber/10 p-4 text-sm">
+              <p className="mb-1 font-bold text-amber">Modo demostración</p>
+              <p className="mb-2 text-muted">Datos de ejemplo. Claves de prueba:</p>
+              <ul className="space-y-0.5">
+                {DEMO_LOGINS.map((d) => <li key={d.name}><b>{d.name}</b> · <span className="tabular-nums">{d.pin}</span></li>)}
+              </ul>
+            </aside>
+          )}
         </>
       )}
     </div>

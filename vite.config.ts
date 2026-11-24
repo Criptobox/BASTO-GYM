@@ -2,12 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // La demo publicada vive en una ruta cualquiera y no admite service workers.
+  base: mode === 'artifact' ? './' : '/',
+  resolve: mode === 'artifact' ? { alias: { '@jsquash/webp': new URL('./src/lib/webp-stub.ts', import.meta.url).pathname } } : {},
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
+    ...(mode === 'artifact' ? [viteSingleFile()] : [VitePWA({
       registerType: 'autoUpdate',
       manifest: {
         name: 'BASTO GYM',
@@ -22,6 +26,6 @@ export default defineConfig({
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-    }),
+    })]),
   ],
-})
+}))
