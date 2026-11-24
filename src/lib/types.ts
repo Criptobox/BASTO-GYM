@@ -20,6 +20,7 @@ export interface Product {
   price: number
   stock: number
   isNew?: boolean
+  photo?: string // URL de la foto WebP (GitHub) o data URL en desarrollo
 }
 
 export interface Movement {

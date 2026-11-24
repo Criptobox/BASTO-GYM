@@ -92,7 +92,7 @@ interface Api extends State {
   sell(items: { product: Product; qty: number }[], method: Method): void
   closeShift(countedCash: number): void
   openShift(): void
-  addProduct(p: Omit<Product, 'id'>): void
+  addProduct(p: Omit<Product, 'id'> & { id?: string }): void
   updateProduct(id: string, patch: Partial<Product>): void
   setSettings(patch: Partial<Settings>): void
 }
@@ -169,7 +169,7 @@ export function GymProvider({ children }: { children: ReactNode }) {
     openShift() {
       dispatch({ type: 'openShift', shift: newShift(state.settings.worker) })
     },
-    addProduct: (p) => dispatch({ type: 'addProduct', product: { ...p, id: crypto.randomUUID() } }),
+    addProduct: (p) => dispatch({ type: 'addProduct', product: { ...p, id: p.id ?? crypto.randomUUID() } }),
     updateProduct: (id, patch) => dispatch({ type: 'updateProduct', id, patch }),
     setSettings: (patch) => dispatch({ type: 'setSettings', patch }),
   }

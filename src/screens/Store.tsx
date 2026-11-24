@@ -76,7 +76,7 @@ export function Store() {
             <li key={p.id}>
               <Card className={cx('flex h-full flex-col !p-3', out && 'opacity-60')}>
                 <div className="relative grid aspect-[4/3] place-items-center rounded-2xl bg-surface-2 text-amber">
-                  <Dumbbell size={30} aria-hidden />
+                  {p.photo ? <img src={p.photo} alt={p.name} loading="lazy" className="size-full rounded-2xl object-cover" /> : <Dumbbell size={30} aria-hidden />}
                   {p.isNew && <span className="absolute left-2 top-2"><Pill tone="amber">Nuevo</Pill></span>}
                   {!out && p.stock <= 5 && <span className="absolute right-2 top-2"><Pill tone="white">Quedan {p.stock}</Pill></span>}
                 </div>

@@ -6,16 +6,7 @@ import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Screen, Segmented, Sheet } from '../components/ui'
 import type { Client, Method, PlanId } from '../lib/types'
-
-/** Reduce la foto a 320px para no llenar el almacenamiento. */
-async function shrink(file: File): Promise<string> {
-  const bmp = await createImageBitmap(file)
-  const s = 320 / Math.max(bmp.width, bmp.height, 320)
-  const c = document.createElement('canvas')
-  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s)
-  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
-  return c.toDataURL('image/jpeg', 0.8)
-}
+import { blobToDataURL, CLIENT_PHOTO, toWebP } from '../lib/image'
 
 export function Enroll() {
   const g = useGym()
@@ -36,7 +27,7 @@ export function Enroll() {
   const next = addPlan(g.today, plan)
 
   async function onFile(f?: File) {
-    if (f) try { setPhoto(await shrink(f)) } catch { /* imagen inválida: se ignora */ }
+    if (f) try { setPhoto(await blobToDataURL(await toWebP(f, CLIENT_PHOTO))) } catch { /* imagen inválida: se ignora */ }
   }
   function submit(e: FormEvent) {
     e.preventDefault()
