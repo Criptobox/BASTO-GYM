@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
-import { chargeFor, normalizeCarnet, rateIsFresh, renewalDate, summarize } from '../lib/domain'
+import { normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, type PartInput } from '../lib/domain'
 import { attemptsLeft, failLock, hashPin, randomSalt, secondsLeft, verifyPin, type LockState } from '../lib/pin'
-import type { Client, Method, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
+import type { Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
 import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
 
 /**
@@ -34,7 +34,7 @@ type Action =
   | { type: 'addWorker'; worker: Worker }
   | { type: 'updateWorker'; id: string; patch: Partial<Worker> }
 
-const KEY = 'basto-gym:v5'
+const KEY = 'basto-gym:v6'
 const SESSION_KEY = 'basto-gym:session'
 const LOCK_KEY = 'basto-gym:locks'
 
@@ -140,10 +140,13 @@ interface Api extends State {
   /** ¿La tasa USD es la de hoy? Sin ella no se puede cobrar en MN ni con tarjeta. */
   rateFresh: boolean
   setRate(rate: number): void
-  /** Devuelve null si no se pudo cobrar (turno cerrado o tasa vencida). */
-  enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; method: Method }): Client | null
-  pay(clientId: string, method: Method): boolean
-  sell(items: { product: Product; qty: number }[], method: Method): boolean
+  /**
+   * Cobros: `parts` es lo que se entrega en cada método (puede ser uno solo o varios combinados).
+   * Devuelve null/false si no se pudo cobrar: turno cerrado, tasa vencida, o el pago no cubre el precio exacto.
+   */
+  enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; parts: PartInput[] }): Client | null
+  pay(clientId: string, parts: PartInput[]): boolean
+  sell(items: { product: Product; qty: number }[], parts: PartInput[]): boolean
   /** El dueño cierra su turno; el administrador puede cerrar cualquiera. */
   closeShift(counted: { mn: number; usd: number }): void
   openShift(): boolean
@@ -247,11 +250,11 @@ export function GymProvider({ children }: { children: ReactNode }) {
       if (!Number.isFinite(rate) || rate <= 0) return
       dispatch({ type: 'setSettings', patch: { usdRate: rate, usdRateDate: today() } })
     },
-    enroll({ name, phone, carnet, plan, method }) {
+    enroll({ name, phone, carnet, plan, parts }) {
       const t = today()
       const price = state.settings.planPrices[plan]
-      const ch = chargeFor(price, method, state.settings, t)
-      if (!ch || !shiftOpen) return null
+      const pay = settle(price, parts, state.settings, t)
+      if (!pay.ok || !shiftOpen) return null
       const client: Client = {
         id: crypto.randomUUID(), name: name.trim(), phone: phone.trim(), carnet: normalizeCarnet(carnet),
         plan, startDate: t, nextDue: renewalDate(t, plan, t),
@@ -260,36 +263,36 @@ export function GymProvider({ children }: { children: ReactNode }) {
         type: 'enroll', client,
         movement: mkMovement({
           kind: 'mensualidad', label: `Inscripción · ${client.name}`,
-          amount: price, method, paid: ch.paid, rate: ch.rate,
+          amount: price, parts: pay.parts,
         }),
       })
       return client
     },
-    pay(clientId, method) {
+    pay(clientId, parts) {
       const c = state.clients.find((x) => x.id === clientId)
       if (!c || !shiftOpen) return false
       const price = state.settings.planPrices[c.plan]
-      const ch = chargeFor(price, method, state.settings, today())
-      if (!ch) return false
+      const pay = settle(price, parts, state.settings, today())
+      if (!pay.ok) return false
       dispatch({
         type: 'pay', clientId,
         nextDue: renewalDate(c.nextDue, c.plan, today()),
         movement: mkMovement({
           kind: 'mensualidad', label: `Mensualidad · ${c.name}`,
-          amount: price, method, paid: ch.paid, rate: ch.rate,
+          amount: price, parts: pay.parts,
         }),
       })
       return true
     },
-    sell(items, method) {
+    sell(items, parts) {
       if (!shiftOpen || items.length === 0) return false
       const total = Math.round(items.reduce((n, i) => n + i.product.price * i.qty, 0) * 100) / 100
-      const ch = chargeFor(total, method, state.settings, today())
-      if (!ch) return false
+      const pay = settle(total, parts, state.settings, today())
+      if (!pay.ok) return false
       const label = items.map((i) => (i.qty > 1 ? `${i.qty}× ` : '') + i.product.name).join(', ')
       dispatch({
         type: 'sell', items: items.map((i) => ({ id: i.product.id, qty: i.qty })),
-        movement: mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, method, paid: ch.paid, rate: ch.rate }),
+        movement: mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, parts: pay.parts }),
       })
       return true
     },

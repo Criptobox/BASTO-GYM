@@ -34,6 +34,7 @@ Estados (componente `LogoMark`, vista previa en *Ajustes → Logo y estados*): n
 - Los **precios están en USD**. Se cobra en **USD**, **MN** o **tarjeta** (la tarjeta se cobra en MN).
 - MN y tarjeta = precio × **tasa del día** (MN por 1 USD), a pesos enteros. La tasa se fija cada día en Inicio o en Ajustes;
   si no es de hoy, MN y tarjeta quedan bloqueados (nunca se cobra con una tasa vieja). Cada cobro guarda la tasa usada.
+- Un cobro puede **combinar métodos** (p. ej. 8 USD + el resto en MN, o USD + tarjeta + MN): cada parte se guarda con su moneda y su tasa, y el cierre las reparte en su cajón. Debe cubrir el precio exacto (tolerancia de medio peso por redondeo); el vuelto no se registra.
 - La caja tiene **dos cajones de efectivo** (MN y USD) más la tarjeta; el cierre cuenta y cuadra cada uno por separado.
 - Valores de ejemplo (tasa, precios, país): `src/data/seed.ts` (`defaultSettings`).
 

@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react'
 import { Dumbbell, Minus, Plus, Search, ShoppingBag } from 'lucide-react'
 import { useGym } from '../data/store'
 import { toMN } from '../lib/domain'
-import { MethodPicker, useCharge, useDefaultMethod } from '../components/Payment'
+import { PaymentSplit, usePaymentSplit } from '../components/Payment'
 import { makeMoney } from '../lib/format'
 import { Button, Card, cx, inputCls, Pill, Screen, Sheet, useToast } from '../components/ui'
 import { haptic } from '../lib/nav'
-import type { Method, Product } from '../lib/types'
+import type { Product } from '../lib/types'
 
 const CATS = ['Todo', 'Proteínas', 'Bebidas', 'Ropa', 'Accesorios'] as const
 
@@ -17,7 +17,6 @@ export function Store() {
   const [cat, setCat] = useState<(typeof CATS)[number]>('Todo')
   const [cart, setCart] = useState<Record<string, number>>({})
   const [open, setOpen] = useState(false)
-  const [method, setMethod] = useState<Method>(useDefaultMethod())
   const toast = useToast()
 
   const products = useMemo(
@@ -27,7 +26,7 @@ export function Store() {
   const lines = g.products.filter((p) => cart[p.id]).map((p) => ({ product: p, qty: cart[p.id] }))
   const count = lines.reduce((n, l) => n + l.qty, 0)
   const total = Math.round(lines.reduce((n, l) => n + l.product.price * l.qty, 0) * 100) / 100
-  const { ch, label } = useCharge(total, method)
+  const split = usePaymentSplit(total)
 
   const add = (p: Product, d: number) =>
     setCart((c) => {
@@ -37,8 +36,8 @@ export function Store() {
     })
 
   function confirm() {
-    if (!g.sell(lines, method)) return
-    haptic(); toast(`Venta registrada · ${label}`)
+    if (!g.sell(lines, split.inputs)) return
+    haptic(); toast(`Venta registrada · ${money.usd(total)}`); split.reset()
     setOpen(false)
     setTimeout(() => setCart({}), 320) // deja terminar la animación de cierre con el contenido visible
   }
@@ -135,8 +134,8 @@ export function Store() {
           <span className="text-muted">Total</span>
           <span className="text-3xl font-extrabold tracking-tight">{money.usd(total)}</span>
         </div>
-        <MethodPicker usd={total} method={method} onChange={setMethod} />
-        <Button block className="mt-6" onClick={confirm} disabled={!lines.length || !ch}>{label ? `Cobrar ${label}` : 'Fija la tasa para cobrar'}</Button>
+        <PaymentSplit split={split} totalUsd={total} />
+        <Button block className="mt-6" onClick={confirm} disabled={!lines.length || !split.ready}>Cobrar {money.usd(total)}</Button>
       </Sheet>
     </Screen>
   )

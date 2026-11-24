@@ -33,14 +33,14 @@ export function Card({ className, children, accent }: { className?: string; chil
   )
 }
 
-type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'outline' | 'dark'; size?: 'md' | 'sm'; block?: boolean }
+type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'outline' | 'dark'; size?: 'md' | 'sm' | 'xs'; block?: boolean }
 export function Button({ variant = 'solid', size = 'md', block, className, ...p }: BtnProps) {
   return (
     <button
       {...p}
       className={cx(
         'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
-        size === 'md' ? 'h-14 px-6 text-base' : 'h-11 px-4 text-sm',
+        size === 'md' ? 'h-14 px-6 text-base' : size === 'sm' ? 'h-11 px-4 text-sm' : 'h-9 px-3.5 text-xs',
         variant === 'solid' && 'bg-gold text-amber-ink',
         variant === 'outline' && 'border border-amber text-amber',
         variant === 'dark' && 'bg-amber-ink text-amber',

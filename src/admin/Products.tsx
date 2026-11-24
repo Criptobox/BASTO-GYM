@@ -6,7 +6,8 @@ import { blobToDataURL, kb, PRODUCT_PHOTO, toWebP } from '../lib/image'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Pill } from '../components/ui'
 import type { Product } from '../lib/types'
-import { AdminHeader, Stat, td, th } from './AdminLayout'
+import { AdminHeader, Stat, StatGrid, td, th } from './AdminLayout'
+import { useWide } from '../lib/media'
 
 const CATS: Product['category'][] = ['Proteínas', 'Bebidas', 'Ropa', 'Accesorios']
 
@@ -19,6 +20,7 @@ async function prepare(file: File): Promise<Pending> {
 
 export function Products() {
   const g = useGym()
+  const wide = useWide()
   const money = makeMoney(g.settings)
   const [f, setF] = useState({ name: '', variant: '', category: 'Proteínas' as Product['category'], price: '', stock: '' })
   const [pending, setPending] = useState<Pending | null>(null)
@@ -63,48 +65,79 @@ export function Products() {
   }
 
   const bad = (b: boolean, m: string) => touched && b && m
+  const thumb = (p: Product, size = 'size-12') => (
+    <label className={`group relative grid ${size} shrink-0 cursor-pointer place-items-center overflow-hidden rounded-xl bg-surface-2 text-amber focus-within:outline focus-within:outline-2 focus-within:outline-amber`}>
+      {p.photo ? <img src={p.photo} alt="" className="size-full object-cover" /> : <Dumbbell size={20} aria-hidden />}
+      <span className="absolute inset-0 grid place-items-center bg-black/60 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"><Camera size={16} aria-hidden /></span>
+      <input type="file" accept="image/*" className="sr-only" aria-label={`Cambiar foto de ${p.name}`} disabled={busy}
+        onChange={(e) => { void changePhoto(p, e.target.files?.[0]); e.target.value = '' }} />
+    </label>
+  )
+  const stepper = (p: Product, small = false) => (
+    <div className="flex items-center gap-2">
+      <button aria-label={`Quitar una unidad de ${p.name}`} disabled={p.stock === 0} onClick={() => g.updateProduct(p.id, { stock: p.stock - 1 })} className={`grid ${small ? 'size-9' : 'size-8'} place-items-center rounded-full border border-line disabled:opacity-30`}><Minus size={14} /></button>
+      <span className="w-8 text-center font-bold">{p.stock}</span>
+      <button aria-label={`Agregar una unidad de ${p.name}`} onClick={() => g.updateProduct(p.id, { stock: p.stock + 1 })} className={`grid ${small ? 'size-9' : 'size-8'} place-items-center rounded-full border border-line`}><Plus size={14} /></button>
+    </div>
+  )
+  const estado = (p: Product) => <Pill tone={p.stock === 0 ? 'danger' : p.stock <= 5 ? 'amber' : 'muted'}>{p.stock === 0 ? 'Agotado' : p.stock <= 5 ? 'Poco stock' : 'Activo'}</Pill>
+
 
   return (
     <>
       <AdminHeader eyebrow="Catálogo" title="Productos" />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <StatGrid>
         <Stat label="Productos activos" value={g.products.filter((p) => p.stock > 0).length} />
         <Stat label="Con poco stock" value={g.products.filter((p) => p.stock > 0 && p.stock <= 5).length} tone="amber" />
         <Stat label="Agotados" value={g.products.filter((p) => p.stock === 0).length} tone="amber" />
-      </div>
+      </StatGrid>
       {error && <p role="alert" className="mt-4 rounded-2xl border border-danger/50 bg-danger/10 px-4 py-3 text-sm text-danger">{error}</p>}
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
+        {!wide ? (
+          <ul className="space-y-2">
+            {g.products.map((p) => (
+              <li key={p.id}>
+                <Card className="!rounded-2xl !p-3">
+                  <div className="flex items-center gap-3">
+                    {thumb(p, 'size-11')}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold leading-tight">{p.name}</p>
+                      <p className="truncate text-xs text-muted">{p.variant} · {p.category}</p>
+                    </div>
+                    <p className="font-extrabold">{money.usd(p.price)}</p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between pl-14">
+                    {estado(p)}
+                    {stepper(p, true)}
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        ) : (
         <div className="overflow-x-auto rounded-3xl border border-line surface-card">
-          <table className="rtable w-full md:min-w-[620px]">
+          <table className="w-full min-w-[560px]">
             <thead><tr className="border-b border-line"><th className={th}>Producto</th><th className={th}>Precio (USD)</th><th className={th}>Stock</th><th className={th}>Estado</th></tr></thead>
             <tbody>
               {g.products.map((p) => (
                 <tr key={p.id} className="border-b border-line last:border-0">
-                  <td data-label="Producto" className={td}>
+                  <td className={td}>
                     <div className="flex items-center gap-3">
-                      <label className="group relative grid size-12 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-xl bg-surface-2 text-amber focus-within:outline focus-within:outline-2 focus-within:outline-amber">
-                        {p.photo ? <img src={p.photo} alt="" className="size-full object-cover" /> : <Dumbbell size={20} aria-hidden />}
-                        <span className="absolute inset-0 grid place-items-center bg-black/60 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"><Camera size={16} aria-hidden /></span>
-                        <input type="file" accept="image/*" className="sr-only" aria-label={`Cambiar foto de ${p.name}`} disabled={busy}
-                          onChange={(e) => { void changePhoto(p, e.target.files?.[0]); e.target.value = '' }} />
-                      </label>
+                      {thumb(p)}
                       <div className="min-w-0"><p className="font-semibold">{p.name}</p><p className="text-xs text-muted">{p.variant} · {p.category}</p></div>
                     </div>
                   </td>
-                  <td data-label="Precio" className={td}>{money.usd(p.price)}</td>
-                  <td data-label="Stock" className={td}>
-                    <div className="flex items-center gap-2">
-                      <button aria-label={`Quitar una unidad de ${p.name}`} disabled={p.stock === 0} onClick={() => g.updateProduct(p.id, { stock: p.stock - 1 })} className="grid size-8 place-items-center rounded-full border border-line disabled:opacity-30"><Minus size={14} /></button>
-                      <span className="w-8 text-center font-bold">{p.stock}</span>
-                      <button aria-label={`Agregar una unidad de ${p.name}`} onClick={() => g.updateProduct(p.id, { stock: p.stock + 1 })} className="grid size-8 place-items-center rounded-full border border-line"><Plus size={14} /></button>
-                    </div>
+                  <td className={td}>{money.usd(p.price)}</td>
+                  <td className={td}>
+                    {stepper(p)}
                   </td>
-                  <td data-label="Estado" className={td}><Pill tone={p.stock === 0 ? 'white' : p.stock <= 5 ? 'amber' : 'muted'}>{p.stock === 0 ? 'Agotado' : p.stock <= 5 ? 'Poco stock' : 'Activo'}</Pill></td>
+                  <td className={td}>{estado(p)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        )}
 
         <Card className="!p-5">
           <h2 className="mb-4 text-lg font-extrabold">Nuevo producto</h2>

@@ -23,19 +23,27 @@ export interface Product {
   photo?: string // URL de la foto WebP (GitHub) o data URL en desarrollo
 }
 
+/** Una parte de un cobro: lo entregado en un método, en la moneda de ese método. */
+export interface PaymentPart {
+  method: Method
+  /** USD si method='usd'; MN si 'mn' o 'tarjeta'. */
+  paid: number
+  /** Tasa MN por 1 USD usada (no aplica a USD). */
+  rate?: number
+  /** Valor de esta parte en USD. */
+  usd: number
+}
+
 export interface Movement {
   id: string
   shiftId: string
   kind: 'mensualidad' | 'venta'
   label: string
   detail?: string
-  /** Valor en USD (los precios están fijados en USD). */
+  /** Precio total en USD (los precios están fijados en USD). */
   amount: number
-  method: Method
-  /** Lo que se cobró en la moneda del método: USD si method='usd'; MN si 'mn' o 'tarjeta'. */
-  paid: number
-  /** Tasa MN por 1 USD usada al cobrar (no aplica si method='usd'). */
-  rate?: number
+  /** Cómo se pagó: una o varias partes (USD, tarjeta y/o MN). */
+  parts: PaymentPart[]
   at: string // ISO datetime
   /** Quién registró el cobro. */
   workerId?: string

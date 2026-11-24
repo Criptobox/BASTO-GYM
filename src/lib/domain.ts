@@ -1,5 +1,5 @@
 import { addPlan, diffDays } from './dates'
-import type { Client, Method, Movement, PlanId } from './types'
+import type { Client, Method, Movement, PaymentPart, PlanId } from './types'
 
 export const PLANS: { id: PlanId; label: string; days: string }[] = [
   { id: 'dia', label: 'Día', days: '1 día' },
@@ -22,16 +22,47 @@ export const toMN = (usd: number, rate: number) => Math.round(usd * rate)
 export const rateIsFresh = (s: { usdRate: number; usdRateDate: string }, today: string) =>
   Number.isFinite(s.usdRate) && s.usdRate > 0 && s.usdRateDate === today
 
-export interface Charge { paid: number; currency: 'USD' | 'MN'; rate?: number }
+/** Lo que se entrega en un método (en la moneda de ese método). */
+export interface PartInput { method: Method; paid: number }
+
+/** Valor en USD de una cantidad entregada: USD tal cual; MN y tarjeta se dividen entre la tasa. */
+export const partUsd = (method: Method, paid: number, rate: number) => (method === 'usd' ? paid : paid / rate)
+
+/** Un cobro queda cubierto si lo que falta o sobra es menos de medio peso (o un centavo) por redondeos. */
+export const isCovered = (diffUsd: number, rate: number) => diffUsd <= 0.005 || (rate > 0 && diffUsd * rate <= 0.51)
+
+/** USD que faltan (positivo) o sobran (negativo). Sin tasa vigente, las partes en MN/tarjeta no cuentan. */
+export function remainingUsd(total: number, inputs: PartInput[], rate: number): number {
+  const paid = inputs.reduce((n, i) => n + (i.method === 'usd' ? i.paid : rate > 0 ? i.paid / rate : 0), 0)
+  return total - paid
+}
+
+export type Settlement =
+  | { ok: true; parts: PaymentPart[] }
+  | { ok: false; reason: 'empty' | 'rate' | 'short' | 'over'; remaining: number }
 
 /**
- * Cuánto se cobra en cada método. USD: el precio tal cual. MN y tarjeta: precio × tasa del día.
- * Devuelve null si el método necesita la tasa y esta no está vigente (nunca se cobra con una tasa vieja).
+ * Valida un pago (posiblemente combinado) y lo convierte en partes guardables.
+ * Nunca acepta MN ni tarjeta con una tasa de otro día; exige cubrir el total sin pasarse
+ * (el vuelto no se registra, así que lo entregado debe ser lo que se aplica al precio).
  */
-export function chargeFor(usd: number, method: Method, s: { usdRate: number; usdRateDate: string }, today: string): Charge | null {
-  if (method === 'usd') return { paid: roundUsd(usd), currency: 'USD' }
-  if (!rateIsFresh(s, today)) return null
-  return { paid: toMN(usd, s.usdRate), currency: 'MN', rate: s.usdRate }
+export function settle(total: number, inputs: PartInput[], s: { usdRate: number; usdRateDate: string }, today: string): Settlement {
+  const used = inputs.filter((i) => Number.isFinite(i.paid) && i.paid > 0)
+  if (used.length === 0) return { ok: false, reason: 'empty', remaining: total }
+  const fresh = rateIsFresh(s, today)
+  if (!fresh && used.some((i) => i.method !== 'usd')) return { ok: false, reason: 'rate', remaining: total }
+  const rate = fresh ? s.usdRate : 0
+  const normalized = used.map((i) => ({ ...i, paid: i.method === 'usd' ? roundUsd(i.paid) : Math.round(i.paid) }))
+  const remaining = remainingUsd(total, normalized, rate)
+  if (remaining > 0 && !isCovered(remaining, rate)) return { ok: false, reason: 'short', remaining }
+  if (remaining < 0 && !isCovered(-remaining, rate)) return { ok: false, reason: 'over', remaining }
+  const parts: PaymentPart[] = normalized.map((i) => ({
+    method: i.method,
+    paid: i.paid,
+    ...(i.method === 'usd' ? {} : { rate: s.usdRate }),
+    usd: i.method === 'usd' ? i.paid : i.paid / s.usdRate,
+  }))
+  return { ok: true, parts }
 }
 
 export type DueState = 'vencido' | 'hoy' | 'pronto' | 'aldia'
@@ -105,9 +136,11 @@ export function summarize(movements: Movement[]): ShiftSummary {
     bucket.count++
     bucket.total = roundUsd(bucket.total + m.amount)
     s.total = roundUsd(s.total + m.amount)
-    if (m.method === 'usd') s.expected.usd = roundUsd(s.expected.usd + m.paid)
-    else if (m.method === 'mn') s.expected.mn += m.paid
-    else s.expected.card += m.paid
+    for (const p of m.parts) {
+      if (p.method === 'usd') s.expected.usd = roundUsd(s.expected.usd + p.paid)
+      else if (p.method === 'mn') s.expected.mn += p.paid
+      else s.expected.card += p.paid
+    }
   }
   return s
 }

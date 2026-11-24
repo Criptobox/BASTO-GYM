@@ -1,5 +1,6 @@
 import { addDays, toISODate } from '../lib/dates'
-import type { Client, Movement, Product, Settings, Shift, Worker } from '../lib/types'
+import type { Client, Movement, PaymentPart, Product, Settings, Shift, Worker } from '../lib/types'
+import { summarize } from '../lib/domain'
 import { DEMO, demoWorkers } from './demo'
 
 export const today = () => toISODate(new Date())
@@ -71,23 +72,23 @@ export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
   spec.forEach(([ago, h0, h1, worker, dMN, dUSD], i) => {
     const date = addDays(t, -ago)
     const id = `h${i}`
-    const mv = (n: number, kind: Movement['kind'], label: string, amount: number, method: Movement['method'], hh: number, mm: number) =>
+    const wid = worker === 'Daniela' ? 'w-daniela' : 'w-jorge'
+    const part = (method: PaymentPart['method'], usd: number): PaymentPart =>
+      method === 'usd' ? { method, paid: usd, usd } : { method, paid: Math.round(usd * rate), rate, usd }
+    // "mixto": mitad en USD y el resto en MN
+    const mv = (n: number, kind: Movement['kind'], label: string, amount: number, how: PaymentPart['method'] | 'mixto', hh: number, mm: number) =>
       movements.push({
-        id: `${id}-${n}`, shiftId: id, kind, label, amount, method,
-        worker, workerId: worker === 'Daniela' ? 'w-daniela' : 'w-jorge',
-        paid: method === 'usd' ? amount : Math.round(amount * rate),
-        rate: method === 'usd' ? undefined : rate,
-        at: at(date, hh, mm),
+        id: `${id}-${n}`, shiftId: id, kind, label, amount, worker, workerId: wid, at: at(date, hh, mm),
+        parts: how === 'mixto' ? [part('usd', amount / 2), part('mn', amount / 2)] : [part(how, amount)],
       })
     mv(1, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, 'mn', h0 + 1, 10)
     mv(2, 'venta', 'Venta · Proteína Whey 2 lb', 25, 'tarjeta', h0 + 2, 30)
-    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, 'usd', h0 + 3, 5)
+    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, i % 2 ? 'mixto' : 'usd', h0 + 3, 5)
     mv(4, 'venta', 'Venta · Agua 600 ml', 0.5, 'mn', h0 + 4, 45)
-    const expectedMN = Math.round(20 * rate) + Math.round(0.5 * rate)
-    const expectedUSD = 20
+    const { expected } = summarize(movements.filter((m) => m.shiftId === id))
     shifts.push({
-      id, worker, workerId: worker === 'Daniela' ? 'w-daniela' : 'w-jorge', openedAt: at(date, h0), closedAt: at(date, h1), closedBy: worker,
-      expectedMN, expectedUSD, countedMN: expectedMN + dMN, countedUSD: expectedUSD + dUSD,
+      id, worker, workerId: wid, openedAt: at(date, h0), closedAt: at(date, h1), closedBy: worker,
+      expectedMN: expected.mn, expectedUSD: expected.usd, countedMN: expected.mn + dMN, countedUSD: expected.usd + dUSD,
     })
   })
   return { shifts, movements }

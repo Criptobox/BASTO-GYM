@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
 import { PLANS, findByCarnet, isValidCarnet, whatsappLink } from '../lib/domain'
-import { MethodPicker, useCharge, useDefaultMethod } from '../components/Payment'
+import { PaymentSplit, usePaymentSplit } from '../components/Payment'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
 import { haptic } from '../lib/nav'
-import type { Client, Method, PlanId } from '../lib/types'
+import type { Client, PlanId } from '../lib/types'
 
 export function Enroll() {
   const g = useGym()
@@ -15,7 +15,6 @@ export function Enroll() {
   const [phone, setPhone] = useState('')
   const [carnet, setCarnet] = useState('')
   const [plan, setPlan] = useState<PlanId>('mes')
-  const [method, setMethod] = useState<Method>(useDefaultMethod())
   const [done, setDone] = useState<Client | null>(null)
   const [touched, setTouched] = useState(false)
   const shown = useLatest(done)
@@ -26,18 +25,18 @@ export function Enroll() {
   const valid = name.trim().length >= 3 && carnetOk && !duplicate && phoneOk
   const next = addPlan(g.today, plan)
   const price = g.settings.planPrices[plan]
-  const { ch } = useCharge(price, method)
+  const split = usePaymentSplit(price)
 
   function submit(e: FormEvent) {
     e.preventDefault()
     setTouched(true)
-    if (!valid || !g.shiftOpen) return
-    const c = g.enroll({ name, phone, carnet, plan, method })
+    if (!valid || !split.ready || !g.shiftOpen) return
+    const c = g.enroll({ name, phone, carnet, plan, parts: split.inputs })
     if (!c) return
     setDone(c); haptic()
   }
   function reset() {
-    setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false)
+    setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false); split.reset()
   }
   const err = (bad: boolean, msg: string) => touched && bad && msg
 
@@ -61,7 +60,7 @@ export function Enroll() {
           <p className="mb-2 text-sm text-muted">Plan</p>
           <Segmented label="Plan" value={plan} onChange={setPlan} options={PLANS.map((p) => ({ id: p.id, label: p.label }))} />
         </div>
-        <MethodPicker usd={price} method={method} onChange={setMethod} />
+        <PaymentSplit split={split} totalUsd={price} />
 
         <Card className="grid grid-cols-3 gap-2 !rounded-2xl !p-4">
           <div><p className="text-xs text-muted">Inicio</p><p className="text-sm font-bold">{formatDate(g.today, g.settings.locale)}</p></div>
@@ -69,7 +68,8 @@ export function Enroll() {
           <div><p className="text-xs text-muted">Total</p><p className="text-sm font-bold">{money.usd(price)}</p></div>
         </Card>
 
-        <Button type="submit" block disabled={!g.shiftOpen || !ch}>Inscribir y cobrar</Button>
+        {touched && !split.ready && <p role="alert" className="text-sm text-danger">Completa el pago para poder inscribir.</p>}
+        <Button type="submit" block disabled={!g.shiftOpen}>Inscribir y cobrar</Button>
         {!g.shiftOpen && <p className="text-center text-sm text-muted">Abre tu turno en Inicio para registrar cobros.</p>}
       </form>
 

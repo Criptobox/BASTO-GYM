@@ -26,7 +26,7 @@ export function Overview() {
   return (
     <>
       <AdminHeader eyebrow="Panorama" title="Resumen" />
-      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
+      <div className="grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
         <Stat label="Ingresos del mes" value={money.usd(monthTotal)} />
         <Stat label="Clientes activos" value={active} />
         <Stat label="Pagos vencidos" value={overdue} tone="amber" />

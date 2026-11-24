@@ -74,11 +74,16 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
 
 export function Stat({ label, value, tone }: { label: string; value: string | number; tone?: 'amber' }) {
   return (
-    <div className="min-w-0 rounded-3xl border border-line surface-card p-5">
-      <p className="text-sm text-muted">{label}</p>
-      <p className={cx('mt-1 truncate text-3xl font-extrabold tracking-tight', tone === 'amber' && 'text-amber')}>{value}</p>
+    <div className="min-w-0 rounded-2xl border border-line surface-card p-3.5 sm:rounded-3xl sm:p-5">
+      <p className="truncate text-xs text-muted sm:text-sm">{label}</p>
+      <p className={cx('mt-0.5 truncate text-2xl font-extrabold tracking-tight sm:mt-1 sm:text-3xl', tone === 'amber' && 'text-amber')}>{value}</p>
     </div>
   )
+}
+
+/** Totales: 2 por fila en móvil (el último, si queda solo, ocupa todo el ancho) y 3 en pantallas anchas. */
+export function StatGrid({ children }: { children: React.ReactNode }) {
+  return <div className="mb-1 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">{children}</div>
 }
 
 export const th = 'px-4 py-3 text-left text-sm font-semibold text-muted'

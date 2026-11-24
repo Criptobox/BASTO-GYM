@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
-import { cashDifference, chargeFor, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, renewalDate, shiftDifference, summarize, whatsappLink } from './domain'
+import { cashDifference, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
 import type { Client, Movement } from './types'
 
 describe('fechas', () => {
@@ -37,23 +37,58 @@ describe('vencimientos', () => {
   })
 })
 
-describe('monedas', () => {
+describe('pagos (uno solo o combinados)', () => {
   const s = { usdRate: 120, usdRateDate: '2026-11-24' }
   const today = '2026-11-24'
-  it('USD se cobra tal cual, sin necesitar tasa', () => {
-    expect(chargeFor(25, 'usd', { usdRate: 0, usdRateDate: '' }, today)).toEqual({ paid: 25, currency: 'USD' })
+  const stale = { usdRate: 120, usdRateDate: '2026-11-23' }
+
+  it('USD cubre el precio sin necesitar tasa', () => {
+    const r = settle(25, [{ method: 'usd', paid: 25 }], { usdRate: 0, usdRateDate: '' }, today)
+    expect(r.ok && r.parts).toEqual([{ method: 'usd', paid: 25, usd: 25 }])
   })
-  it('MN y tarjeta se cobran a la tasa del día, a pesos enteros', () => {
-    expect(chargeFor(25, 'mn', s, today)).toEqual({ paid: 3000, currency: 'MN', rate: 120 })
-    expect(chargeFor(20, 'tarjeta', { usdRate: 122.5, usdRateDate: today }, today)).toEqual({ paid: 2450, currency: 'MN', rate: 122.5 })
-    expect(chargeFor(0.5, 'mn', { usdRate: 123, usdRateDate: today }, today)?.paid).toBe(62) // 61.5 → 62
+  it('MN y tarjeta se cobran a la tasa del día', () => {
+    const r = settle(25, [{ method: 'mn', paid: 3000 }], s, today)
+    expect(r.ok && r.parts).toEqual([{ method: 'mn', paid: 3000, rate: 120, usd: 25 }])
+    expect(settle(20, [{ method: 'tarjeta', paid: 2450 }], { usdRate: 122.5, usdRateDate: today }, today).ok).toBe(true)
   })
-  it('nunca cobra en MN con una tasa de otro día o inválida', () => {
-    expect(chargeFor(25, 'mn', s, '2026-11-25')).toBeNull()
-    expect(chargeFor(25, 'tarjeta', { usdRate: 0, usdRateDate: today }, today)).toBeNull()
-    expect(chargeFor(25, 'mn', { usdRate: NaN, usdRateDate: today }, today)).toBeNull()
+  it('permite combinar USD, MN y tarjeta', () => {
+    // 20 USD = 10 USD + 600 MN (5 USD) + 600 MN con tarjeta (5 USD)
+    const r = settle(20, [{ method: 'usd', paid: 10 }, { method: 'mn', paid: 600 }, { method: 'tarjeta', paid: 600 }], s, today)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.parts.map((p) => p.method)).toEqual(['usd', 'mn', 'tarjeta'])
+      expect(r.parts.reduce((n, p) => n + p.usd, 0)).toBeCloseTo(20, 6)
+    }
+  })
+  it('exige cubrir el precio completo: avisa cuánto falta', () => {
+    const r = settle(20, [{ method: 'usd', paid: 10 }, { method: 'mn', paid: 600 }], s, today)
+    expect(r).toMatchObject({ ok: false, reason: 'short' })
+    expect(!r.ok && r.remaining).toBeCloseTo(5, 6)
+  })
+  it('rechaza pasarse (el vuelto no se registra)', () => {
+    expect(settle(20, [{ method: 'usd', paid: 30 }], s, today)).toMatchObject({ ok: false, reason: 'over' })
+  })
+  it('tolera medio peso de redondeo al repartir', () => {
+    // 20 USD a tasa 130 = 2600 MN. 7 USD + 1690 MN = 7 + 13 = 20 exacto; 1689.7 MN redondeado a 1690
+    expect(settle(20, [{ method: 'usd', paid: 7 }, { method: 'mn', paid: 1690 }], { usdRate: 130, usdRateDate: today }, today).ok).toBe(true)
+    // 1 peso menos ya es faltante real
+    expect(settle(20, [{ method: 'usd', paid: 7 }, { method: 'mn', paid: 1688 }], { usdRate: 130, usdRateDate: today }, today)).toMatchObject({ ok: false, reason: 'short' })
+  })
+  it('nunca acepta MN ni tarjeta con una tasa de otro día; USD sí', () => {
+    expect(settle(25, [{ method: 'mn', paid: 3000 }], stale, today)).toMatchObject({ ok: false, reason: 'rate' })
+    expect(settle(25, [{ method: 'usd', paid: 10 }, { method: 'tarjeta', paid: 1800 }], stale, today)).toMatchObject({ ok: false, reason: 'rate' })
+    expect(settle(25, [{ method: 'usd', paid: 25 }], stale, today).ok).toBe(true)
     expect(rateIsFresh(s, today)).toBe(true)
-    expect(rateIsFresh(s, '2026-11-25')).toBe(false)
+    expect(rateIsFresh(stale, today)).toBe(false)
+  })
+  it('un pago vacío o con montos inválidos no se acepta', () => {
+    expect(settle(25, [], s, today)).toMatchObject({ ok: false, reason: 'empty' })
+    expect(settle(25, [{ method: 'usd', paid: 0 }, { method: 'mn', paid: NaN }], s, today)).toMatchObject({ ok: false, reason: 'empty' })
+  })
+  it('calcula lo que falta en vivo', () => {
+    expect(remainingUsd(20, [{ method: 'usd', paid: 5 }], 120)).toBe(15)
+    expect(remainingUsd(20, [{ method: 'mn', paid: 1200 }], 120)).toBe(10)
+    expect(remainingUsd(20, [{ method: 'usd', paid: 25 }], 120)).toBe(-5)
   })
 })
 
@@ -63,14 +98,15 @@ describe('caja', () => {
     expect(cashDifference(90, 100)).toEqual({ status: 'faltante', amount: 10 })
     expect(cashDifference(105.5, 100)).toEqual({ status: 'sobrante', amount: 5.5 })
   })
-  it('separa los cajones: efectivo USD, efectivo MN y tarjeta', () => {
-    const m = (kind: Movement['kind'], amount: number, method: Movement['method'], paid: number) =>
-      ({ kind, amount, method, paid }) as Movement
-    const s = summarize([m('mensualidad', 20, 'mn', 2400), m('venta', 25, 'tarjeta', 3000), m('mensualidad', 20, 'usd', 20), m('venta', 0.5, 'usd', 0.5)])
-    expect(s.memberships).toEqual({ count: 2, total: 40 })
+  it('separa los cajones, también cuando un cobro se paga combinado', () => {
+    const one = (kind: Movement['kind'], amount: number, method: 'usd' | 'mn' | 'tarjeta', paid: number) =>
+      ({ kind, amount, parts: [{ method, paid, usd: amount }] }) as Movement
+    const mixed = { kind: 'mensualidad', amount: 20, parts: [{ method: 'usd', paid: 10, usd: 10 }, { method: 'mn', paid: 600, usd: 5 }, { method: 'tarjeta', paid: 600, usd: 5 }] } as Movement
+    const s = summarize([one('mensualidad', 20, 'mn', 2400), one('venta', 25, 'tarjeta', 3000), one('mensualidad', 20, 'usd', 20), one('venta', 0.5, 'usd', 0.5), mixed])
+    expect(s.memberships).toEqual({ count: 3, total: 60 })
     expect(s.sales).toEqual({ count: 2, total: 25.5 })
-    expect(s.expected).toEqual({ usd: 20.5, mn: 2400, card: 3000 })
-    expect(s.total).toBe(65.5)
+    expect(s.expected).toEqual({ usd: 30.5, mn: 3000, card: 3600 })
+    expect(s.total).toBe(85.5)
   })
   it('cuadra cada cajón por separado', () => {
     const base = { expectedMN: 2460, expectedUSD: 20 }

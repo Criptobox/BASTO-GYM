@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
-import { METHODS, shiftDifference, summarize, type CashStatus } from '../lib/domain'
+import { shiftDifference, summarize, type CashStatus } from '../lib/domain'
+import type { Movement, PaymentPart } from '../lib/types'
+import { useWide } from '../lib/media'
 import { formatTime, makeMoney } from '../lib/format'
 import { Button, Card, Field, cx, inputCls, Pill, Sheet, useToast } from '../components/ui'
-import { AdminHeader, Stat, td, th } from './AdminLayout'
+import { AdminHeader, Stat, StatGrid, td, th } from './AdminLayout'
 
 type Range = 'hoy' | 'semana' | 'mes'
 const RANGES: { id: Range; label: string }[] = [{ id: 'hoy', label: 'Hoy' }, { id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }]
@@ -12,6 +14,7 @@ const LABEL: Record<CashStatus, string> = { cuadra: 'Cuadra', faltante: 'Faltant
 
 export function Closings() {
   const g = useGym()
+  const wide = useWide()
   const money = makeMoney(g.settings)
   const [range, setRange] = useState<Range>('semana')
   const [sel, setSel] = useState<string | null>(null)
@@ -35,6 +38,16 @@ export function Closings() {
   const current = rows.find((r) => r.s.id === sel) ?? rows.find((r) => r.mv.length > 0) ?? rows[0]
   const totals = rows.reduce((a, r) => ({ m: a.m + r.sum.memberships.total, v: a.v + r.sum.sales.total, d: a.d + (r.diff && !r.diff.balanced ? 1 : 0) }), { m: 0, v: 0, d: 0 })
   const part = (iso: string) => (new Date(iso).getHours() < 14 ? 'Mañana' : 'Tarde')
+  const label = (p: PaymentPart) => (p.method === 'usd' ? money.usd(p.paid) : p.method === 'mn' ? money.mn(p.paid) : `${money.mn(p.paid)} tarjeta`)
+  const how = (m: Movement) => m.parts.map(label).join(' + ')
+  const cash = (diff: ReturnType<typeof shiftDifference> | null) =>
+    !diff ? <Pill tone="amber">Abierto</Pill> : diff.balanced ? <Pill>Cuadra</Pill> : (
+      <div className="flex flex-wrap justify-end gap-1.5">
+        {diff.mn.status !== 'cuadra' && <Pill tone={diff.mn.status === 'faltante' ? 'danger' : 'amber'}>MN {LABEL[diff.mn.status].toLowerCase()} {money.mn(diff.mn.amount)}</Pill>}
+        {diff.usd.status !== 'cuadra' && <Pill tone={diff.usd.status === 'faltante' ? 'danger' : 'amber'}>USD {LABEL[diff.usd.status].toLowerCase()} {money.usd(diff.usd.amount)}</Pill>}
+      </div>
+    )
+  const when = (iso: string) => `${formatShortDate(toISODate(new Date(iso)), g.settings.locale)} · ${part(iso)}`
 
   return (
     <>
@@ -46,36 +59,53 @@ export function Closings() {
           ))}
         </div>
       } />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Mensualidades cobradas" value={money.usd(totals.m)} />
-        <Stat label="Ventas de productos" value={money.usd(totals.v)} />
+      <StatGrid>
+        <Stat label="Mensualidades" value={money.usd(totals.m)} />
+        <Stat label="Ventas" value={money.usd(totals.v)} />
         <Stat label="Cierres con diferencia" value={totals.d} tone="amber" />
-      </div>
+      </StatGrid>
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        {!wide ? (
+          <ul className="space-y-2">
+            {rows.map(({ s, sum, diff }) => (
+              <li key={s.id}>
+                <button
+                  onClick={() => setSel(s.id)} aria-pressed={current?.s.id === s.id}
+                  className={cx('surface-card w-full rounded-2xl border p-3 text-left transition active:scale-[0.99]', current?.s.id === s.id ? 'border-amber/70' : 'border-line')}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold leading-tight">{when(s.openedAt)}</p>
+                      <p className="mt-0.5 text-xs text-muted">{s.worker} · Mens. {money.usd(sum.memberships.total)} · Ventas {money.usd(sum.sales.total)}</p>
+                    </div>
+                    <div className="shrink-0">{cash(diff)}</div>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {rows.length === 0 && <li className="rounded-2xl border border-dashed border-line p-8 text-center text-muted">No hay turnos en este periodo.</li>}
+          </ul>
+        ) : (
         <div className="overflow-x-auto rounded-3xl border border-line surface-card">
-          <table className="rtable w-full md:min-w-[620px]">
+          <table className="w-full min-w-[620px]">
             <thead><tr className="border-b border-line"><th className={th}>Fecha</th><th className={th}>Trabajador</th><th className={th}>Mensualidades</th><th className={th}>Ventas</th><th className={th}>Caja</th></tr></thead>
             <tbody>
               {rows.map(({ s, sum, diff }) => (
                 <tr key={s.id} onClick={() => setSel(s.id)} className={cx('cursor-pointer border-b border-line last:border-0', current?.s.id === s.id && 'bg-surface-2')}>
-                  <td data-label="Fecha" className={`${td} font-semibold`}>
+                  <td className={`${td} font-semibold`}>
                     <button className="text-left" onClick={() => setSel(s.id)}>{formatShortDate(toISODate(new Date(s.openedAt)), g.settings.locale)} · {part(s.openedAt)}</button>
                   </td>
-                  <td data-label="Trabajador" className={td}>{s.worker}</td>
-                  <td data-label="Mensualidades" className={td}>{money.usd(sum.memberships.total)}</td>
-                  <td data-label="Ventas" className={td}>{money.usd(sum.sales.total)}</td>
-                  <td data-label="Caja" className={td}>{!diff ? <Pill tone="amber">Abierto</Pill> : diff.balanced ? <Pill>Cuadra</Pill> : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {diff.mn.status !== 'cuadra' && <Pill tone={diff.mn.status === 'faltante' ? 'white' : 'amber'}>MN {LABEL[diff.mn.status].toLowerCase()} {money.mn(diff.mn.amount)}</Pill>}
-                      {diff.usd.status !== 'cuadra' && <Pill tone={diff.usd.status === 'faltante' ? 'white' : 'amber'}>USD {LABEL[diff.usd.status].toLowerCase()} {money.usd(diff.usd.amount)}</Pill>}
-                    </div>
-                  )}</td>
+                  <td className={td}>{s.worker}</td>
+                  <td className={td}>{money.usd(sum.memberships.total)}</td>
+                  <td className={td}>{money.usd(sum.sales.total)}</td>
+                  <td className={td}>{cash(diff)}</td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-muted">No hay turnos en este periodo.</td></tr>}
             </tbody>
           </table>
         </div>
+        )}
 
         {current && (
           <Card className="!p-5">
@@ -90,10 +120,16 @@ export function Closings() {
             )}
             <ul className="divide-y divide-line">
               {[...current.mv].sort((a, b) => a.at.localeCompare(b.at)).map((m) => (
-                <li key={m.id} className="flex items-center gap-3 py-3">
-                  <span className="w-14 shrink-0 text-xs text-muted">{formatTime(m.at, g.settings.locale)}</span>
-                  <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{m.label}</p><p className="text-xs text-muted">{METHODS.find((o) => o.id === m.method)?.label}{m.rate ? ` · 1 USD = ${m.rate} MN` : ''}</p></div>
-                  <div className="text-right"><p className="font-bold">{money.usd(m.amount)}</p>{m.method !== 'usd' && <p className="text-xs text-muted">{money.mn(m.paid)}</p>}</div>
+                <li key={m.id} className="flex items-start gap-3 py-2.5">
+                  <span className="w-12 shrink-0 pt-0.5 text-xs text-muted">{formatTime(m.at, g.settings.locale)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-tight">{m.label}</p>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {m.parts.length > 1 && <span className="mr-1.5 rounded-full border border-amber/50 px-1.5 py-px font-bold text-amber">Mixto</span>}
+                      {how(m)}{m.parts.some((p) => p.rate) ? ` · tasa ${m.parts.find((p) => p.rate)?.rate}` : ''}
+                    </p>
+                  </div>
+                  <p className="font-bold">{money.usd(m.amount)}</p>
                 </li>
               ))}
               {current.mv.length === 0 && <li className="py-6 text-center text-sm text-muted">Sin movimientos.</li>}

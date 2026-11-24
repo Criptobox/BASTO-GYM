@@ -4,6 +4,7 @@ import { isValidPin } from '../lib/pin'
 import { Avatar, Button, Card, Field, inputCls, Pill, Sheet, useToast } from '../components/ui'
 import type { Worker } from '../lib/types'
 import { AdminHeader, td, th } from './AdminLayout'
+import { useWide } from '../lib/media'
 
 const pinInput = (v: string, set: (s: string) => void, label: string) => (
   <input
@@ -15,6 +16,7 @@ const pinInput = (v: string, set: (s: string) => void, label: string) => (
 export function Workers() {
   const g = useGym()
   const toast = useToast()
+  const wide = useWide()
   const [name, setName] = useState('')
   const [pin, setPin] = useState('')
   const [touched, setTouched] = useState(false)
@@ -49,20 +51,45 @@ export function Workers() {
         Cada trabajador entra con su propia clave. Todo cobro y cada cierre quedan a nombre de quien los hizo, para saber de quién es cada turno si hay un problema.
       </p>
       <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="overflow-x-auto rounded-3xl border border-line surface-card">
-          <table className="rtable w-full md:min-w-[560px]">
+        <div>
+          {/* Móvil: tarjetas compactas */}
+          {!wide && <ul className="space-y-2">
+            {g.workers.map((w) => {
+              const me = w.id === g.session?.id
+              return (
+                <li key={w.id}>
+                  <Card className="!rounded-2xl !p-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={w.name} size={40} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold leading-tight">{w.name}{me ? ' (tú)' : ''}</p>
+                        <p className="text-xs text-muted">{w.role === 'admin' ? 'Administrador' : 'Trabajador'}</p>
+                      </div>
+                      {!w.active ? <Pill tone="danger">Desactivado</Pill> : !w.pinHash ? <Pill tone="amber">Sin clave</Pill> : <Pill>Activo</Pill>}
+                    </div>
+                    <div className="mt-2 flex gap-2 pl-[52px]">
+                      <Button size="xs" variant="outline" onClick={() => { setTarget(w); setNewPin(''); setPinTouched(false) }}>{w.pinHash ? 'Cambiar clave' : 'Dar clave'}</Button>
+                      {!me && <Button size="xs" variant="outline" onClick={() => g.setWorkerActive(w.id, !w.active)}>{w.active ? 'Desactivar' : 'Activar'}</Button>}
+                    </div>
+                  </Card>
+                </li>
+              )
+            })}
+          </ul>}
+        {wide && <div className="overflow-x-auto rounded-3xl border border-line surface-card">
+          <table className="w-full min-w-[560px]">
             <thead><tr className="border-b border-line"><th className={th}>Nombre</th><th className={th}>Rol</th><th className={th}>Estado</th><th className={th}>Acciones</th></tr></thead>
             <tbody>
               {g.workers.map((w) => {
                 const me = w.id === g.session?.id
                 return (
                   <tr key={w.id} className="border-b border-line last:border-0">
-                    <td data-label="Nombre" className={td}><div className="flex items-center gap-3"><Avatar name={w.name} size={36} /><span className="font-semibold">{w.name}{me ? ' (tú)' : ''}</span></div></td>
-                    <td data-label="Rol" className={td}>{w.role === 'admin' ? 'Administrador' : 'Trabajador'}</td>
-                    <td data-label="Estado" className={td}>
-                      {!w.active ? <Pill tone="white">Desactivado</Pill> : !w.pinHash ? <Pill tone="amber">Sin clave</Pill> : <Pill>Activo</Pill>}
+                    <td className={td}><div className="flex items-center gap-3"><Avatar name={w.name} size={36} /><span className="font-semibold">{w.name}{me ? ' (tú)' : ''}</span></div></td>
+                    <td className={td}>{w.role === 'admin' ? 'Administrador' : 'Trabajador'}</td>
+                    <td className={td}>
+                      {!w.active ? <Pill tone="danger">Desactivado</Pill> : !w.pinHash ? <Pill tone="amber">Sin clave</Pill> : <Pill>Activo</Pill>}
                     </td>
-                    <td data-label="Acciones" className={td}>
+                    <td className={td}>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" onClick={() => { setTarget(w); setNewPin(''); setPinTouched(false) }}>{w.pinHash ? 'Cambiar clave' : 'Dar clave'}</Button>
                         {!me && <Button size="sm" variant="outline" onClick={() => g.setWorkerActive(w.id, !w.active)}>{w.active ? 'Desactivar' : 'Activar'}</Button>}
@@ -73,6 +100,7 @@ export function Workers() {
               })}
             </tbody>
           </table>
+        </div>}
         </div>
 
         <Card className="!p-5">

@@ -36,24 +36,6 @@ h1:focus { outline: none; } /* foco programático al cambiar de pantalla */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-/* Tablas del admin: en móvil cada fila pasa a ser una tarjeta con etiquetas. */
-@media (max-width: 767px) {
-  .rtable { min-width: 0 !important; }
-  .rtable, .rtable tbody { display: block; }
-  .rtable thead { display: none; }
-  .rtable tr {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.75rem;
-    padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-line);
-  }
-  .rtable tr:last-child { border-bottom: 0; }
-  .rtable td { display: block; padding: 0; min-width: 0; }
-  .rtable td:first-child, .rtable td[colspan] { grid-column: 1 / -1; }
-  .rtable td[data-label]:not(:first-child)::before {
-    content: attr(data-label); display: block; margin-bottom: 0.2rem;
-    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--color-faint);
-  }
-}
 
 /* ---------- Hoja inferior: <dialog> nativo (top layer, Esc, foco y backdrop gratis) ---------- */
 dialog.sheet {
