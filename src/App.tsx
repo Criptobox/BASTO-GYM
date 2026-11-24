@@ -3,6 +3,8 @@ import { GymProvider, useGym } from './data/store'
 import { BottomNav } from './components/BottomNav'
 import { ToastProvider } from './components/ui'
 import { useIdleLogout, useRouteReset } from './lib/nav'
+import { useAppBadge } from './lib/badge'
+import { pendingClients } from './lib/domain'
 import { Login } from './screens/Login'
 import { Home } from './screens/Home'
 import { Enroll } from './screens/Enroll'
@@ -29,6 +31,8 @@ function RequireRole({ role }: { role: Worker['role'] }) {
 
 function WorkerShell() {
   useRouteReset()
+  const g = useGym()
+  useAppBadge(g.session ? pendingClients(g.clients, g.today).length : 0) // número rojo en el icono de la app instalada
   return (
     <div className="mx-auto min-h-dvh max-w-[430px] pb-28 sm:border-x sm:border-line">
       <main><Outlet /></main>

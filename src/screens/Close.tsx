@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Lock } from 'lucide-react'
+import { LogoMark } from '../components/Logo'
 import { useGym } from '../data/store'
 import { shiftDifference, summarize, cashDifference, type CashStatus } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
@@ -38,7 +38,7 @@ export function Close() {
     return (
       <Screen eyebrow="Cierre de caja" title="Turno cerrado">
         <Card className="text-center !py-8">
-          <Lock className="mx-auto text-amber" aria-hidden />
+          <LogoMark size={72} state="inactive" label="Turno cerrado" className="mx-auto" />
           <p className="mt-3 text-sm text-muted">Cerrado a las {formatTime(g.shift.closedAt!, g.settings.locale)}{g.shift.closedBy && g.shift.closedBy !== g.shift.worker ? ` por ${g.shift.closedBy}` : ''}</p>
           <p className="mt-1 text-4xl font-extrabold tracking-tight">{money.usd(sum.total)}</p>
           <p className="text-sm text-muted">cobrado en el turno (valor en USD)</p>

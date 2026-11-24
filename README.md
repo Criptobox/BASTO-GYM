@@ -23,7 +23,8 @@ npm run build    # typecheck + build PWA
 - Las claves se guardan con PBKDF2-SHA256 y sal propia, nunca en claro. **Aun así esto es solo responsabilidad, no seguridad real:** los datos viven en el navegador y cualquiera con acceso al dispositivo puede leerlos o alterarlos. La seguridad real llega con Supabase Auth y reglas por rol.
 
 ## Logo
-Dibujado en vector a partir de la referencia de estilo (`brand/referencia-estilo.jpg`): `brand/logo.svg`, un hexágono con marco mitad negro y mitad dorado y una **B** negra con una **G** dorada.
+Vectorizado a partir de la referencia (`brand/referencia-estados.jpg`): `brand/logo.svg`, un escudo hexagonal con marco dorado, una **B** de contorno de acero y una **G** dorada.
+Estados (componente `LogoMark`, vista previa en *Ajustes → Logo y estados*): normal, **activo** (resplandor), **inactivo** (gris: cuenta bloqueada, turno cerrado), **cargando** (anillo que gira) y **aviso** (globo rojo). El icono de la app instalada muestra el número de pagos pendientes (Badging API, solo si el sistema lo permite).
 `node scripts/build-logo.cjs` genera `public/logo.svg` y los iconos PNG (192, 512, maskable, apple-touch, favicon). Necesita Playwright (`npm i -D playwright`).
 
 ## Monedas

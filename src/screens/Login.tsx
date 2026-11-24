@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Delete } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
 import { Avatar, Button, Field, inputCls } from '../components/ui'
-import { LogoMark } from '../components/Logo'
+import { LogoMark, type LogoState } from '../components/Logo'
 import { isValidPin } from '../lib/pin'
 import { haptic } from '../lib/nav'
 import type { Worker } from '../lib/types'
@@ -63,7 +63,7 @@ function message(r: Extract<LoginResult, { ok: false }>): string {
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 
-function PinStep({ worker, onBack }: { worker: Worker; onBack: () => void }) {
+function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () => void; onLogoState: (s: LogoState) => void }) {
   const g = useGym()
   const nav = useNavigate()
   const [pin, setPin] = useState('')
@@ -73,6 +73,10 @@ function PinStep({ worker, onBack }: { worker: Worker; onBack: () => void }) {
   const [wait, setWait] = useState(0)
   const pinRef = useRef(pin)
   pinRef.current = pin
+
+  // El logo refleja lo que pasa: verificando = anillo que gira; bloqueado = gris.
+  useEffect(() => { onLogoState(busy ? 'loading' : wait > 0 ? 'inactive' : 'default') }, [busy, wait, onLogoState])
+  useEffect(() => () => onLogoState('default'), [onLogoState])
 
   // Cuenta atrás cuando la cuenta queda bloqueada temporalmente.
   useEffect(() => {
@@ -139,6 +143,7 @@ function PinStep({ worker, onBack }: { worker: Worker; onBack: () => void }) {
 export function Login() {
   const g = useGym()
   const [picked, setPicked] = useState<Worker | null>(null)
+  const [logoState, setLogoState] = useState<LogoState>('default')
   if (g.session) return <Navigate to={home(g.session.role)} replace />
 
   const people = g.workers
@@ -146,15 +151,15 @@ export function Login() {
     .sort((a, b) => Number(a.role === 'admin') - Number(b.role === 'admin') || a.name.localeCompare(b.name))
   return (
     <div className="mx-auto min-h-dvh max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="mb-8 flex items-center gap-3">
-        <LogoMark size={52} />
+      <div className="mb-8 flex items-center gap-4">
+        <LogoMark size={72} state={logoState} />
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">Acceso</p>
           <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
         </div>
       </div>
 
-      {g.needsSetup ? <Setup /> : picked ? <PinStep worker={picked} onBack={() => setPicked(null)} /> : (
+      {g.needsSetup ? <Setup /> : picked ? <PinStep worker={picked} onBack={() => setPicked(null)} onLogoState={setLogoState} /> : (
         <>
           <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres?</h1>
           <p className="mb-5 text-muted">Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.</p>

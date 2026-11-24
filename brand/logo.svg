@@ -1,91 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BASTO GYM">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-111 -24 1040 1040" role="img" aria-label="BASTO GYM">
   <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0" stop-color="#FFF1A0"/><stop offset="0.2" stop-color="#FFCB2E"/>
-      <stop offset="0.6" stop-color="#F29B00"/><stop offset="1" stop-color="#9A5600"/>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#FFE57F"/><stop offset="0.3" stop-color="#FFC21F"/>
+      <stop offset="0.7" stop-color="#E69A00"/><stop offset="1" stop-color="#B87800"/>
     </linearGradient>
-    <linearGradient id="goldBracket" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFE57A"/><stop offset="0.5" stop-color="#FFB400"/><stop offset="1" stop-color="#B86A00"/>
+    <linearGradient id="goldFrame" x1="0" y1="0" x2="0.15" y2="1">
+      <stop offset="0" stop-color="#FFDB63"/><stop offset="0.35" stop-color="#F3B200"/>
+      <stop offset="1" stop-color="#C98400"/>
     </linearGradient>
-    <linearGradient id="black" x1="0" y1="0" x2="0.25" y2="1">
-      <stop offset="0" stop-color="#4d5056"/><stop offset="0.22" stop-color="#18191c"/><stop offset="1" stop-color="#000"/>
+    <linearGradient id="goldBracket" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#FFEB94"/><stop offset="0.5" stop-color="#FFC62E"/><stop offset="1" stop-color="#F0A500"/>
     </linearGradient>
-    <linearGradient id="blackBracket" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6b6e75"/><stop offset="0.45" stop-color="#2a2c30"/><stop offset="1" stop-color="#0a0a0b"/>
+    <linearGradient id="body" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#26282c"/><stop offset="1" stop-color="#121315"/>
     </linearGradient>
-    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.5" stop-color="#C6C9CF"/><stop offset="1" stop-color="#6E727A"/>
+    <linearGradient id="bFill" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#2a2c30"/><stop offset="1" stop-color="#17181b"/>
     </linearGradient>
-    <linearGradient id="counter" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#E4E6EA"/><stop offset="1" stop-color="#A6AAB2"/>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D2D5DA"/><stop offset="0.5" stop-color="#9A9DA4"/><stop offset="1" stop-color="#6F7279"/>
     </linearGradient>
-    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <linearGradient id="tab" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#43454b"/><stop offset="1" stop-color="#2a2c30"/>
     </linearGradient>
-    <radialGradient id="plate" cx="0.5" cy="0.4" r="0.7">
-      <stop offset="0" stop-color="#26282c"/><stop offset="1" stop-color="#070708"/>
-    </radialGradient>
-    <radialGradient id="flare" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFBE0" stop-opacity="1"/><stop offset="0.25" stop-color="#FFC84A" stop-opacity="0.9"/>
-      <stop offset="0.6" stop-color="#FF9A00" stop-opacity="0.35"/><stop offset="1" stop-color="#FF8A00" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- Cuerpo: las letras forman el hexágono (arriba plano a la izquierda, inclinado a la derecha, abajo en V) -->
-    <path id="body" d="M150 150 H262 L414 227 V365 L256 458 L98 365 V205 Z"/>
-    <clipPath id="clipBody"><use href="#body"/></clipPath>
-    <path id="Bshape" fill-rule="evenodd" d="M150 150 H236 L262 176 V236 L248 250 L266 264 V452 L256 458 L98 365 V205 Z"/>
-    <path id="Gshape" d="M262 150 L414 227 V365 L262 454.5 Z"/>
-    <clipPath id="clipB"><use href="#Bshape"/></clipPath>
-    <clipPath id="clipG"><use href="#Gshape"/></clipPath>
-    <!-- Huecos plateados -->
-    <path id="Bc" d="M158 172 H228 L242 186 V224 L228 238 H158 Z M158 290 H232 L248 306 V352 L232 368 H158 Z"/>
-    <path id="Gc" d="M302 214 L372 249.5 V272 H414 V304 H334 V338 H372 V372 H302 Z"/>
+    <linearGradient id="gloss" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
   </defs>
 
-  <g transform="translate(0 -6)">
-    <!-- "Techo": dos soportes con gancho, negro a la izquierda y dorado a la derecha -->
-    <path id="bkL" d="M58.6 215 V148 L246 39.8 V69.9 L84.6 163 V215 Z" fill="url(#blackBracket)" stroke="url(#silver)" stroke-width="3" stroke-linejoin="round"/>
-    <path id="bkR" d="M453.4 215 V148 L266 39.8 V69.9 L427.4 163 V215 Z" fill="url(#goldBracket)" stroke="#FFF3B8" stroke-width="2.5" stroke-linejoin="round"/>
-    <!-- brillo en el canto de cada soporte -->
-    <path d="M70 148 L240 50" stroke="#fff" stroke-opacity="0.35" stroke-width="2" fill="none"/>
-    <path d="M442 148 L272 50" stroke="#fff" stroke-opacity="0.6" stroke-width="2" fill="none"/>
+  <!-- Silueta dorada: escudo con el borde del escalón y la punta superior -->
+  <path fill="url(#goldFrame)" d="M28 328 L127 270 L127 185 L400 34 L487 80 L674 176 L674 294 L790 330 V688 Q790 735 744 766 L408 957 L72 766 Q28 735 28 688 Z"/>
 
-    <!-- Contorno plateado fino de la base (doble línea en V) -->
-    <path d="M58.6 232 V376 L256 490 L453.4 376 V232" fill="none" stroke="url(#silver)" stroke-width="3.5" stroke-linejoin="round"/>
-    <path d="M74 236 V368 L256 474 L438 368 V236" fill="none" stroke="#fff" stroke-opacity="0.28" stroke-width="2" stroke-linejoin="round"/>
+  <path fill="none" stroke="#FFF1A8" stroke-opacity="0.85" stroke-width="3.5" stroke-linejoin="round" d="M28 328 L127 270 L127 185 L400 34 L470 72 M674 294 L790 330 V688 Q790 735 744 766 L408 957 L72 766 Q28 735 28 688 Z"/>
 
-    <!-- G dorada -->
-    <use href="#Gshape" fill="#FFF8C9"/>
-    <g clip-path="url(#clipG)">
-      <use href="#Gshape" fill="url(#gold)" transform="translate(5 5)"/>
-      <rect x="262" y="150" width="160" height="110" fill="url(#gloss)" opacity="0.5"/>
-      <use href="#Gshape" fill="none" stroke="#FFF6C0" stroke-opacity="0.42" stroke-width="12"/>
-      <use href="#Gc" fill="url(#counter)"/>
-      <!-- sombra del borde interior del hueco -->
-      <use href="#Gc" fill="none" stroke="#6b3f00" stroke-opacity="0.45" stroke-width="2.5"/>
-    </g>
+  <!-- Cuerpo oscuro del escudo (deja ver el marco dorado alrededor) -->
+  <path fill="url(#body)" stroke="#07070a" stroke-width="7" stroke-linejoin="round" d="M59 340 L141 293 V189 L400 50 L466 76 L428 113 L602 216 V262 L757 343 V650 Q757 690 722 716 L407 890 L94 716 Q59 690 59 650 Z"/>
 
-    <!-- B negra -->
-    <use href="#Bshape" fill="url(#silver)" fill-rule="evenodd"/>
-    <g clip-path="url(#clipB)">
-      <use href="#Bshape" fill="url(#black)" fill-rule="evenodd" transform="translate(5 5)"/>
-      <rect x="98" y="150" width="170" height="90" fill="url(#gloss)" opacity="0.3"/>
-      <use href="#Bshape" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="12" fill-rule="evenodd"/>
-      <use href="#Bc" fill="url(#counter)"/>
-      <use href="#Bc" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="2.5"/>
-    </g>
-    <!-- línea de unión B | G -->
-    <path d="M263 176 V236 L249 250 L267 264 V452" fill="none" stroke="#000" stroke-opacity="0.7" stroke-width="2.2"/>
-    <use href="#body" fill="none" stroke="#000" stroke-opacity="0.55" stroke-width="1.5"/>
+  <path fill="none" stroke="#B27800" stroke-opacity="0.75" stroke-width="3" stroke-linejoin="round" d="M59 340 V650 Q59 690 94 716 L407 890 L722 716 Q757 690 757 650 V343"/>
 
-    <!-- Destellos -->
-    <g>
-      <ellipse cx="256" cy="486" rx="120" ry="14" fill="url(#flare)" opacity="0.55"/>
-      <circle cx="256" cy="490" r="30" fill="url(#flare)"/>
-      <path d="M256 456 L260.5 484 L256 514 L251.5 484 Z" fill="#FFFBE0"/>
-      <path d="M220 490 L256 485 L292 490 L256 495 Z" fill="#FFFBE0" opacity="0.9"/>
-      <circle cx="104" cy="392" r="16" fill="url(#flare)"/>
-      <circle cx="408" cy="392" r="14" fill="url(#flare)" opacity="0.8"/>
-    </g>
-  </g>
+  <!-- Pestaña de arriba a la izquierda: panel gris con escalón -->
+  <path fill="url(#tab)" d="M141 189 L400 50 L400 68 L190 183 V232 L170 244 L141 262 Z"/>
+  <path fill="none" stroke="#6b6e75" stroke-width="3" stroke-linejoin="round" d="M141 262 L170 244 L190 232 V183 L400 68"/>
+  <path fill="none" stroke="#0a0a0b" stroke-opacity="0.8" stroke-width="3" stroke-linejoin="round" d="M141 269 L173 252 L196 238 V188 L400 76"/>
+
+  <!-- Soporte dorado grueso arriba a la derecha, con su pierna -->
+  <path fill="url(#goldBracket)" d="M415 116 L487 80 L674 176 V294 L602 262 V216 L430 118 Z"/>
+  <path fill="none" stroke="#FFF3B5" stroke-opacity="0.8" stroke-width="3" stroke-linejoin="round" d="M432 112 L487 87 L668 181"/>
+  <path fill="none" stroke="#A66A00" stroke-opacity="0.5" stroke-width="3" d="M430 120 L602 218 V262"/>
+
+  <!-- B: solo contorno de acero, con dos huecos -->
+  <path fill="url(#bFill)" stroke="url(#steel)" stroke-width="9" stroke-linejoin="round" d="M384 191 V445 L330 518 L384 578 V835 L85 671 V353 Z"/>
+  <path fill="#101113" stroke="url(#steel)" stroke-width="7" stroke-linejoin="round" d="M155 415 L303 335 L305 442 L268 483 H155 Z"/>
+  <path fill="#101113" stroke="url(#steel)" stroke-width="7" stroke-linejoin="round" d="M155 548 H268 L305 592 V712 L155 640 Z"/>
+
+  <!-- G: dorado macizo con bisel -->
+  <path fill="url(#gold)" stroke="#8F5C00" stroke-opacity="0.55" stroke-width="3" stroke-linejoin="round"
+        d="M427 209 L729 364 L732 444 L500 339 V703 H518 L648 630 V561 L567 558 L625 499 L727 502 L732 652 L706 695 L413 848 V569 L371 516 L412 471 V312 Z"/>
+  <path fill="none" stroke="#FFF6C4" stroke-opacity="0.75" stroke-width="3.5" stroke-linejoin="round" d="M430 222 L722 372 M414 318 V470 M416 580 V835"/>
+  <path fill="url(#gloss)" opacity="0.35" d="M427 209 L729 364 L732 444 L500 339 L500 380 L412 340 V312 Z"/>
 </svg>
