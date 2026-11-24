@@ -125,6 +125,13 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   box-shadow: inset 0 1px 0 var(--card-hi), 0 12px 28px -14px var(--card-shadow);
 }
 
+/* Cliente seleccionado en la lista (tableta/escritorio) */
+.card-selected {
+  border-color: var(--color-amber);
+  background-image: linear-gradient(165deg, rgb(255 194 31 / 0.22), rgb(255 194 31 / 0.07));
+  outline: 2px solid var(--color-amber); outline-offset: -2px;
+}
+
 /* ---------- Paleta clara ---------- */
 :root { --card-a: #1f2125; --card-b: #141517; --card-hi: rgb(255 255 255 / 0.055); --card-shadow: rgb(0 0 0 / 0.75); }
 @media (prefers-color-scheme: light) {

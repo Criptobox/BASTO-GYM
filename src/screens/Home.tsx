@@ -158,8 +158,8 @@ export function Home() {
           return (
             <li key={c.id}>
               <SwipeRow label="Cobrar" disabled={!g.shiftOpen || isFrozen(c) || !(due || q)} onTrigger={() => setPaying(c)}>
-              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className={cx('flex items-center gap-3 !p-3.5 !pl-5', cp.selected === c.id && 'ring-2 ring-amber')}>
-                <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className={cx('flex items-center gap-3 !p-3.5 !pl-5', cp.selected === c.id && 'card-selected')}>
+                <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} aria-current={cp.selected === c.id || undefined} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                   <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{c.name}</p>

@@ -166,7 +166,12 @@ export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
     if (taps.current.length >= 3) { taps.current = []; nav('/admin/acceso') }
   }
   return (
-    <div className="mx-auto min-h-dvh max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+    <div className="relative min-h-dvh overflow-hidden">
+     {/* Logo enorme y casi transparente de fondo: decorativo */}
+     <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
+       <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
+     </div>
+     <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="mb-8 flex items-center gap-4">
         <div onClick={logoTap} className="select-none"><LogoMark size={72} state={logoState} /></div>
         <div>
@@ -215,6 +220,7 @@ export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
           )}
         </>
       )}
+     </div>
     </div>
   )
 }
