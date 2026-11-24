@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, Search, TrendingUp } from 'lucide-react'
 import { useGym } from '../data/store'
-import { dueInfo, normalizeCarnet, pendingClients } from '../lib/domain'
+import { dueInfo, isFrozen, normalizeCarnet, pendingClients } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
 import { Avatar, Button, Card, inputCls, Pill, Screen, Sheet } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
 import { accentFor, DuePill } from './Payments'
+import { ClientSheet } from '../components/ClientDetail'
+import { StatusPill } from '../components/ClientStatus'
 import { RateForm } from '../components/Payment'
 import { CashOutSheet, OpenShiftSheet } from '../components/Cash'
 import type { Client } from '../lib/types'
@@ -19,6 +21,7 @@ export function Home() {
   const [paying, setPaying] = useState<Client | null>(null)
   const [rateOpen, setRateOpen] = useState(false)
   const sum = g.shiftSummary
+  const [detail, setDetail] = useState<string | null>(null)
   const [openSheet, setOpenSheet] = useState(false)
   const [outSheet, setOutSheet] = useState(false)
 
@@ -120,13 +123,15 @@ export function Home() {
           const due = info.state === 'vencido' || info.state === 'hoy'
           return (
             <li key={c.id}>
-              <Card accent={accentFor(info)} className="flex items-center gap-3 !p-3.5 !pl-5">
-                <Avatar name={c.name} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{c.name}</p>
-                  <div className="mt-1"><DuePill info={info} /></div>
-                </div>
-                {due || q ? (
+              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className="flex items-center gap-3 !p-3.5 !pl-5">
+                <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                  <Avatar name={c.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{c.name}</p>
+                    <div className="mt-1">{isFrozen(c) ? <StatusPill client={c} today={g.today} /> : <DuePill info={info} />}</div>
+                  </div>
+                </button>
+                {!isFrozen(c) && (due || q) ? (
                   <Button variant="outline" size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>Cobrar</Button>
                 ) : null}
               </Card>
@@ -142,6 +147,7 @@ export function Home() {
 
       <Button block className="mt-6" disabled={!g.shiftOpen} onClick={() => nav('/tienda')}>Venta en mostrador</Button>
       <PaySheet client={paying} onClose={() => setPaying(null)} />
+      <ClientSheet clientId={detail} onClose={() => setDetail(null)} onPay={(c) => { setDetail(null); setPaying(c) }} />
       <OpenShiftSheet open={openSheet} onClose={() => setOpenSheet(false)} />
       <CashOutSheet open={outSheet} onClose={() => setOutSheet(false)} />
       <Sheet open={rateOpen} onClose={() => setRateOpen(false)} title="Tasa del USD de hoy">

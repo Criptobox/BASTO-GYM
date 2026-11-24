@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
-import type { CashOut } from './types'
-import { cashDifference, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
-import type { Client, Movement } from './types'
+import { receiptText } from './receipt'
+import { cashDifference, frozenDays, isFrozen, unfreezeDue, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
+import type { CashOut, Client, Movement } from './types'
 
 describe('fechas', () => {
   it('no desborda meses cortos', () => {
@@ -184,5 +184,50 @@ describe('carnet', () => {
     const cs = [{ id: 'a', carnet: '12345678A' }] as Client[]
     expect(findByCarnet(cs, '12.345-678 a')?.id).toBe('a')
     expect(findByCarnet(cs, '99999')).toBeUndefined()
+  })
+})
+
+describe('congelar membresía', () => {
+  it('reactivar corre el vencimiento tantos días como estuvo congelada', () => {
+    const c = { nextDue: '2026-12-01', frozenAt: '2026-11-20' }
+    expect(frozenDays('2026-11-20', '2026-11-24')).toBe(4)
+    expect(unfreezeDue(c, '2026-11-24')).toBe('2026-12-05')
+    expect(unfreezeDue({ nextDue: '2026-12-01' }, '2026-11-24')).toBe('2026-12-01')
+  })
+  it('los congelados no cuentan como pendientes de cobro', () => {
+    const cs = [
+      { id: 'a', nextDue: '2026-11-18' },
+      { id: 'b', nextDue: '2026-11-18', frozenAt: '2026-11-20' },
+    ] as Client[]
+    expect(pendingClients(cs, '2026-11-24').map((c) => c.id)).toEqual(['a'])
+    expect(isFrozen(cs[1])).toBe(true)
+  })
+})
+
+describe('recibo', () => {
+  const settings = { gymName: 'BASTO GYM', locale: 'es-CU' }
+  const m = {
+    id: 'abcdef12-0000', kind: 'mensualidad', label: 'Mensualidad · Ana García', amount: 20, at: '2026-11-24T10:20:00', worker: 'Daniela',
+    parts: [{ method: 'usd', paid: 25, usd: 25 }], change: { method: 'mn', paid: 600, rate: 120, usd: 5 },
+  } as Movement
+  it('incluye cliente, total, pago, vuelto, vencimiento y quién atendió', () => {
+    const txt = receiptText(m, { settings, clientName: 'Ana García', nextDue: '2026-12-24' })
+    expect(txt).toContain('Recibo #ABCDEF')
+    expect(txt).toContain('Cliente: Ana García')
+    expect(txt).toContain('Concepto: Mensualidad')
+    expect(txt).toContain('Total: US$20.00')
+    expect(txt).toContain('Pago: US$25.00')
+    expect(txt).toContain('Vuelto: 600 MN')
+    expect(txt).toContain('tasa 1 USD = 120 MN')
+    expect(txt).toContain('Vence:')
+    expect(txt).toContain('Atendió: Daniela')
+  })
+  it('una venta no lleva cliente ni vencimiento y lista los productos', () => {
+    const sale = { id: 'zz', kind: 'venta', label: 'Venta · 2× Agua 600 ml', amount: 1, at: '2026-11-24T10:20:00', parts: [{ method: 'tarjeta', paid: 120, rate: 120, usd: 1 }] } as Movement
+    const txt = receiptText(sale, { settings })
+    expect(txt).toContain('Concepto: 2× Agua 600 ml')
+    expect(txt).toContain('120 MN (tarjeta)')
+    expect(txt).not.toContain('Cliente:')
+    expect(txt).not.toContain('Vence:')
   })
 })

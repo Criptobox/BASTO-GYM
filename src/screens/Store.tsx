@@ -3,6 +3,7 @@ import { Dumbbell, Minus, Plus, Search, ShoppingBag } from 'lucide-react'
 import { useGym } from '../data/store'
 import { toMN } from '../lib/domain'
 import { PaymentSplit, usePaymentSplit } from '../components/Payment'
+import { useReceipt } from '../components/Receipt'
 import { makeMoney } from '../lib/format'
 import { Button, Card, cx, inputCls, Pill, Screen, Sheet, useToast } from '../components/ui'
 import { haptic } from '../lib/nav'
@@ -18,6 +19,7 @@ export function Store() {
   const [cart, setCart] = useState<Record<string, number>>({})
   const [open, setOpen] = useState(false)
   const toast = useToast()
+  const showReceipt = useReceipt()
 
   const products = useMemo(
     () => g.products.filter((p) => (cat === 'Todo' || p.category === cat) && `${p.name} ${p.variant}`.toLowerCase().includes(q.trim().toLowerCase())),
@@ -36,8 +38,9 @@ export function Store() {
     })
 
   function confirm() {
-    if (!g.sell(lines, split.inputs, split.change)) return
-    haptic(); toast(`Venta registrada · ${money.usd(total)}`); split.reset()
+    const mv = g.sell(lines, split.inputs, split.change)
+    if (!mv) return
+    haptic(); toast(`Venta registrada · ${money.usd(total)}`, { label: 'Recibo', onClick: () => showReceipt(mv) }); split.reset()
     setOpen(false)
     setTimeout(() => setCart({}), 320) // deja terminar la animación de cierre con el contenido visible
   }

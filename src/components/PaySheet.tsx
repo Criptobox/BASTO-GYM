@@ -6,11 +6,13 @@ import type { Client } from '../lib/types'
 import { useGym } from '../data/store'
 import { Avatar, Button, Sheet, useLatest, useToast } from './ui'
 import { PaymentSplit, usePaymentSplit } from './Payment'
+import { useReceipt } from './Receipt'
 import { haptic } from '../lib/nav'
 
 export function PaySheet({ client: current, onClose }: { client: Client | null; onClose: () => void }) {
   const g = useGym()
   const toast = useToast()
+  const showReceipt = useReceipt()
   const client = useLatest(current)
   const money = makeMoney(g.settings)
   const price = client ? g.settings.planPrices[client.plan] : 0
@@ -36,8 +38,9 @@ export function PaySheet({ client: current, onClose }: { client: Client | null; 
       <Button
         block className="mt-5" disabled={!split.ready}
         onClick={() => {
-          if (!g.pay(client.id, split.inputs, split.change)) return
-          haptic(); toast(`Cobro registrado · ${client.name.split(' ')[0]}`); split.reset(); onClose()
+          const mv = g.pay(client.id, split.inputs, split.change)
+          if (!mv) return
+          haptic(); toast(`Cobro registrado · ${client.name.split(' ')[0]}`, { label: 'Recibo', onClick: () => showReceipt(mv) }); split.reset(); onClose()
         }}
       >
         Cobrar {money.usd(price)}

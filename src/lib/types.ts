@@ -10,6 +10,8 @@ export interface Client {
   plan: PlanId
   startDate: string // YYYY-MM-DD
   nextDue: string // YYYY-MM-DD
+  /** Día desde el que la membresía está congelada (YYYY-MM-DD). Congelada: no se cobra ni se avisa. */
+  frozenAt?: string
 }
 
 export interface Product {

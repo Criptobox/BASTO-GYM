@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
 import { PLANS, findByCarnet, isValidCarnet, whatsappLink } from '../lib/domain'
 import { PaymentSplit, usePaymentSplit } from '../components/Payment'
+import { useReceipt } from '../components/Receipt'
+import type { Movement } from '../lib/types'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
@@ -16,6 +18,8 @@ export function Enroll() {
   const [carnet, setCarnet] = useState('')
   const [plan, setPlan] = useState<PlanId>('mes')
   const [done, setDone] = useState<Client | null>(null)
+  const [doneMovement, setDoneMovement] = useState<Movement | null>(null)
+  const showReceipt = useReceipt()
   const [touched, setTouched] = useState(false)
   const shown = useLatest(done)
 
@@ -33,7 +37,7 @@ export function Enroll() {
     if (!valid || !split.ready || !g.shiftOpen) return
     const r = g.enroll({ name, phone, carnet, plan, parts: split.inputs, change: split.change })
     if (!r) return
-    setDone(r.client); haptic()
+    setDone(r.client); setDoneMovement(r.movement); haptic()
   }
   function reset() {
     setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false); split.reset()
@@ -84,6 +88,7 @@ export function Enroll() {
             >
               Enviar bienvenida por WhatsApp
             </a>
+            {doneMovement && <Button block variant="outline" className="mt-3" onClick={() => showReceipt(doneMovement)}>Ver recibo</Button>}
             <Button block className="mt-3" onClick={reset}>Inscribir otro cliente</Button>
           </>
         )}

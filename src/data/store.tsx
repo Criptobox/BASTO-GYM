@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
-import { normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, type ChangeInput, type PartInput, type ShiftSummary } from '../lib/domain'
+import { isFrozen, normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, unfreezeDue, type ChangeInput, type PartInput, type ShiftSummary } from '../lib/domain'
 import { attemptsLeft, failLock, hashPin, randomSalt, secondsLeft, verifyPin, type LockState } from '../lib/pin'
 import type { CashOut, Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
 import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
@@ -30,6 +30,7 @@ type Action =
   | { type: 'closeShift'; shiftId: string; by: string; countedMN: number; countedUSD: number; expectedMN: number; expectedUSD: number }
   | { type: 'openShift'; shift: Shift }
   | { type: 'addCashOut'; out: CashOut }
+  | { type: 'updateClient'; id: string; patch: Partial<Client> }
   | { type: 'addProduct'; product: Product }
   | { type: 'updateProduct'; id: string; patch: Partial<Product> }
   | { type: 'setSettings'; patch: Partial<Settings> }
@@ -86,6 +87,8 @@ function reducer(s: State, a: Action): State {
       }
     case 'openShift':
       return { ...s, shifts: [a.shift, ...s.shifts] }
+    case 'updateClient':
+      return { ...s, clients: s.clients.map((c) => (c.id === a.id ? { ...c, ...a.patch } : c)) }
     case 'addCashOut':
       return { ...s, cashOuts: [a.out, ...s.cashOuts] }
     case 'addProduct':
@@ -156,6 +159,12 @@ interface Api extends State {
   enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; parts: PartInput[]; change?: ChangeInput }): { client: Client; movement: Movement } | null
   pay(clientId: string, parts: PartInput[], change?: ChangeInput): Movement | null
   sell(items: { product: Product; qty: number }[], parts: PartInput[], change?: ChangeInput): Movement | null
+  /** Edita nombre, teléfono o plan (el carnet no cambia: es la identidad). */
+  updateClient(id: string, patch: { name?: string; phone?: string; plan?: PlanId }): boolean
+  /** Congela la membresía desde hoy: no se cobra ni se avisa. */
+  freezeClient(id: string): void
+  /** Reactiva: el vencimiento se corre los días que estuvo congelada. */
+  unfreezeClient(id: string): void
   /** Registra un gasto o retiro de efectivo del turno. */
   addCashOut(input: { kind: CashOut['kind']; concept: string; mn: number; usd: number }): boolean
   /** El dueño cierra su turno; el administrador puede cerrar cualquiera. */
@@ -290,7 +299,7 @@ export function GymProvider({ children }: { children: ReactNode }) {
     },
     pay(clientId, parts, change) {
       const c = state.clients.find((x) => x.id === clientId)
-      if (!c || !shiftOpen) return null
+      if (!c || !shiftOpen || isFrozen(c)) return null // una membresía congelada se reactiva antes de cobrar
       const price = state.settings.planPrices[c.plan]
       const pay = settle(price, parts, state.settings, today(), change)
       if (!pay.ok) return null
@@ -310,6 +319,25 @@ export function GymProvider({ children }: { children: ReactNode }) {
       const movement = mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, parts: pay.parts, change: pay.change })
       dispatch({ type: 'sell', items: items.map((i) => ({ id: i.product.id, qty: i.qty })), movement })
       return movement
+    },
+    updateClient(id, patch) {
+      if (!session) return false
+      const clean: Partial<Client> = {}
+      if (patch.name !== undefined) { if (patch.name.trim().length < 3) return false; clean.name = patch.name.trim() }
+      if (patch.phone !== undefined) { if (patch.phone.replace(/\D/g, '').length < 7) return false; clean.phone = patch.phone.trim() }
+      if (patch.plan !== undefined) clean.plan = patch.plan
+      dispatch({ type: 'updateClient', id, patch: clean })
+      return true
+    },
+    freezeClient(id) {
+      const c = state.clients.find((x) => x.id === id)
+      if (!session || !c || isFrozen(c)) return
+      dispatch({ type: 'updateClient', id, patch: { frozenAt: today() } })
+    },
+    unfreezeClient(id) {
+      const c = state.clients.find((x) => x.id === id)
+      if (!session || !c || !isFrozen(c)) return
+      dispatch({ type: 'updateClient', id, patch: { nextDue: unfreezeDue(c, today()), frozenAt: undefined } })
     },
     addCashOut({ kind, concept, mn, usd }) {
       const c = concept.trim()

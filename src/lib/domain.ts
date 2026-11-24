@@ -1,4 +1,4 @@
-import { addPlan, diffDays } from './dates'
+import { addDays, addPlan, diffDays } from './dates'
 import type { CashOut, Client, Method, Movement, PaymentPart, PlanId } from './types'
 
 export const PLANS: { id: PlanId; label: string; days: string }[] = [
@@ -98,10 +98,19 @@ export function dueInfo(nextDue: string, today: string): DueInfo {
   return { state: 'aldia', days, text: `Al día · vence en ${days} días` }
 }
 
-/** Clientes que requieren cobro (vencidos o que vencen hoy), los más atrasados primero. */
+export const isFrozen = (c: Pick<Client, 'frozenAt'>) => Boolean(c.frozenAt)
+
+/** Días que lleva congelada una membresía. */
+export const frozenDays = (frozenAt: string, today: string) => Math.max(0, diffDays(today, frozenAt))
+
+/** Al reactivar, el vencimiento se corre tantos días como estuvo congelada: no se pierde lo ya pagado. */
+export const unfreezeDue = (c: Pick<Client, 'nextDue' | 'frozenAt'>, today: string) =>
+  c.frozenAt ? addDays(c.nextDue, frozenDays(c.frozenAt, today)) : c.nextDue
+
+/** Clientes que requieren cobro (vencidos o que vencen hoy), los más atrasados primero. Los congelados no cuentan. */
 export function pendingClients(clients: Client[], today: string): Client[] {
   return clients
-    .filter((c) => diffDays(c.nextDue, today) <= 0)
+    .filter((c) => !c.frozenAt && diffDays(c.nextDue, today) <= 0)
     .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
 }
 

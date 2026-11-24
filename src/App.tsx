@@ -3,6 +3,7 @@ import { DEMO } from './data/demo'
 import { GymProvider, useGym } from './data/store'
 import { BottomNav } from './components/BottomNav'
 import { ToastProvider } from './components/ui'
+import { ReceiptProvider } from './components/Receipt'
 import { useIdleLogout, useRouteReset } from './lib/nav'
 import { useAppBadge } from './lib/badge'
 import { pendingClients } from './lib/domain'
@@ -49,6 +50,7 @@ export default function App() {
   return (
     <GymProvider>
       <ToastProvider>
+       <ReceiptProvider>
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -74,6 +76,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
+       </ReceiptProvider>
       </ToastProvider>
     </GymProvider>
   )

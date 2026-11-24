@@ -127,7 +127,8 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       className="sheet"
       aria-labelledby={titleId}
       {...({ closedby: 'any' } as object)}
-      onClose={() => openRef.current && onClose()}
+      // React hace "subir" el evento close desde un diálogo anidado hasta su padre: solo cuenta el propio.
+      onClose={(e) => { if (e.target === e.currentTarget && openRef.current) onClose() }}
       onPointerDown={needsFallback ? (e) => { pressedOutside.current = outside(e) } : undefined}
       onPointerUp={needsFallback ? (e) => { if (pressedOutside.current && outside(e)) e.currentTarget.close() } : undefined}
     >
@@ -147,22 +148,36 @@ export function useLatest<T>(value: T | null): T | null {
   return value ?? last.current
 }
 
-const ToastCtx = createContext<(text: string) => void>(() => {})
+export interface ToastAction { label: string; onClick: () => void }
+const ToastCtx = createContext<(text: string, action?: ToastAction) => void>(() => {})
 export const useToast = () => useContext(ToastCtx)
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [msg, setMsg] = useState<{ id: number; text: string } | null>(null)
+  const [msg, setMsg] = useState<{ id: number; text: string; action?: ToastAction } | null>(null)
   const timer = useRef<number>(undefined)
-  const show = useCallback((text: string) => {
+  const show = useCallback((text: string, action?: ToastAction) => {
     window.clearTimeout(timer.current)
-    setMsg({ id: Date.now(), text })
-    timer.current = window.setTimeout(() => setMsg(null), 2600)
+    setMsg({ id: Date.now(), text, action })
+    // con botón de acción dura más, para dar tiempo a tocarlo
+    timer.current = window.setTimeout(() => setMsg(null), action ? 7000 : 2600)
   }, [])
   return (
     <ToastCtx.Provider value={show}>
       {children}
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[104px] z-[60] flex justify-center px-4">
-        {msg && <div key={msg.id} className="toast rounded-full bg-white px-5 py-3 text-sm font-bold text-black shadow-xl">✓ {msg.text}</div>}
+        {msg && (
+          <div key={msg.id} className="toast pointer-events-auto flex items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-bold text-black shadow-xl">
+            <span>✓ {msg.text}</span>
+            {msg.action && (
+              <button
+                onClick={() => { msg.action!.onClick(); setMsg(null) }}
+                className="h-8 rounded-full bg-black px-3.5 text-xs font-bold text-amber active:scale-95"
+              >
+                {msg.action.label}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </ToastCtx.Provider>
   )
