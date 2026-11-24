@@ -49,18 +49,18 @@ export function Closings() {
       </div>
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
-          <table className="w-full min-w-[620px]">
+          <table className="rtable w-full md:min-w-[620px]">
             <thead><tr className="border-b border-line"><th className={th}>Fecha</th><th className={th}>Trabajador</th><th className={th}>Mensualidades</th><th className={th}>Ventas</th><th className={th}>Caja</th></tr></thead>
             <tbody>
               {rows.map(({ s, sum, diff }) => (
                 <tr key={s.id} onClick={() => setSel(s.id)} className={cx('cursor-pointer border-b border-line last:border-0', current?.s.id === s.id && 'bg-surface-2')}>
-                  <td className={`${td} font-semibold`}>
+                  <td data-label="Fecha" className={`${td} font-semibold`}>
                     <button className="text-left" onClick={() => setSel(s.id)}>{formatShortDate(toISODate(new Date(s.openedAt)), g.settings.locale)} · {part(s.openedAt)}</button>
                   </td>
-                  <td className={td}>{s.worker}</td>
-                  <td className={td}>{money(sum.memberships.total)}</td>
-                  <td className={td}>{money(sum.sales.total)}</td>
-                  <td className={td}>{diff ? <Pill tone={diff.status === 'cuadra' ? 'muted' : diff.status === 'faltante' ? 'white' : 'amber'}>{LABEL[diff.status]}{diff.amount ? ` ${money(diff.amount)}` : ''}</Pill> : <Pill tone="amber">Abierto</Pill>}</td>
+                  <td data-label="Trabajador" className={td}>{s.worker}</td>
+                  <td data-label="Mensualidades" className={td}>{money(sum.memberships.total)}</td>
+                  <td data-label="Ventas" className={td}>{money(sum.sales.total)}</td>
+                  <td data-label="Caja" className={td}>{diff ? <Pill tone={diff.status === 'cuadra' ? 'muted' : diff.status === 'faltante' ? 'white' : 'amber'}>{LABEL[diff.status]}{diff.amount ? ` ${money(diff.amount)}` : ''}</Pill> : <Pill tone="amber">Abierto</Pill>}</td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-muted">No hay turnos en este periodo.</td></tr>}

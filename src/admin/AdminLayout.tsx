@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BarChart3, ExternalLink, Package, Receipt, Settings, Users } from 'lucide-react'
 import { useGym } from '../data/store'
 import { cx } from '../components/ui'
@@ -13,6 +14,10 @@ const items = [
 
 export function AdminLayout() {
   const { settings } = useGym()
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.querySelector('[aria-label="Administración"] [aria-current="page"]')?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [pathname])
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
       <aside className="border-b border-line bg-[#0f0f0f] lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
@@ -51,7 +56,7 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
-        <h1 className="mt-1 text-4xl font-extrabold tracking-tight">{title}</h1>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
       </div>
       {action}
     </header>

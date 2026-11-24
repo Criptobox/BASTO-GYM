@@ -24,18 +24,18 @@ export function Clients() {
         </div>
       } />
       <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
-        <table className="w-full min-w-[640px]">
+        <table className="rtable w-full md:min-w-[620px]">
           <thead><tr className="border-b border-line"><th className={th}>Cliente</th><th className={th}>Teléfono</th><th className={th}>Plan</th><th className={th}>Vence</th><th className={th}>Estado</th></tr></thead>
           <tbody>
             {rows.map((c) => {
               const i = dueInfo(c.nextDue, g.today)
               return (
                 <tr key={c.id} className="border-b border-line last:border-0">
-                  <td className={td}><div className="flex items-center gap-3"><Avatar name={c.name} photo={c.photo} size={36} /><span className="font-semibold">{c.name}</span></div></td>
-                  <td className={`${td} text-muted`}>{c.phone}</td>
-                  <td className={td}>{PLANS.find((p) => p.id === c.plan)?.label}</td>
-                  <td className={td}>{formatDate(c.nextDue, g.settings.locale)}</td>
-                  <td className={td}><Pill tone={i.state === 'vencido' ? 'white' : i.state === 'hoy' || i.state === 'pronto' ? 'amber' : 'muted'}>{i.state === 'vencido' ? 'Vencido' : i.state === 'hoy' ? 'Vence hoy' : i.state === 'pronto' ? 'Por vencer' : 'Al día'}</Pill></td>
+                  <td data-label="Cliente" className={td}><div className="flex items-center gap-3"><Avatar name={c.name} photo={c.photo} size={36} /><span className="font-semibold">{c.name}</span></div></td>
+                  <td data-label="Teléfono" className={`${td} text-muted`}>{c.phone}</td>
+                  <td data-label="Plan" className={td}>{PLANS.find((p) => p.id === c.plan)?.label}</td>
+                  <td data-label="Vence" className={td}>{formatDate(c.nextDue, g.settings.locale)}</td>
+                  <td data-label="Estado" className={td}><Pill tone={i.state === 'vencido' ? 'white' : i.state === 'hoy' || i.state === 'pronto' ? 'amber' : 'muted'}>{i.state === 'vencido' ? 'Vencido' : i.state === 'hoy' ? 'Vence hoy' : i.state === 'pronto' ? 'Por vencer' : 'Al día'}</Pill></td>
                 </tr>
               )
             })}

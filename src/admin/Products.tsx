@@ -34,21 +34,21 @@ export function Products() {
       </div>
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
-          <table className="w-full min-w-[560px]">
+          <table className="rtable w-full md:min-w-[620px]">
             <thead><tr className="border-b border-line"><th className={th}>Producto</th><th className={th}>Precio</th><th className={th}>Stock</th><th className={th}>Estado</th></tr></thead>
             <tbody>
               {g.products.map((p) => (
                 <tr key={p.id} className="border-b border-line last:border-0">
-                  <td className={td}><p className="font-semibold">{p.name}</p><p className="text-xs text-muted">{p.variant} · {p.category}</p></td>
-                  <td className={td}>{money(p.price)}</td>
-                  <td className={td}>
+                  <td data-label="Producto" className={td}><p className="font-semibold">{p.name}</p><p className="text-xs text-muted">{p.variant} · {p.category}</p></td>
+                  <td data-label="Precio" className={td}>{money(p.price)}</td>
+                  <td data-label="Stock" className={td}>
                     <div className="flex items-center gap-2">
                       <button aria-label={`Quitar una unidad de ${p.name}`} disabled={p.stock === 0} onClick={() => g.updateProduct(p.id, { stock: p.stock - 1 })} className="grid size-8 place-items-center rounded-full border border-line disabled:opacity-30"><Minus size={14} /></button>
                       <span className="w-8 text-center font-bold">{p.stock}</span>
                       <button aria-label={`Agregar una unidad de ${p.name}`} onClick={() => g.updateProduct(p.id, { stock: p.stock + 1 })} className="grid size-8 place-items-center rounded-full border border-line"><Plus size={14} /></button>
                     </div>
                   </td>
-                  <td className={td}><Pill tone={p.stock === 0 ? 'white' : p.stock <= 5 ? 'amber' : 'muted'}>{p.stock === 0 ? 'Agotado' : p.stock <= 5 ? 'Poco stock' : 'Activo'}</Pill></td>
+                  <td data-label="Estado" className={td}><Pill tone={p.stock === 0 ? 'white' : p.stock <= 5 ? 'amber' : 'muted'}>{p.stock === 0 ? 'Agotado' : p.stock <= 5 ? 'Poco stock' : 'Activo'}</Pill></td>
                 </tr>
               ))}
             </tbody>
