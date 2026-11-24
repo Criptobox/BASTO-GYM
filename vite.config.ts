@@ -6,7 +6,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 
 export default defineConfig(({ mode }) => ({
   // La demo publicada vive en una ruta cualquiera y no admite service workers.
-  base: mode === 'artifact' ? './' : '/',
+  base: mode === 'artifact' ? './' : (process.env.BASE_PATH ?? '/'),
   resolve: mode === 'artifact' ? { alias: { '@jsquash/webp': new URL('./src/lib/webp-stub.ts', import.meta.url).pathname } } : {},
   plugins: [
     react(),

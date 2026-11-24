@@ -60,7 +60,7 @@ export default function App() {
     <GymProvider>
       <ToastProvider>
        <ReceiptProvider>
-        <Router>
+        <Router {...(DEMO ? {} : { basename: import.meta.env.BASE_URL.replace(/\/$/, '') })}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route element={<RequireRole role="worker" />}>
