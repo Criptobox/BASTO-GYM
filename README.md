@@ -23,7 +23,8 @@ npm run build    # typecheck + build PWA
 - Las claves se guardan con PBKDF2-SHA256 y sal propia, nunca en claro. **Aun así esto es solo responsabilidad, no seguridad real:** los datos viven en el navegador y cualquiera con acceso al dispositivo puede leerlos o alterarlos. La seguridad real llega con Supabase Auth y reglas por rol.
 
 ## Logo
-Logo oficial en `brand/logo-original.jpg` (202×202 px, pensado para fondo claro, por eso se usa sobre tarjeta blanca). `python3 scripts/build-logo.py` genera los iconos de `public/` (192, 512, maskable, apple-touch, favicon) y `logo.webp`. Con una versión de mayor resolución o en vector, reemplaza el original y vuelve a ejecutarlo para iconos más nítidos.
+Dibujado en vector a partir de la referencia de estilo (`brand/referencia-estilo.jpg`): `brand/logo.svg`, un hexágono con marco mitad negro y mitad dorado y una **B** negra con una **G** dorada.
+`node scripts/build-logo.cjs` genera `public/logo.svg` y los iconos PNG (192, 512, maskable, apple-touch, favicon). Necesita Playwright (`npm i -D playwright`).
 
 ## Monedas
 - Los **precios están en USD**. Se cobra en **USD**, **MN** o **tarjeta** (la tarjeta se cobra en MN).

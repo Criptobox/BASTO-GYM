@@ -1,9 +1,10 @@
 /**
- * Logo oficial de BASTO GYM (brand/logo-original.jpg), ya sobre su tarjeta blanca: public/logo.webp.
- * Los iconos se regeneran con `python3 scripts/build-logo.py`.
+ * Logo de BASTO GYM (brand/logo.svg → public/logo.svg): hexágono con una B negra y una G dorada.
+ * Es vector, así que queda nítido a cualquier tamaño. Los iconos PNG se regeneran con
+ * `node scripts/build-logo.cjs`.
  */
 export function LogoMark({ size = 64, className }: { size?: number; className?: string }) {
-  return <img src="/logo.webp" width={size} height={size} alt="BASTO GYM" className={className} />
+  return <img src="/logo.svg" width={size} height={size} alt="BASTO GYM" className={className} />
 }
 
 export function Logo({ name = 'BASTO GYM', size = 44 }: { name?: string; size?: number }) {
