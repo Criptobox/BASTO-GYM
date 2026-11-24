@@ -26,20 +26,21 @@ export function Overview() {
   return (
     <>
       <AdminHeader eyebrow="Panorama" title="Resumen" />
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <Stat label="Ingresos del mes" value={money(monthTotal)} />
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+        <Stat label="Ingresos del mes" value={money.usd(monthTotal)} />
         <Stat label="Clientes activos" value={active} />
         <Stat label="Pagos vencidos" value={overdue} tone="amber" />
         <Stat label="Productos con poco stock" value={lowStock} tone="amber" />
+        <Stat label="Tasa USD de hoy" value={g.rateFresh ? `${g.settings.usdRate} MN` : 'Sin fijar'} tone={g.rateFresh ? undefined : 'amber'} />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="!p-6">
           <h2 className="font-bold">Ingresos · últimos 7 días</h2>
-          <div className="mt-6 flex h-52 items-end gap-3" role="img" aria-label={`Ingresos diarios de los últimos 7 días: ${totals.map(money).join(', ')}`}>
+          <div className="mt-6 flex h-52 items-end gap-3" role="img" aria-label={`Ingresos diarios de los últimos 7 días: ${totals.map(money.usd).join(', ')}`}>
             {totals.map((t, i) => (
               <div key={days[i]} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-                <span className="text-xs text-muted">{t ? money(t) : ''}</span>
+                <span className="text-xs text-muted">{t ? money.usd(t) : ''}</span>
                 <div className="w-full rounded-t-xl bg-amber" style={{ height: `${Math.max((t / max) * 100, t ? 4 : 1)}%`, opacity: i === 6 ? 1 : 0.55 }} />
                 <span className="text-xs text-muted">{formatShortDate(days[i], g.settings.locale)}</span>
               </div>

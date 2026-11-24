@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
-import { cashDifference, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, renewalDate, summarize, whatsappLink } from './domain'
+import { cashDifference, chargeFor, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, renewalDate, shiftDifference, summarize, whatsappLink } from './domain'
 import type { Client, Movement } from './types'
 
 describe('fechas', () => {
@@ -37,20 +37,48 @@ describe('vencimientos', () => {
   })
 })
 
+describe('monedas', () => {
+  const s = { usdRate: 120, usdRateDate: '2026-11-24' }
+  const today = '2026-11-24'
+  it('USD se cobra tal cual, sin necesitar tasa', () => {
+    expect(chargeFor(25, 'usd', { usdRate: 0, usdRateDate: '' }, today)).toEqual({ paid: 25, currency: 'USD' })
+  })
+  it('MN y tarjeta se cobran a la tasa del día, a pesos enteros', () => {
+    expect(chargeFor(25, 'mn', s, today)).toEqual({ paid: 3000, currency: 'MN', rate: 120 })
+    expect(chargeFor(20, 'tarjeta', { usdRate: 122.5, usdRateDate: today }, today)).toEqual({ paid: 2450, currency: 'MN', rate: 122.5 })
+    expect(chargeFor(0.5, 'mn', { usdRate: 123, usdRateDate: today }, today)?.paid).toBe(62) // 61.5 → 62
+  })
+  it('nunca cobra en MN con una tasa de otro día o inválida', () => {
+    expect(chargeFor(25, 'mn', s, '2026-11-25')).toBeNull()
+    expect(chargeFor(25, 'tarjeta', { usdRate: 0, usdRateDate: today }, today)).toBeNull()
+    expect(chargeFor(25, 'mn', { usdRate: NaN, usdRateDate: today }, today)).toBeNull()
+    expect(rateIsFresh(s, today)).toBe(true)
+    expect(rateIsFresh(s, '2026-11-25')).toBe(false)
+  })
+})
+
 describe('caja', () => {
   it('detecta cuadre, faltante y sobrante sin errores de decimales', () => {
     expect(cashDifference(0.3, 0.1 + 0.2)).toEqual({ status: 'cuadra', amount: 0 })
     expect(cashDifference(90, 100)).toEqual({ status: 'faltante', amount: 10 })
     expect(cashDifference(105.5, 100)).toEqual({ status: 'sobrante', amount: 5.5 })
   })
-  it('resume por método y tipo', () => {
-    const m = (kind: Movement['kind'], amount: number, method: Movement['method']) =>
-      ({ kind, amount, method }) as Movement
-    const s = summarize([m('mensualidad', 600, 'efectivo'), m('venta', 450, 'tarjeta'), m('mensualidad', 600, 'transferencia')])
-    expect(s.memberships).toEqual({ count: 2, total: 1200 })
-    expect(s.sales).toEqual({ count: 1, total: 450 })
-    expect(s.byMethod).toEqual({ efectivo: 600, tarjeta: 450, transferencia: 600 })
-    expect(s.total).toBe(1650)
+  it('separa los cajones: efectivo USD, efectivo MN y tarjeta', () => {
+    const m = (kind: Movement['kind'], amount: number, method: Movement['method'], paid: number) =>
+      ({ kind, amount, method, paid }) as Movement
+    const s = summarize([m('mensualidad', 20, 'mn', 2400), m('venta', 25, 'tarjeta', 3000), m('mensualidad', 20, 'usd', 20), m('venta', 0.5, 'usd', 0.5)])
+    expect(s.memberships).toEqual({ count: 2, total: 40 })
+    expect(s.sales).toEqual({ count: 2, total: 25.5 })
+    expect(s.expected).toEqual({ usd: 20.5, mn: 2400, card: 3000 })
+    expect(s.total).toBe(65.5)
+  })
+  it('cuadra cada cajón por separado', () => {
+    const base = { expectedMN: 2460, expectedUSD: 20 }
+    expect(shiftDifference({ ...base, countedMN: 2460, countedUSD: 20 }).balanced).toBe(true)
+    const d = shiftDifference({ ...base, countedMN: 2360, countedUSD: 21 })
+    expect(d.balanced).toBe(false)
+    expect(d.mn).toEqual({ status: 'faltante', amount: 100 })
+    expect(d.usd).toEqual({ status: 'sobrante', amount: 1 })
   })
 })
 

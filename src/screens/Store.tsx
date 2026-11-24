@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Dumbbell, Minus, Plus, Search, ShoppingBag } from 'lucide-react'
 import { useGym } from '../data/store'
-import { METHODS } from '../lib/domain'
+import { toMN } from '../lib/domain'
+import { MethodPicker, useCharge, useDefaultMethod } from '../components/Payment'
 import { makeMoney } from '../lib/format'
-import { Button, Card, cx, inputCls, Pill, Screen, Segmented, Sheet, useToast } from '../components/ui'
+import { Button, Card, cx, inputCls, Pill, Screen, Sheet, useToast } from '../components/ui'
 import { haptic } from '../lib/nav'
 import type { Method, Product } from '../lib/types'
 
@@ -16,7 +17,7 @@ export function Store() {
   const [cat, setCat] = useState<(typeof CATS)[number]>('Todo')
   const [cart, setCart] = useState<Record<string, number>>({})
   const [open, setOpen] = useState(false)
-  const [method, setMethod] = useState<Method>('efectivo')
+  const [method, setMethod] = useState<Method>(useDefaultMethod())
   const toast = useToast()
 
   const products = useMemo(
@@ -25,7 +26,8 @@ export function Store() {
   )
   const lines = g.products.filter((p) => cart[p.id]).map((p) => ({ product: p, qty: cart[p.id] }))
   const count = lines.reduce((n, l) => n + l.qty, 0)
-  const total = lines.reduce((n, l) => n + l.product.price * l.qty, 0)
+  const total = Math.round(lines.reduce((n, l) => n + l.product.price * l.qty, 0) * 100) / 100
+  const { ch, label } = useCharge(total, method)
 
   const add = (p: Product, d: number) =>
     setCart((c) => {
@@ -35,8 +37,8 @@ export function Store() {
     })
 
   function confirm() {
-    g.sell(lines, method)
-    haptic(); toast(`Venta registrada · ${money(total)}`)
+    if (!g.sell(lines, method)) return
+    haptic(); toast(`Venta registrada · ${label}`)
     setOpen(false)
     setTimeout(() => setCart({}), 320) // deja terminar la animación de cierre con el contenido visible
   }
@@ -85,7 +87,8 @@ export function Store() {
                 <p className="mt-2.5 text-[15px] font-bold leading-tight">{p.name}</p>
                 <p className="text-sm text-muted">{p.variant}</p>
                 <div className="mt-auto pt-3">
-                  <span className="block text-lg font-extrabold">{money(p.price)}</span>
+                  <span className="block text-lg font-extrabold">{money.usd(p.price)}</span>
+                  {g.rateFresh && <span className="block text-xs text-muted">{money.mn(toMN(p.price, g.settings.usdRate))}</span>}
                   {out ? <div className="mt-2"><Pill tone="white">Agotado</Pill></div> : inCart ? (
                     <div className="mt-2 flex items-center justify-between">
                       <button aria-label={`Quitar uno de ${p.name}`} onClick={() => add(p, -1)} className="grid size-9 place-items-center rounded-full border border-amber text-amber"><Minus size={16} /></button>
@@ -107,7 +110,7 @@ export function Store() {
       <div className="h-20" />
       {count > 0 && (
         <div className="fixed inset-x-0 bottom-[92px] z-30 mx-auto max-w-[430px] px-4">
-          <Button block disabled={!g.shiftOpen} onClick={() => setOpen(true)}>Ver carrito ({count}) · {money(total)}</Button>
+          <Button block disabled={!g.shiftOpen} onClick={() => setOpen(true)}>Ver carrito ({count}) · {money.usd(total)}</Button>
         </div>
       )}
 
@@ -117,24 +120,23 @@ export function Store() {
             <li key={p.id} className="flex items-center gap-3 py-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{p.name}</p>
-                <p className="text-sm text-muted">{money(p.price)} c/u</p>
+                <p className="text-sm text-muted">{money.usd(p.price)} c/u</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <button aria-label={`Quitar uno de ${p.name}`} onClick={() => add(p, -1)} className="grid size-9 place-items-center rounded-full border border-line"><Minus size={16} /></button>
                 <span className="w-5 text-center font-bold">{qty}</span>
                 <button aria-label={`Agregar uno de ${p.name}`} onClick={() => add(p, 1)} disabled={qty >= p.stock} className="grid size-9 place-items-center rounded-full border border-line disabled:opacity-40"><Plus size={16} /></button>
               </div>
-              <span className="w-20 text-right font-bold">{money(p.price * qty)}</span>
+              <span className="w-20 text-right font-bold">{money.usd(p.price * qty)}</span>
             </li>
           ))}
         </ul>
         <div className="my-4 flex items-end justify-between border-t border-line pt-4">
           <span className="text-muted">Total</span>
-          <span className="text-3xl font-extrabold tracking-tight">{money(total)}</span>
+          <span className="text-3xl font-extrabold tracking-tight">{money.usd(total)}</span>
         </div>
-        <p className="mb-2 text-sm text-muted">Método de pago</p>
-        <Segmented label="Método de pago" value={method} onChange={setMethod} options={METHODS} />
-        <Button block className="mt-6" onClick={confirm} disabled={!lines.length}>Cobrar {money(total)}</Button>
+        <MethodPicker usd={total} method={method} onChange={setMethod} />
+        <Button block className="mt-6" onClick={confirm} disabled={!lines.length || !ch}>{label ? `Cobrar ${label}` : 'Fija la tasa para cobrar'}</Button>
       </Sheet>
     </Screen>
   )

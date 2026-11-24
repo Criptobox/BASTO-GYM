@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
-import { cashDifference, summarize, type CashStatus } from '../lib/domain'
+import { METHODS, shiftDifference, summarize, type CashStatus } from '../lib/domain'
 import { formatTime, makeMoney } from '../lib/format'
 import { Card, cx, Pill } from '../components/ui'
 import { AdminHeader, Stat, td, th } from './AdminLayout'
@@ -23,13 +23,13 @@ export function Closings() {
       .map((s) => {
         const mv = g.movements.filter((m) => m.shiftId === s.id)
         const sum = summarize(mv)
-        const diff = s.closedAt ? cashDifference(s.countedCash ?? 0, s.expectedCash ?? 0) : null
+        const diff = s.closedAt ? shiftDifference(s) : null
         return { s, mv, sum, diff }
       })
   }, [g.shifts, g.movements, g.today, range])
 
   const current = rows.find((r) => r.s.id === sel) ?? rows.find((r) => r.mv.length > 0) ?? rows[0]
-  const totals = rows.reduce((a, r) => ({ m: a.m + r.sum.memberships.total, v: a.v + r.sum.sales.total, d: a.d + (r.diff && r.diff.status !== 'cuadra' ? 1 : 0) }), { m: 0, v: 0, d: 0 })
+  const totals = rows.reduce((a, r) => ({ m: a.m + r.sum.memberships.total, v: a.v + r.sum.sales.total, d: a.d + (r.diff && !r.diff.balanced ? 1 : 0) }), { m: 0, v: 0, d: 0 })
   const part = (iso: string) => (new Date(iso).getHours() < 14 ? 'Mañana' : 'Tarde')
 
   return (
@@ -43,8 +43,8 @@ export function Closings() {
         </div>
       } />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Mensualidades cobradas" value={money(totals.m)} />
-        <Stat label="Ventas de productos" value={money(totals.v)} />
+        <Stat label="Mensualidades cobradas" value={money.usd(totals.m)} />
+        <Stat label="Ventas de productos" value={money.usd(totals.v)} />
         <Stat label="Cierres con diferencia" value={totals.d} tone="amber" />
       </div>
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -58,9 +58,14 @@ export function Closings() {
                     <button className="text-left" onClick={() => setSel(s.id)}>{formatShortDate(toISODate(new Date(s.openedAt)), g.settings.locale)} · {part(s.openedAt)}</button>
                   </td>
                   <td data-label="Trabajador" className={td}>{s.worker}</td>
-                  <td data-label="Mensualidades" className={td}>{money(sum.memberships.total)}</td>
-                  <td data-label="Ventas" className={td}>{money(sum.sales.total)}</td>
-                  <td data-label="Caja" className={td}>{diff ? <Pill tone={diff.status === 'cuadra' ? 'muted' : diff.status === 'faltante' ? 'white' : 'amber'}>{LABEL[diff.status]}{diff.amount ? ` ${money(diff.amount)}` : ''}</Pill> : <Pill tone="amber">Abierto</Pill>}</td>
+                  <td data-label="Mensualidades" className={td}>{money.usd(sum.memberships.total)}</td>
+                  <td data-label="Ventas" className={td}>{money.usd(sum.sales.total)}</td>
+                  <td data-label="Caja" className={td}>{!diff ? <Pill tone="amber">Abierto</Pill> : diff.balanced ? <Pill>Cuadra</Pill> : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {diff.mn.status !== 'cuadra' && <Pill tone={diff.mn.status === 'faltante' ? 'white' : 'amber'}>MN {LABEL[diff.mn.status].toLowerCase()} {money.mn(diff.mn.amount)}</Pill>}
+                      {diff.usd.status !== 'cuadra' && <Pill tone={diff.usd.status === 'faltante' ? 'white' : 'amber'}>USD {LABEL[diff.usd.status].toLowerCase()} {money.usd(diff.usd.amount)}</Pill>}
+                    </div>
+                  )}</td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={5} className="p-10 text-center text-muted">No hay turnos en este periodo.</td></tr>}
@@ -76,8 +81,8 @@ export function Closings() {
               {[...current.mv].sort((a, b) => a.at.localeCompare(b.at)).map((m) => (
                 <li key={m.id} className="flex items-center gap-3 py-3">
                   <span className="w-14 shrink-0 text-xs text-muted">{formatTime(m.at, g.settings.locale)}</span>
-                  <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{m.label}</p><p className="text-xs capitalize text-muted">{m.method}</p></div>
-                  <span className="font-bold">{money(m.amount)}</span>
+                  <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{m.label}</p><p className="text-xs text-muted">{METHODS.find((o) => o.id === m.method)?.label}{m.rate ? ` · 1 USD = ${m.rate} MN` : ''}</p></div>
+                  <div className="text-right"><p className="font-bold">{money.usd(m.amount)}</p>{m.method !== 'usd' && <p className="text-xs text-muted">{money.mn(m.paid)}</p>}</div>
                 </li>
               ))}
               {current.mv.length === 0 && <li className="py-6 text-center text-sm text-muted">Sin movimientos.</li>}

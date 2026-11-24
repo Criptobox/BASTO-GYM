@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
-import { METHODS, PLANS, findByCarnet, isValidCarnet, whatsappLink } from '../lib/domain'
+import { PLANS, findByCarnet, isValidCarnet, whatsappLink } from '../lib/domain'
+import { MethodPicker, useCharge, useDefaultMethod } from '../components/Payment'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
@@ -14,7 +15,7 @@ export function Enroll() {
   const [phone, setPhone] = useState('')
   const [carnet, setCarnet] = useState('')
   const [plan, setPlan] = useState<PlanId>('mes')
-  const [method, setMethod] = useState<Method>('efectivo')
+  const [method, setMethod] = useState<Method>(useDefaultMethod())
   const [done, setDone] = useState<Client | null>(null)
   const [touched, setTouched] = useState(false)
   const shown = useLatest(done)
@@ -24,12 +25,16 @@ export function Enroll() {
   const duplicate = carnetOk ? findByCarnet(g.clients, carnet) : undefined
   const valid = name.trim().length >= 3 && carnetOk && !duplicate && phoneOk
   const next = addPlan(g.today, plan)
+  const price = g.settings.planPrices[plan]
+  const { ch } = useCharge(price, method)
 
   function submit(e: FormEvent) {
     e.preventDefault()
     setTouched(true)
     if (!valid || !g.shiftOpen) return
-    setDone(g.enroll({ name, phone, carnet, plan, method })); haptic()
+    const c = g.enroll({ name, phone, carnet, plan, method })
+    if (!c) return
+    setDone(c); haptic()
   }
   function reset() {
     setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false)
@@ -56,18 +61,15 @@ export function Enroll() {
           <p className="mb-2 text-sm text-muted">Plan</p>
           <Segmented label="Plan" value={plan} onChange={setPlan} options={PLANS.map((p) => ({ id: p.id, label: p.label }))} />
         </div>
-        <div>
-          <p className="mb-2 text-sm text-muted">Método de pago</p>
-          <Segmented label="Método de pago" value={method} onChange={setMethod} options={METHODS} />
-        </div>
+        <MethodPicker usd={price} method={method} onChange={setMethod} />
 
         <Card className="grid grid-cols-3 gap-2 !rounded-2xl !p-4">
           <div><p className="text-xs text-muted">Inicio</p><p className="text-sm font-bold">{formatDate(g.today, g.settings.locale)}</p></div>
           <div><p className="text-xs text-muted">Próximo pago</p><p className="text-sm font-bold text-amber">{formatDate(next, g.settings.locale)}</p></div>
-          <div><p className="text-xs text-muted">Total</p><p className="text-sm font-bold">{money(g.settings.planPrices[plan])}</p></div>
+          <div><p className="text-xs text-muted">Total</p><p className="text-sm font-bold">{money.usd(price)}</p></div>
         </Card>
 
-        <Button type="submit" block disabled={!g.shiftOpen}>Inscribir y cobrar</Button>
+        <Button type="submit" block disabled={!g.shiftOpen || !ch}>Inscribir y cobrar</Button>
         {!g.shiftOpen && <p className="text-center text-sm text-muted">Abre un turno en “Cierre” para registrar cobros.</p>}
       </form>
 

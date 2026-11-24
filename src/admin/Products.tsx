@@ -76,7 +76,7 @@ export function Products() {
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
           <table className="rtable w-full md:min-w-[620px]">
-            <thead><tr className="border-b border-line"><th className={th}>Producto</th><th className={th}>Precio</th><th className={th}>Stock</th><th className={th}>Estado</th></tr></thead>
+            <thead><tr className="border-b border-line"><th className={th}>Producto</th><th className={th}>Precio (USD)</th><th className={th}>Stock</th><th className={th}>Estado</th></tr></thead>
             <tbody>
               {g.products.map((p) => (
                 <tr key={p.id} className="border-b border-line last:border-0">
@@ -91,7 +91,7 @@ export function Products() {
                       <div className="min-w-0"><p className="font-semibold">{p.name}</p><p className="text-xs text-muted">{p.variant} · {p.category}</p></div>
                     </div>
                   </td>
-                  <td data-label="Precio" className={td}>{money(p.price)}</td>
+                  <td data-label="Precio" className={td}>{money.usd(p.price)}</td>
                   <td data-label="Stock" className={td}>
                     <div className="flex items-center gap-2">
                       <button aria-label={`Quitar una unidad de ${p.name}`} disabled={p.stock === 0} onClick={() => g.updateProduct(p.id, { stock: p.stock - 1 })} className="grid size-8 place-items-center rounded-full border border-line disabled:opacity-30"><Minus size={14} /></button>
@@ -127,7 +127,7 @@ export function Products() {
               <select className={inputCls} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value as Product['category'] })}>{CATS.map((c) => <option key={c}>{c}</option>)}</select>
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Precio" error={bad(!(price > 0), 'Precio mayor a 0.')}><input className={inputCls} inputMode="decimal" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '') })} /></Field>
+              <Field label="Precio (USD)" error={bad(!(price > 0), 'Precio mayor a 0.')}><input className={inputCls} inputMode="decimal" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '') })} /></Field>
               <Field label="Stock" error={bad(f.stock === '', 'Indica el stock.')}><input className={inputCls} inputMode="numeric" value={f.stock} onChange={(e) => setF({ ...f, stock: e.target.value.replace(/\D/g, '') })} /></Field>
             </div>
             <Button type="submit" block disabled={busy}>{busy ? 'Publicando…' : 'Publicar en la app'}</Button>

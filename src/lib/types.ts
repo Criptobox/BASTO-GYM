@@ -1,5 +1,6 @@
 export type PlanId = 'dia' | 'semana' | 'mes' | 'anio'
-export type Method = 'efectivo' | 'tarjeta' | 'transferencia'
+/** usd = efectivo en dólares · mn = efectivo en moneda nacional · tarjeta = se cobra en MN. */
+export type Method = 'usd' | 'tarjeta' | 'mn'
 
 export interface Client {
   id: string
@@ -28,8 +29,13 @@ export interface Movement {
   kind: 'mensualidad' | 'venta'
   label: string
   detail?: string
+  /** Valor en USD (los precios están fijados en USD). */
   amount: number
   method: Method
+  /** Lo que se cobró en la moneda del método: USD si method='usd'; MN si 'mn' o 'tarjeta'. */
+  paid: number
+  /** Tasa MN por 1 USD usada al cobrar (no aplica si method='usd'). */
+  rate?: number
   at: string // ISO datetime
 }
 
@@ -38,15 +44,20 @@ export interface Shift {
   worker: string
   openedAt: string
   closedAt?: string
-  countedCash?: number
-  expectedCash?: number
+  countedMN?: number
+  countedUSD?: number
+  expectedMN?: number
+  expectedUSD?: number
 }
 
 export interface Settings {
   gymName: string
-  currency: string // ISO 4217
   locale: string
   countryCode: string // phone prefix, sin "+"
+  /** Precio de cada plan, en USD. */
   planPrices: Record<PlanId, number>
+  /** MN por 1 USD, y el día (YYYY-MM-DD) para el que se fijó. Debe actualizarse cada día. */
+  usdRate: number
+  usdRateDate: string
   worker: string
 }

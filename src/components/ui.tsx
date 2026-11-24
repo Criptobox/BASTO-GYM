@@ -156,15 +156,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { id: T; label: string }[]; label: string }) {
+export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { id: T; label: string; disabled?: boolean }[]; label: string }) {
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
       {options.map((o) => (
         <button
-          key={o.id} type="button" role="radio" aria-checked={value === o.id}
+          key={o.id} type="button" role="radio" aria-checked={value === o.id} disabled={o.disabled}
           onClick={() => onChange(o.id)}
           className={cx(
-            'h-11 rounded-full border px-5 text-sm font-semibold transition active:scale-95',
+            'h-11 rounded-full border px-5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100',
             value === o.id ? 'border-amber bg-amber text-amber-ink' : 'border-line text-white',
           )}
         >

@@ -15,7 +15,12 @@ npm test         # lógica de negocio (src/lib)
 npm run build    # typecheck + build PWA
 ```
 
-Moneda, país y precios de planes: `src/data/seed.ts` (`defaultSettings`).
+## Monedas
+- Los **precios están en USD**. Se cobra en **USD**, **MN** o **tarjeta** (la tarjeta se cobra en MN).
+- MN y tarjeta = precio × **tasa del día** (MN por 1 USD), a pesos enteros. La tasa se fija cada día en Inicio o en Ajustes;
+  si no es de hoy, MN y tarjeta quedan bloqueados (nunca se cobra con una tasa vieja). Cada cobro guarda la tasa usada.
+- La caja tiene **dos cajones de efectivo** (MN y USD) más la tarjeta; el cierre cuenta y cuadra cada uno por separado.
+- Valores de ejemplo (tasa, precios, país): `src/data/seed.ts` (`defaultSettings`).
 
 ## Fotos (WebP + GitHub)
 - Solo hay fotos de **productos** → GitHub (rama `media`, servidas por jsDelivr). Los clientes no llevan foto: solo nombre, carnet y teléfono.

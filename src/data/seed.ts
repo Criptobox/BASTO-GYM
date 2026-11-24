@@ -5,11 +5,13 @@ export const today = () => toISODate(new Date())
 
 export const defaultSettings: Settings = {
   gymName: 'BASTO GYM',
-  currency: 'MXN',
-  locale: 'es-MX',
-  countryCode: '52',
-  // Precios de ejemplo: el administrador los podrá editar.
-  planPrices: { dia: 50, semana: 200, mes: 600, anio: 5500 },
+  locale: 'es-CU',
+  countryCode: '53',
+  // Precios en USD, de ejemplo: el administrador los puede editar en Ajustes.
+  planPrices: { dia: 2, semana: 8, mes: 20, anio: 200 },
+  // Tasa de ejemplo fijada hoy; en uso real se actualiza cada día.
+  usdRate: 120,
+  usdRateDate: today(),
   worker: 'Daniela',
 }
 
@@ -28,13 +30,13 @@ export function seedClients(): Client[] {
 }
 
 export const seedProducts: Product[] = [
-  { id: 'p1', name: 'Proteína Whey 2 lb', variant: 'Chocolate', category: 'Proteínas', price: 899, stock: 12, isNew: true },
-  { id: 'p2', name: 'Creatina 300 g', variant: 'Sin sabor', category: 'Proteínas', price: 499, stock: 4 },
-  { id: 'p3', name: 'Shaker 700 ml', variant: 'Negro', category: 'Accesorios', price: 149, stock: 30 },
-  { id: 'p4', name: 'Bebida isotónica', variant: 'Limón', category: 'Bebidas', price: 35, stock: 0 },
-  { id: 'p5', name: 'Agua 600 ml', variant: 'Natural', category: 'Bebidas', price: 20, stock: 48 },
-  { id: 'p6', name: 'Playera BASTO', variant: 'Negra · M', category: 'Ropa', price: 299, stock: 9 },
-  { id: 'p7', name: 'Guantes de gym', variant: 'Talla L', category: 'Accesorios', price: 249, stock: 6 },
+  { id: 'p1', name: 'Proteína Whey 2 lb', variant: 'Chocolate', category: 'Proteínas', price: 25, stock: 12, isNew: true },
+  { id: 'p2', name: 'Creatina 300 g', variant: 'Sin sabor', category: 'Proteínas', price: 14, stock: 4 },
+  { id: 'p3', name: 'Shaker 700 ml', variant: 'Negro', category: 'Accesorios', price: 4, stock: 30 },
+  { id: 'p4', name: 'Bebida isotónica', variant: 'Limón', category: 'Bebidas', price: 1, stock: 0 },
+  { id: 'p5', name: 'Agua 600 ml', variant: 'Natural', category: 'Bebidas', price: 0.5, stock: 48 },
+  { id: 'p6', name: 'Playera BASTO', variant: 'Negra · M', category: 'Ropa', price: 8, stock: 9 },
+  { id: 'p7', name: 'Guantes de gym', variant: 'Talla L', category: 'Accesorios', price: 7, stock: 6 },
 ]
 
 export function newShift(worker: string): Shift {
@@ -49,29 +51,36 @@ const at = (date: string, h: number, m = 0) => {
 /** Turnos cerrados de ejemplo para el historial del administrador. */
 export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
   const t = today()
+  const rate = 120
   const shifts: Shift[] = []
   const movements: Movement[] = []
-  const spec: [number, number, number, string, number][] = [
-    // díasAtrás, horaInicio, horaFin, trabajador, diferenciaEfectivo
-    [1, 14, 21, 'Jorge', -100],
-    [1, 8, 14, 'Daniela', 0],
-    [2, 14, 21, 'Jorge', 50],
-    [2, 8, 14, 'Daniela', 0],
-    [4, 8, 14, 'Daniela', 0],
+  // díasAtrás, horaInicio, horaFin, trabajador, diferenciaMN, diferenciaUSD
+  const spec: [number, number, number, string, number, number][] = [
+    [1, 14, 21, 'Jorge', -100, 0],
+    [1, 8, 14, 'Daniela', 0, 0],
+    [2, 14, 21, 'Jorge', 0, 1],
+    [2, 8, 14, 'Daniela', 0, 0],
+    [4, 8, 14, 'Daniela', 0, 0],
   ]
-  spec.forEach(([ago, h0, h1, worker, delta], i) => {
+  spec.forEach(([ago, h0, h1, worker, dMN, dUSD], i) => {
     const date = addDays(t, -ago)
     const id = `h${i}`
     const mv = (n: number, kind: Movement['kind'], label: string, amount: number, method: Movement['method'], hh: number, mm: number) =>
-      movements.push({ id: `${id}-${n}`, shiftId: id, kind, label, amount, method, at: at(date, hh, mm) })
-    mv(1, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 600, 'efectivo', h0 + 1, 10)
-    mv(2, 'venta', 'Venta · Proteína Whey 2 lb', 899, 'tarjeta', h0 + 2, 30)
-    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 600, 'transferencia', h0 + 3, 5)
-    mv(4, 'venta', 'Venta · Agua 600 ml', 20, 'efectivo', h0 + 4, 45)
-    const expected = 620
+      movements.push({
+        id: `${id}-${n}`, shiftId: id, kind, label, amount, method,
+        paid: method === 'usd' ? amount : Math.round(amount * rate),
+        rate: method === 'usd' ? undefined : rate,
+        at: at(date, hh, mm),
+      })
+    mv(1, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, 'mn', h0 + 1, 10)
+    mv(2, 'venta', 'Venta · Proteína Whey 2 lb', 25, 'tarjeta', h0 + 2, 30)
+    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, 'usd', h0 + 3, 5)
+    mv(4, 'venta', 'Venta · Agua 600 ml', 0.5, 'mn', h0 + 4, 45)
+    const expectedMN = Math.round(20 * rate) + Math.round(0.5 * rate)
+    const expectedUSD = 20
     shifts.push({
       id, worker, openedAt: at(date, h0), closedAt: at(date, h1),
-      expectedCash: expected, countedCash: expected + delta,
+      expectedMN, expectedUSD, countedMN: expectedMN + dMN, countedUSD: expectedUSD + dUSD,
     })
   })
   return { shifts, movements }

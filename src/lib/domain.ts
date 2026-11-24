@@ -9,10 +9,30 @@ export const PLANS: { id: PlanId; label: string; days: string }[] = [
 ]
 
 export const METHODS: { id: Method; label: string }[] = [
-  { id: 'efectivo', label: 'Efectivo' },
+  { id: 'usd', label: 'USD' },
   { id: 'tarjeta', label: 'Tarjeta' },
-  { id: 'transferencia', label: 'Transferencia' },
+  { id: 'mn', label: 'MN' },
 ]
+
+export const roundUsd = (n: number) => Math.round(n * 100) / 100
+/** USD → MN a la tasa dada, a pesos enteros. */
+export const toMN = (usd: number, rate: number) => Math.round(usd * rate)
+
+/** La tasa solo vale el día para el que se fijó. */
+export const rateIsFresh = (s: { usdRate: number; usdRateDate: string }, today: string) =>
+  Number.isFinite(s.usdRate) && s.usdRate > 0 && s.usdRateDate === today
+
+export interface Charge { paid: number; currency: 'USD' | 'MN'; rate?: number }
+
+/**
+ * Cuánto se cobra en cada método. USD: el precio tal cual. MN y tarjeta: precio × tasa del día.
+ * Devuelve null si el método necesita la tasa y esta no está vigente (nunca se cobra con una tasa vieja).
+ */
+export function chargeFor(usd: number, method: Method, s: { usdRate: number; usdRateDate: string }, today: string): Charge | null {
+  if (method === 'usd') return { paid: roundUsd(usd), currency: 'USD' }
+  if (!rateIsFresh(s, today)) return null
+  return { paid: toMN(usd, s.usdRate), currency: 'MN', rate: s.usdRate }
+}
 
 export type DueState = 'vencido' | 'hoy' | 'pronto' | 'aldia'
 
@@ -66,25 +86,28 @@ export function initials(name: string): string {
 export type CashStatus = 'cuadra' | 'faltante' | 'sobrante'
 
 export interface ShiftSummary {
-  memberships: { count: number; total: number }
-  sales: { count: number; total: number }
-  byMethod: Record<Method, number>
-  total: number
+  memberships: { count: number; total: number } // total en USD (valor)
+  sales: { count: number; total: number } // total en USD (valor)
+  /** Lo que debe haber físicamente: efectivo USD, efectivo MN, y cobros con tarjeta (MN). */
+  expected: { usd: number; mn: number; card: number }
+  total: number // valor total en USD
 }
 
 export function summarize(movements: Movement[]): ShiftSummary {
   const s: ShiftSummary = {
     memberships: { count: 0, total: 0 },
     sales: { count: 0, total: 0 },
-    byMethod: { efectivo: 0, tarjeta: 0, transferencia: 0 },
+    expected: { usd: 0, mn: 0, card: 0 },
     total: 0,
   }
   for (const m of movements) {
     const bucket = m.kind === 'mensualidad' ? s.memberships : s.sales
     bucket.count++
-    bucket.total += m.amount
-    s.byMethod[m.method] += m.amount
-    s.total += m.amount
+    bucket.total = roundUsd(bucket.total + m.amount)
+    s.total = roundUsd(s.total + m.amount)
+    if (m.method === 'usd') s.expected.usd = roundUsd(s.expected.usd + m.paid)
+    else if (m.method === 'mn') s.expected.mn += m.paid
+    else s.expected.card += m.paid
   }
   return s
 }
@@ -94,6 +117,19 @@ export function cashDifference(counted: number, expected: number): { status: Cas
   const diff = Math.round(counted * 100) - Math.round(expected * 100)
   if (diff === 0) return { status: 'cuadra', amount: 0 }
   return { status: diff < 0 ? 'faltante' : 'sobrante', amount: Math.abs(diff) / 100 }
+}
+
+export interface ShiftDiff {
+  mn: { status: CashStatus; amount: number }
+  usd: { status: CashStatus; amount: number }
+  balanced: boolean
+}
+
+/** Cuadre de los dos cajones: efectivo MN y efectivo USD, cada uno por separado. */
+export function shiftDifference(sh: { countedMN?: number; countedUSD?: number; expectedMN?: number; expectedUSD?: number }): ShiftDiff {
+  const mn = cashDifference(sh.countedMN ?? 0, sh.expectedMN ?? 0)
+  const usd = cashDifference(sh.countedUSD ?? 0, sh.expectedUSD ?? 0)
+  return { mn, usd, balanced: mn.status === 'cuadra' && usd.status === 'cuadra' }
 }
 
 /** Enlace de WhatsApp con mensaje listo para enviar. */
