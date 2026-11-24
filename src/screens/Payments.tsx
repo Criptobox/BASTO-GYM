@@ -4,9 +4,9 @@ import { useGym } from '../data/store'
 import { alertToday, dueInfo, isFrozen, pendingClients, upcomingClients, type DueInfo } from '../lib/domain'
 import { formatTime, makeMoney } from '../lib/format'
 import { formatShortDate } from '../lib/dates'
-import { Avatar, Button, Card, Pill, Screen, Sheet } from '../components/ui'
+import { Avatar, Button, Card, Pill, Screen, Sheet, Split, SwipeRow, cx } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
-import { ClientSheet } from '../components/ClientDetail'
+import { useClientPanel } from '../components/ClientDetail'
 import { StatusPill } from '../components/ClientStatus'
 import { AlertButton, AlertedTag, useAlertLink } from '../components/Alert'
 import type { Client } from '../lib/types'
@@ -33,7 +33,7 @@ export function Payments() {
   const money = makeMoney(g.settings)
   const { message, href } = useAlertLink()
   const [paying, setPaying] = useState<Client | null>(null)
-  const [detail, setDetail] = useState<string | null>(null)
+  const cp = useClientPanel((c) => setPaying(c))
   const [bulk, setBulk] = useState(false)
 
   const pending = pendingClients(g.clients, g.today)
@@ -52,9 +52,10 @@ export function Payments() {
     const info = dueInfo(c.nextDue, g.today)
     return (
       <li key={c.id}>
-        <Card accent={accentFor(info)} className="!p-3.5 !pl-5">
+        <SwipeRow label="Registrar pago" disabled={!g.shiftOpen} onTrigger={() => setPaying(c)}>
+        <Card accent={accentFor(info)} className={cx('!p-3.5 !pl-5', cp.selected === c.id && 'ring-2 ring-amber')}>
           <div className="flex items-center gap-3">
-            <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+            <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
               <Avatar name={c.name} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{c.name}</p>
@@ -69,13 +70,14 @@ export function Payments() {
             <Button size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>{info.state === 'pronto' ? 'Cobrar ya' : 'Registrar pago'}</Button>
           </div>
         </Card>
+        </SwipeRow>
       </li>
     )
   }
   const simple = (c: Client) => (
     <li key={c.id}>
       <Card className="!p-3.5">
-        <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex w-full items-center gap-3 text-left">
+        <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex w-full items-center gap-3 text-left">
           <Avatar name={c.name} />
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold">{c.name}</p>
@@ -89,6 +91,7 @@ export function Payments() {
 
   return (
     <Screen eyebrow="Registro de pagos" title="Quién debe pagar">
+     <Split side={cp.panel} empty="Toca un cliente para ver su ficha, avisarle o registrar su pago.">
       <div className="relative overflow-hidden rounded-3xl bg-gold p-5 text-amber-ink">
         <span aria-hidden className="absolute -right-6 -top-6 grid size-28 place-items-center rounded-full bg-black/10">
           <BellRing size={44} className="translate-x-[-6px] translate-y-[8px] opacity-40" />
@@ -99,7 +102,7 @@ export function Payments() {
         </p>
         <div className="mt-1 flex flex-wrap gap-2">
           <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-[#ff9a92]">{overdue} {overdue === 1 ? 'vencido' : 'vencidos'}</span>
-          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-amber">{dueToday} {dueToday === 1 ? 'vence' : 'vencen'} hoy</span>
+          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-[#ffc21f]">{dueToday} {dueToday === 1 ? 'vence' : 'vencen'} hoy</span>
           <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-white/85">{upcoming.length} por vencer</span>
         </div>
         <p className="mt-3 text-sm font-semibold">
@@ -135,8 +138,9 @@ export function Payments() {
         </>
       )}
 
+     </Split>
       <PaySheet client={paying} onClose={() => setPaying(null)} />
-      <ClientSheet clientId={detail} onClose={() => setDetail(null)} onPay={(c) => { setDetail(null); setPaying(c) }} />
+      {cp.sheet}
       <Sheet open={bulk} onClose={() => setBulk(false)} title="Alertar a todos">
         {alertable[0] && (
           <>

@@ -25,7 +25,7 @@ export function AdminLayout() {
   }, [pathname])
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="vt-static border-b border-line bg-[#0f0f0f] lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
+      <aside className="vt-static border-b border-line bg-panel lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-3 px-6 pt-6 lg:pt-8">
           <LogoMark size={44} />
           <div className="min-w-0">
@@ -41,14 +41,14 @@ export function AdminLayout() {
               className={({ isActive }) =>
                 cx(
                   'flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition',
-                  isActive ? 'bg-gold text-amber-ink' : 'text-muted hover:bg-surface-2 hover:text-white',
+                  isActive ? 'bg-gold text-amber-ink' : 'text-muted hover:bg-surface-2 hover:text-ink',
                 )
               }
             >
               <Icon size={18} aria-hidden /> {label}
             </NavLink>
           ))}
-          <button onClick={logout} className="flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold text-muted hover:text-white lg:mt-6">
+          <button onClick={logout} className="flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold text-muted hover:text-ink lg:mt-6">
             <LogOut size={18} aria-hidden /> Salir
           </button>
         </nav>

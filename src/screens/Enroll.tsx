@@ -45,7 +45,7 @@ export function Enroll() {
   const err = (bad: boolean, msg: string) => touched && bad && msg
 
   return (
-    <Screen eyebrow="Recepción" title="Nuevo cliente">
+    <Screen narrow eyebrow="Recepción" title="Nuevo cliente">
       <form onSubmit={submit} className="space-y-4" noValidate>
         <Field label="Nombre completo" error={err(name.trim().length < 3, 'Escribe el nombre completo.')}>
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" autoCapitalize="words" placeholder="Nombre y apellidos" />
@@ -80,7 +80,7 @@ export function Enroll() {
       <Sheet open={!!done} onClose={reset} title="¡Cliente inscrito!">
         {shown && (
           <>
-            <p className="text-muted"><b className="text-white">{shown.name}</b> quedó inscrito con vigencia hasta el {formatDate(shown.nextDue, g.settings.locale)}.</p>
+            <p className="text-muted"><b className="text-ink">{shown.name}</b> quedó inscrito con vigencia hasta el {formatDate(shown.nextDue, g.settings.locale)}.</p>
             <a
               href={whatsappLink(shown.phone, g.settings.countryCode, `¡Bienvenido/a a ${g.settings.gymName}, ${shown.name.split(' ')[0]}! Tu membresía está activa hasta el ${formatDate(shown.nextDue, g.settings.locale)}. 💪`)}
               target="_blank" rel="noreferrer"

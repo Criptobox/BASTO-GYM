@@ -26,7 +26,7 @@ export function Close() {
   const mine = g.shift.id !== 'none' && g.shift.workerId === g.session?.id
   if (!mine) {
     return (
-      <Screen eyebrow="Cierre de caja" title="Sin turno abierto">
+      <Screen narrow eyebrow="Cierre de caja" title="Sin turno abierto">
         <Card className="text-center !py-8">
           <p className="text-muted">No tienes un turno abierto. Ábrelo para empezar a cobrar.</p>
         </Card>
@@ -40,7 +40,7 @@ export function Close() {
   if (!g.shiftOpen) {
     const d = shiftDifference(g.shift)
     return (
-      <Screen eyebrow="Cierre de caja" title="Turno cerrado">
+      <Screen narrow eyebrow="Cierre de caja" title="Turno cerrado">
         <Card className="text-center !py-8">
           <LogoMark size={72} state="inactive" label="Turno cerrado" className="mx-auto" />
           <p className="mt-3 text-sm text-muted">Cerrado a las {formatTime(g.shift.closedAt!, g.settings.locale)}{g.shift.closedBy && g.shift.closedBy !== g.shift.worker ? ` por ${g.shift.closedBy}` : ''}</p>
@@ -78,7 +78,7 @@ export function Close() {
   )
 
   return (
-    <Screen eyebrow="Cierre de caja" title="Resumen del turno">
+    <Screen narrow eyebrow="Cierre de caja" title="Resumen del turno">
       <div className="grid grid-cols-2 gap-3">
         <Card><p className="text-sm text-muted">Mensualidades</p><p className="text-2xl font-extrabold tracking-tight">{money.usd(sum.memberships.total)}</p><p className="text-xs text-muted">{plural(sum.memberships.count, 'cobro', 'cobros')}</p></Card>
         <Card><p className="text-sm text-muted">Ventas</p><p className="text-2xl font-extrabold tracking-tight">{money.usd(sum.sales.total)}</p><p className="text-xs text-muted">{plural(sum.sales.count, 'venta', 'ventas')}</p></Card>
@@ -95,7 +95,7 @@ export function Close() {
           {(cm.outs > 0 || cu.outs > 0) && row('− Salidas', money.mnNum(cm.outs), money.usdNum(cu.outs))}
           {row('Efectivo esperado', money.mnNum(sum.expected.mn), money.usdNum(sum.expected.usd), true)}
         </dl>
-        <p className="mt-2 text-xs text-muted">Además, cobrado con tarjeta: <b className="text-white">{money.mn(sum.expected.card)}</b> (no va en la caja).</p>
+        <p className="mt-2 text-xs text-muted">Además, cobrado con tarjeta: <b className="text-ink">{money.mn(sum.expected.card)}</b> (no va en la caja).</p>
       </Card>
 
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -141,11 +141,11 @@ export function Close() {
 
       <Sheet open={confirm} onClose={() => setConfirm(false)} title="¿Cerrar el turno?">
         <p className="text-muted">
-          Contaste <b className="text-white">{money.mn(valid(mn) ? mn : 0)}</b> y <b className="text-white">{money.usd(valid(usd) ? usd : 0)}</b>.{' '}
+          Contaste <b className="text-ink">{money.mn(valid(mn) ? mn : 0)}</b> y <b className="text-ink">{money.usd(valid(usd) ? usd : 0)}</b>.{' '}
           {dMN && dUSD && dMN.status === 'cuadra' && dUSD.status === 'cuadra' ? 'La caja cuadra. ' : (
             <>
-              {dMN && dMN.status !== 'cuadra' && <>En MN hay un <b className="text-white">{STATUS[dMN.status].toLowerCase()} de {money.mn(dMN.amount)}</b>. </>}
-              {dUSD && dUSD.status !== 'cuadra' && <>En USD hay un <b className="text-white">{STATUS[dUSD.status].toLowerCase()} de {money.usd(dUSD.amount)}</b>. </>}
+              {dMN && dMN.status !== 'cuadra' && <>En MN hay un <b className="text-ink">{STATUS[dMN.status].toLowerCase()} de {money.mn(dMN.amount)}</b>. </>}
+              {dUSD && dUSD.status !== 'cuadra' && <>En USD hay un <b className="text-ink">{STATUS[dUSD.status].toLowerCase()} de {money.usd(dUSD.amount)}</b>. </>}
             </>
           )}
           Esta acción no se puede deshacer.

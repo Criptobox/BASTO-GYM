@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useGym } from '../data/store'
 import { PLANS } from '../lib/domain'
-import { Card, Field, inputCls } from '../components/ui'
+import { Card, Field, inputCls, ThemeSwitch } from '../components/ui'
 import { RateForm } from '../components/Payment'
 import { LogoMark, type LogoState } from '../components/Logo'
 import { AdminHeader } from './AdminLayout'
@@ -52,6 +52,11 @@ export function SettingsPage() {
           <Field label="Prefijo telefónico del país (sin +)"><input className={inputCls} inputMode="numeric" value={g.settings.countryCode} onChange={(e) => g.setSettings({ countryCode: e.target.value.replace(/\D/g, '') })} /></Field>
         </Card>
         <Card className="!p-6">
+          <h2 className="mb-1 font-bold">Apariencia</h2>
+          <p className="mb-4 text-sm text-muted">Automático sigue el modo claro u oscuro del teléfono. Se guarda en este dispositivo.</p>
+          <ThemeSwitch />
+        </Card>
+        <Card className="!p-6">
           <h2 className="mb-1 font-bold">Logo y estados</h2>
           <p className="mb-5 text-sm text-muted">Así se ve el logo en cada situación de la app. El icono instalado en el teléfono lleva el número de pagos pendientes.</p>
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-5">
@@ -74,7 +79,7 @@ export function SettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             {PLANS.map((p) => (
               <DecimalField key={p.id} label={`${p.label} (${p.days})`} value={g.settings.planPrices[p.id]}
-                onCommit={(n) => g.setSettings({ planPrices: { ...g.settings.planPrices, [p.id]: n } })} />
+                onCommit={(n) => g.setSettings({ planPrices: { ...g.settings.planPrices, [p.id]: n }, pricesReviewed: true })} />
             ))}
           </div>
           <p className="mt-3 text-sm text-muted">Los precios están en USD. En MN y con tarjeta se calculan con la tasa del día. Los cambios aplican a los próximos cobros.</p>

@@ -1,9 +1,55 @@
+import { Link } from 'react-router-dom'
+import { Check } from 'lucide-react'
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
 import { alertToday, dueInfo, pendingClients, upcomingClients } from '../lib/domain'
 import { makeMoney } from '../lib/format'
-import { Avatar, Card, Pill } from '../components/ui'
+import { Avatar, Button, Card, Pill } from '../components/ui'
 import { AdminHeader, Stat } from './AdminLayout'
+
+/** Primer uso: lo mínimo que el administrador debe dejar listo para que recepción pueda cobrar. */
+function SetupGuide() {
+  const g = useGym()
+  if (g.settings.setupDismissed) return null
+  const staff = g.workers.filter((w) => w.role === 'worker' && w.active)
+  const steps = [
+    { done: g.rateFresh, title: 'Fija la tasa del USD de hoy', hint: 'Sin ella recepción no puede cobrar en MN ni con tarjeta.', to: '/admin/ajustes', cta: 'Ir a Ajustes' },
+    { done: !!g.settings.pricesReviewed, title: 'Revisa los precios de los planes', hint: 'Están en USD. Los de ahora son de ejemplo.', to: '/admin/ajustes', cta: 'Revisar precios', alt: () => g.setSettings({ pricesReviewed: true }), altLabel: 'Ya están bien' },
+    { done: staff.length > 0 && staff.every((w) => w.pinHash), title: 'Dale una clave a cada trabajador', hint: staff.length ? 'Sin clave no pueden entrar, y así cada turno queda a su nombre.' : 'Agrega al menos un trabajador.', to: '/admin/trabajadores', cta: 'Ir a Trabajadores' },
+    { done: g.products.length > 0, title: 'Carga tus productos', hint: 'Para poder vender en mostrador.', to: '/admin/productos', cta: 'Ir a Productos' },
+  ]
+  const left = steps.filter((s) => !s.done).length
+  return (
+    <Card className="mb-4 !p-5" accent="gold">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-extrabold">{left ? 'Deja tu gimnasio listo' : '¡Todo listo para abrir!'}</h2>
+          <p className="text-sm text-muted">{left ? `Faltan ${left} de ${steps.length} pasos antes del primer turno.` : 'Recepción ya puede abrir turno y cobrar.'}</p>
+        </div>
+        {left === 0 && <Button size="xs" variant="outline" onClick={() => g.setSettings({ setupDismissed: true })}>Cerrar guía</Button>}
+      </div>
+      <ol className="mt-4 space-y-3">
+        {steps.map((s, i) => (
+          <li key={s.title} className="flex items-start gap-3">
+            <span aria-hidden className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-xs font-extrabold ${s.done ? 'bg-ok text-amber-ink' : 'border border-line text-muted'}`}>{s.done ? <Check size={16} /> : i + 1}</span>
+            <div className="min-w-0 flex-1">
+              <p className={`font-bold ${s.done ? 'text-muted line-through' : ''}`}>{s.title}<span className="sr-only">{s.done ? ' (hecho)' : ' (pendiente)'}</span></p>
+              {!s.done && (
+                <>
+                  <p className="text-sm text-muted">{s.hint}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Link to={s.to} className="inline-flex h-9 items-center rounded-full bg-gold px-3.5 text-xs font-bold text-amber-ink">{s.cta}</Link>
+                    {s.alt && <Button size="xs" variant="outline" onClick={s.alt}>{s.altLabel}</Button>}
+                  </div>
+                </>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  )
+}
 
 export function Overview() {
   const g = useGym()
@@ -28,6 +74,7 @@ export function Overview() {
   return (
     <>
       <AdminHeader eyebrow="Panorama" title="Resumen" />
+      <SetupGuide />
       <div className="grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
         <Stat label="Ingresos del mes" value={money.usd(monthTotal)} />
         <Stat label="Clientes activos" value={active} />

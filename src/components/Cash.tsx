@@ -23,7 +23,7 @@ export function OpenShiftSheet({ open, onClose }: { open: boolean; onClose: () =
     <Sheet open={open} onClose={onClose} title="Abrir mi turno">
       <p className="mb-4 text-sm text-muted">
         Cuenta el efectivo que hay ahora en la caja. Con eso se calcula lo que debe haber al cerrar.
-        {left?.countedMN != null && <> El turno anterior dejó <b className="text-white">{money.mn(left.countedMN)}</b> y <b className="text-white">{money.usd(left.countedUSD ?? 0)}</b>.</>}
+        {left?.countedMN != null && <> El turno anterior dejó <b className="text-ink">{money.mn(left.countedMN)}</b> y <b className="text-ink">{money.usd(left.countedUSD ?? 0)}</b>.</>}
       </p>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Efectivo MN"><input className={inputCls} inputMode="decimal" placeholder="0" value={mn} onChange={(e) => setMn(clean(e.target.value))} /></Field>

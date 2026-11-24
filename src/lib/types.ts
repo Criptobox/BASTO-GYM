@@ -116,4 +116,7 @@ export interface Settings {
   /** MN por 1 USD, y el día (YYYY-MM-DD) para el que se fijó. Debe actualizarse cada día. */
   usdRate: number
   usdRateDate: string
+  /** Guía de primer uso del administrador: precios ya revisados / guía cerrada. */
+  pricesReviewed?: boolean
+  setupDismissed?: boolean
 }

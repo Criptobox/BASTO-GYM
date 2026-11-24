@@ -12,14 +12,21 @@
   --color-amber-ink: #0a0a0a;
   --color-danger: #ff6b5b;
   --color-ok: #4ade80;
+  --color-ink: #ffffff;
+  --color-field: #131417;
+  --color-panel: #141517;
+  --color-danger-soft: #ff9a92;
 }
 
 html { color-scheme: dark; background: var(--color-bg); }
+/* Modo claro: automático según el teléfono, o forzado desde el botón de tema */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { color-scheme: light; } }
+:root[data-theme="light"] { color-scheme: light; }
 html, body, #root { height: 100%; }
 body {
   /* un velo dorado muy leve arriba, como el resplandor del logo */
   background: radial-gradient(900px 420px at 50% -140px, rgb(255 190 40 / 0.10), transparent 70%), var(--color-bg);
-  color: #fff;
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
@@ -41,7 +48,7 @@ h1:focus { outline: none; } /* foco programático al cambiar de pantalla */
 dialog.sheet {
   margin: auto auto 0; padding: 0; width: 100%; max-width: 430px; max-height: 88dvh;
   border: 1px solid var(--color-line); border-bottom: 0; border-radius: 32px 32px 0 0;
-  background: var(--color-surface); color: #fff;
+  background: var(--color-surface); color: var(--color-ink);
   overflow-y: auto; overscroll-behavior: contain;
   transform: translateY(100%);
   transition-property: transform, display, overlay;
@@ -110,10 +117,31 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 6px rgb(120 70 0 / 0.28), 0 8px 22px -10px rgb(240 160 0 / 0.55);
 }
 @utility text-gold {
-  background-image: linear-gradient(90deg, #ffe88a, #ffc21f 55%, #f0a000);
+  background-image: linear-gradient(90deg, var(--gold-t1, #ffe88a), var(--gold-t2, #ffc21f) 55%, var(--gold-t3, #f0a000));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 @utility surface-card {
-  background-image: linear-gradient(165deg, #1f2125 0%, #141517 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.055), 0 12px 28px -14px rgb(0 0 0 / 0.75);
+  background-image: linear-gradient(165deg, var(--card-a) 0%, var(--card-b) 100%);
+  box-shadow: inset 0 1px 0 var(--card-hi), 0 12px 28px -14px var(--card-shadow);
 }
+
+/* ---------- Paleta clara ---------- */
+:root { --card-a: #1f2125; --card-b: #141517; --card-hi: rgb(255 255 255 / 0.055); --card-shadow: rgb(0 0 0 / 0.75); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-bg: #f3f2ee; --color-surface: #ffffff; --color-surface-2: #ebeae5; --color-line: #d8d6cf;
+    --color-muted: #55575e; --color-faint: #6d6f76; --color-amber: #9a6200; --color-danger: #c8341f; --color-ok: #17803f;
+    --color-ink: #121316; --color-field: #f7f6f2; --color-panel: #ffffff; --color-danger-soft: #b3281a;
+    --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.9); --card-shadow: rgb(60 50 20 / 0.28);
+  }
+}
+:root[data-theme="light"] {
+  --color-bg: #f3f2ee; --color-surface: #ffffff; --color-surface-2: #ebeae5; --color-line: #d8d6cf;
+  --color-muted: #55575e; --color-faint: #6d6f76; --color-amber: #9a6200; --color-danger: #c8341f; --color-ok: #17803f;
+  --color-ink: #121316; --color-field: #f7f6f2; --color-panel: #ffffff; --color-danger-soft: #b3281a;
+  --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.9); --card-shadow: rgb(60 50 20 / 0.28);
+}
+
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --gold-t1: #b87800; --gold-t2: #a16500; --gold-t3: #8a5400; } }
+:root[data-theme="light"] { --gold-t1: #b87800; --gold-t2: #a16500; --gold-t3: #8a5400; }
+body { background-color: var(--color-bg); }

@@ -114,7 +114,7 @@ export function Closings() {
               Movimientos del turno{current.s.closedBy && current.s.closedBy !== current.s.worker ? ` · cerrado por ${current.s.closedBy}` : ''}
             </p>
             <p className="mb-3 rounded-xl border border-line px-3 py-2 text-xs text-muted">
-              Fondo inicial: <b className="text-white">{money.mn(current.s.openingMN ?? 0)}</b> y <b className="text-white">{money.usd(current.s.openingUSD ?? 0)}</b>
+              Fondo inicial: <b className="text-ink">{money.mn(current.s.openingMN ?? 0)}</b> y <b className="text-ink">{money.usd(current.s.openingUSD ?? 0)}</b>
             </p>
             {!current.s.closedAt && current.s.id === g.shift.id && (
               <Button size="sm" variant="outline" className="mb-3" onClick={() => { setMnRaw(''); setUsdRaw(''); setForcing(true) }}>
@@ -145,7 +145,7 @@ export function Closings() {
                     <li key={o.id} className="flex items-start gap-3 py-2.5">
                       <span className="w-12 shrink-0 pt-0.5 text-xs text-muted">{formatTime(o.at, g.settings.locale)}</span>
                       <div className="min-w-0 flex-1"><p className="text-sm font-semibold leading-tight">{o.concept}</p><p className="text-xs text-muted">{o.kind === 'gasto' ? 'Gasto' : 'Retiro'}</p></div>
-                      <p className="text-sm font-bold text-[#ff9a92]">− {[o.mn > 0 && money.mn(o.mn), o.usd > 0 && money.usd(o.usd)].filter(Boolean).join(' + ')}</p>
+                      <p className="text-sm font-bold text-danger-soft">− {[o.mn > 0 && money.mn(o.mn), o.usd > 0 && money.usd(o.usd)].filter(Boolean).join(' + ')}</p>
                     </li>
                   ))}
                 </ul>

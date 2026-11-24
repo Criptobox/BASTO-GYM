@@ -1,11 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { initials } from '../lib/domain'
+import { haptic } from '../lib/nav'
+import { THEMES, useTheme } from '../lib/theme'
+import { useWide } from '../lib/media'
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
-export function Screen({ eyebrow, title, action, children }: { eyebrow: string; title: string; action?: ReactNode; children: ReactNode }) {
+export function Screen({ eyebrow, title, action, narrow, children }: { eyebrow: string; title: string; action?: ReactNode; narrow?: boolean; children: ReactNode }) {
   return (
-    <div className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-6">
+    <div className={cx('px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-6 md:px-8', narrow && 'mx-auto md:max-w-[620px]')}>
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{eyebrow}</p>
@@ -43,7 +46,7 @@ export function Button({ variant = 'solid', size = 'md', block, className, ...p 
         size === 'md' ? 'h-14 px-6 text-base' : size === 'sm' ? 'h-11 px-4 text-sm' : 'h-9 px-3.5 text-xs',
         variant === 'solid' && 'bg-gold text-amber-ink',
         variant === 'outline' && 'border border-amber text-amber',
-        variant === 'dark' && 'bg-amber-ink text-amber',
+        variant === 'dark' && 'bg-amber-ink text-[#ffc21f]',
         block && 'w-full',
         className,
       )}
@@ -57,9 +60,9 @@ export function Pill({ tone = 'muted', children }: { tone?: 'amber' | 'white' | 
       className={cx(
         'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold',
         tone === 'amber' && 'bg-gold text-amber-ink',
-        tone === 'white' && 'bg-white text-black',
+        tone === 'white' && 'bg-ink text-bg',
         tone === 'muted' && 'border border-line bg-surface-2 text-muted',
-        tone === 'danger' && 'border border-[rgb(255_90_82/0.4)] bg-[rgb(255_90_82/0.14)] text-[#ff9a92]',
+        tone === 'danger' && 'border border-[rgb(255_90_82/0.4)] bg-[rgb(255_90_82/0.14)] text-danger-soft',
       )}
     >
       {children}
@@ -94,7 +97,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
 }
 
 export const inputCls =
-  'h-14 w-full rounded-2xl border border-line bg-[#131417] px-4 text-base text-white shadow-[inset_0_2px_6px_rgb(0_0_0/0.35)] placeholder:text-faint focus:border-amber focus:shadow-[inset_0_2px_6px_rgb(0_0_0/0.35),0_0_0_3px_rgb(255_194_31/0.2)] focus:outline-none'
+  'h-14 w-full rounded-2xl border border-line bg-field px-4 text-base text-ink shadow-[inset_0_2px_6px_rgb(0_0_0/0.18)] placeholder:text-faint focus:border-amber focus:shadow-[inset_0_2px_6px_rgb(0_0_0/0.35),0_0_0_3px_rgb(255_194_31/0.2)] focus:outline-none'
 
 /**
  * Hoja inferior con <dialog> nativo: el navegador aporta capa superior, foco contenido,
@@ -166,12 +169,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[104px] z-[60] flex justify-center px-4">
         {msg && (
-          <div key={msg.id} className="toast pointer-events-auto flex items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 text-sm font-bold text-black shadow-xl">
+          <div key={msg.id} className="toast pointer-events-auto flex items-center gap-3 rounded-full bg-ink py-2 pl-5 pr-2 text-sm font-bold text-bg shadow-xl">
             <span>✓ {msg.text}</span>
             {msg.action && (
               <button
                 onClick={() => { msg.action!.onClick(); setMsg(null) }}
-                className="h-8 rounded-full bg-black px-3.5 text-xs font-bold text-amber active:scale-95"
+                className="h-8 rounded-full bg-black px-3.5 text-xs font-bold text-[#ffc21f] active:scale-95"
               >
                 {msg.action.label}
               </button>
@@ -192,7 +195,7 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
           onClick={() => onChange(o.id)}
           className={cx(
             'h-11 rounded-full border px-5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100',
-            value === o.id ? 'border-amber bg-gold text-amber-ink' : 'border-line text-white',
+            value === o.id ? 'border-amber bg-gold text-amber-ink' : 'border-line text-ink',
           )}
         >
           {o.label}
@@ -203,3 +206,70 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
 }
 
 export { cx }
+
+/** Tema de la app: automático (según el teléfono), claro u oscuro. Se guarda en este dispositivo. */
+export function ThemeSwitch() {
+  const [theme, setTheme] = useTheme()
+  return <Segmented label="Tema" value={theme} onChange={setTheme} options={THEMES.map((t) => ({ id: t.id, label: t.label }))} />
+}
+
+/**
+ * Tarjeta que se desliza hacia la izquierda para ejecutar una acción (p. ej. cobrar).
+ * Es un atajo: la acción siempre tiene también un botón visible. Solo capta gestos horizontales.
+ */
+export function SwipeRow({ onTrigger, label, disabled, children }: { onTrigger: () => void; label: string; disabled?: boolean; children: ReactNode }) {
+  const [dx, setDx] = useState(0)
+  const [drag, setDrag] = useState(false)
+  const st = useRef<{ x: number; y: number; id: number; lock: boolean | null } | null>(null)
+  const MAX = 120, GO = 84
+  if (disabled) return <>{children}</>
+  const end = (e: React.PointerEvent) => {
+    const s = st.current
+    st.current = null
+    setDrag(false)
+    if (s && s.lock && -dx >= GO) { haptic(18); onTrigger() }
+    setDx(0)
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* ya liberado */ }
+  }
+  return (
+    <div className="relative overflow-hidden rounded-3xl">
+      <div aria-hidden className="absolute inset-0 flex items-center justify-end rounded-3xl bg-gold pr-6 text-sm font-extrabold text-amber-ink" style={{ opacity: Math.min(1, -dx / GO) }}>
+        {label} →
+      </div>
+      <div
+        className="relative touch-pan-y"
+        style={{ transform: `translateX(${dx}px)`, transition: drag ? 'none' : 'transform 0.25s cubic-bezier(0.32,0.72,0,1)' }}
+        onPointerDown={(e) => { if (e.pointerType === 'mouse') return; st.current = { x: e.clientX, y: e.clientY, id: e.pointerId, lock: null } }}
+        onPointerMove={(e) => {
+          const s = st.current
+          if (!s) return
+          const mx = e.clientX - s.x, my = e.clientY - s.y
+          if (s.lock === null && Math.abs(mx) + Math.abs(my) > 8) {
+            s.lock = Math.abs(mx) > Math.abs(my) * 1.4 && mx < 0
+            if (s.lock) { setDrag(true); try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) } catch { /* sin captura */ } }
+            else st.current = null
+          }
+          if (s.lock) setDx(Math.max(-MAX, Math.min(0, mx)))
+        }}
+        onPointerUp={end}
+        onPointerCancel={end}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** Móvil: solo la lista. Tableta/escritorio: lista a la izquierda y detalle fijo a la derecha. */
+export function Split({ side, empty, children }: { side: ReactNode; empty: string; children: ReactNode }) {
+  const wide = useWide()
+  if (!wide) return <>{children}</>
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] items-start gap-6">
+      <div className="min-w-0">{children}</div>
+      <aside aria-label="Ficha del cliente" className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-3xl border border-line surface-card p-5">
+        {side ?? <p className="grid min-h-60 place-items-center text-center text-muted">{empty}</p>}
+      </aside>
+    </div>
+  )
+}

@@ -39,7 +39,7 @@ function ReceiptSheet({ movement, onClose }: { movement: Movement | null; onClos
   }
   return (
     <Sheet open={!!movement} onClose={onClose} title="Recibo">
-      <pre className="mb-4 max-h-[42dvh] overflow-auto whitespace-pre-wrap rounded-2xl border border-line bg-[#101113] p-4 font-sans text-sm leading-relaxed text-white select-text">{text}</pre>
+      <pre className="mb-4 max-h-[42dvh] overflow-auto whitespace-pre-wrap rounded-2xl border border-line bg-field p-4 font-sans text-sm leading-relaxed text-ink select-text">{text}</pre>
       <a
         href={href} target="_blank" rel="noreferrer"
         className="bg-gold inline-flex h-14 w-full items-center justify-center gap-2 rounded-full text-base font-bold text-amber-ink active:scale-[0.97]"

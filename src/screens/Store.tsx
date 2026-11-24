@@ -46,7 +46,7 @@ export function Store() {
   }
 
   return (
-    <Screen
+    <Screen narrow
       eyebrow="Suplementos y accesorios" title="Tienda"
       action={
         <button
@@ -67,7 +67,7 @@ export function Store() {
         {CATS.map((c) => (
           <button
             key={c} role="tab" aria-selected={cat === c} onClick={() => setCat(c)}
-            className={cx('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold', cat === c ? 'border-amber bg-gold text-amber-ink' : 'border-line text-white')}
+            className={cx('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold', cat === c ? 'border-amber bg-gold text-amber-ink' : 'border-line text-ink')}
           >
             {c}
           </button>

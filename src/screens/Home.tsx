@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Search, TrendingUp } from 'lucide-react'
+import { HandCoins, LogOut, Moon, ShoppingBag, Search, Sun, TrendingUp, UserPlus } from 'lucide-react'
 import { useGym } from '../data/store'
 import { dueInfo, isFrozen, normalizeCarnet, pendingClients } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
-import { Avatar, Button, Card, inputCls, Pill, Screen, Sheet } from '../components/ui'
+import { Avatar, Button, Card, inputCls, Screen, Sheet, Split, SwipeRow, cx } from '../components/ui'
+import { THEMES, useTheme } from '../lib/theme'
 import { PaySheet } from '../components/PaySheet'
 import { accentFor, DuePill } from './Payments'
-import { ClientSheet } from '../components/ClientDetail'
+import { useClientPanel } from '../components/ClientDetail'
 import { StatusPill } from '../components/ClientStatus'
 import { AlertedTag } from '../components/Alert'
 import { RateForm } from '../components/Payment'
@@ -22,7 +23,9 @@ export function Home() {
   const [paying, setPaying] = useState<Client | null>(null)
   const [rateOpen, setRateOpen] = useState(false)
   const sum = g.shiftSummary
-  const [detail, setDetail] = useState<string | null>(null)
+  const cp = useClientPanel((c) => setPaying(c))
+  const searchRef = useRef<HTMLInputElement>(null)
+  const [theme, setTheme] = useTheme()
   const [openSheet, setOpenSheet] = useState(false)
   const [outSheet, setOutSheet] = useState(false)
 
@@ -41,11 +44,21 @@ export function Home() {
       eyebrow={g.shiftOpen ? `Turno abierto · desde ${formatTime(g.shift.openedAt, g.settings.locale)}` : 'Sin turno abierto'}
       title={`Hola, ${g.session?.name}`}
       action={
-        <button onClick={g.logout} aria-label="Salir" className="grid size-12 shrink-0 place-items-center rounded-2xl border border-line text-muted active:scale-95">
-          <LogOut size={20} aria-hidden />
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => setTheme(THEMES[(THEMES.findIndex((t) => t.id === theme) + 1) % THEMES.length].id)}
+            aria-label={`Tema: ${THEMES.find((t) => t.id === theme)?.label}. Tocar para cambiar`}
+            className="grid size-12 place-items-center rounded-2xl border border-line text-muted active:scale-95"
+          >
+            {theme === 'oscuro' ? <Moon size={20} aria-hidden /> : theme === 'claro' ? <Sun size={20} aria-hidden /> : <span aria-hidden className="text-xs font-extrabold">A</span>}
+          </button>
+          <button onClick={g.logout} aria-label="Salir" className="grid size-12 place-items-center rounded-2xl border border-line text-muted active:scale-95">
+            <LogOut size={20} aria-hidden />
+          </button>
+        </div>
       }
     >
+     <Split side={cp.panel} empty="Toca un cliente de la lista para ver su ficha, su historial y cobrarle.">
       {!g.shiftOpen && (
         <div className="mb-3 rounded-3xl border border-amber bg-surface p-4">
           <p className="font-extrabold">Todavía no abriste tu turno</p>
@@ -53,6 +66,26 @@ export function Home() {
           <Button block onClick={() => setOpenSheet(true)}>Abrir mi turno</Button>
         </div>
       )}
+
+      {/* Lo que se hace casi todo el día, a un toque */}
+      <div className="mb-3 grid grid-cols-3 gap-3">
+        {[
+          { label: 'Cobrar', Icon: HandCoins, run: () => { searchRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }); searchRef.current?.focus({ preventScroll: true }) } },
+          { label: 'Inscribir', Icon: UserPlus, run: () => nav('/inscribir') },
+          { label: 'Vender', Icon: ShoppingBag, run: () => nav('/tienda') },
+        ].map(({ label, Icon, run }, i) => (
+          <button
+            key={label} onClick={run} disabled={!g.shiftOpen}
+            className={cx(
+              'flex h-28 flex-col items-center justify-center gap-2 rounded-3xl text-base font-extrabold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
+              i === 0 ? 'bg-gold text-amber-ink' : 'border border-line surface-card',
+            )}
+          >
+            <Icon size={30} aria-hidden strokeWidth={2.2} className={i === 0 ? '' : 'text-amber'} />
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Tasa del día: lo primero que se necesita para cobrar en MN */}
       {g.rateFresh ? (
@@ -65,7 +98,7 @@ export function Home() {
           <Button variant="outline" size="sm" onClick={() => setRateOpen(true)}>Cambiar</Button>
         </div>
       ) : (
-        <div role="alert" className="flex items-center gap-4 rounded-3xl bg-white p-4 text-black">
+        <div role="alert" className="flex items-center gap-4 rounded-3xl bg-ink p-4 text-bg">
           <div className="min-w-0 flex-1">
             <p className="font-extrabold">Falta la tasa del USD de hoy</p>
             <p className="text-sm">Sin ella no se puede cobrar en MN ni con tarjeta.</p>
@@ -87,7 +120,7 @@ export function Home() {
           </div>
         </div>
         {g.shiftOpen && (
-          <button onClick={() => setOutSheet(true)} className="mt-3 rounded-full bg-black/80 px-3.5 py-1.5 text-xs font-bold text-amber active:scale-95">
+          <button onClick={() => setOutSheet(true)} className="mt-3 rounded-full bg-black/80 px-3.5 py-1.5 text-xs font-bold text-[#ffc21f] active:scale-95">
             − Registrar gasto o retiro
           </button>
         )}
@@ -109,7 +142,7 @@ export function Home() {
       <div className="relative mt-4">
         <Search size={18} aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint" />
         <input
-          type="search" value={q} onChange={(e) => setQ(e.target.value)}
+          ref={searchRef} type="search" value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="Nombre, carnet o teléfono" aria-label="Buscar cliente"
           className={`${inputCls} pl-11`}
         />
@@ -124,8 +157,9 @@ export function Home() {
           const due = info.state === 'vencido' || info.state === 'hoy'
           return (
             <li key={c.id}>
-              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className="flex items-center gap-3 !p-3.5 !pl-5">
-                <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+              <SwipeRow label="Cobrar" disabled={!g.shiftOpen || isFrozen(c) || !(due || q)} onTrigger={() => setPaying(c)}>
+              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className={cx('flex items-center gap-3 !p-3.5 !pl-5', cp.selected === c.id && 'ring-2 ring-amber')}>
+                <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                   <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{c.name}</p>
@@ -136,6 +170,7 @@ export function Home() {
                   <Button variant="outline" size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>Cobrar</Button>
                 ) : null}
               </Card>
+              </SwipeRow>
             </li>
           )
         })}
@@ -146,9 +181,9 @@ export function Home() {
         )}
       </ul>
 
-      <Button block className="mt-6" disabled={!g.shiftOpen} onClick={() => nav('/tienda')}>Venta en mostrador</Button>
+     </Split>
       <PaySheet client={paying} onClose={() => setPaying(null)} />
-      <ClientSheet clientId={detail} onClose={() => setDetail(null)} onPay={(c) => { setDetail(null); setPaying(c) }} />
+      {cp.sheet}
       <OpenShiftSheet open={openSheet} onClose={() => setOpenSheet(false)} />
       <CashOutSheet open={outSheet} onClose={() => setOutSheet(false)} />
       <Sheet open={rateOpen} onClose={() => setRateOpen(false)} title="Tasa del USD de hoy">

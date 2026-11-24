@@ -1,7 +1,8 @@
 import { BrowserRouter, MemoryRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { DEMO } from './data/demo'
 import { GymProvider, useGym } from './data/store'
-import { BottomNav } from './components/BottomNav'
+import { BottomNav, SideRail } from './components/BottomNav'
+import { useWide } from './lib/media'
 import { ToastProvider } from './components/ui'
 import { ReceiptProvider } from './components/Receipt'
 import { useIdleLogout, useRouteReset } from './lib/nav'
@@ -34,12 +35,20 @@ function RequireRole({ role }: { role: Worker['role'] }) {
 function WorkerShell() {
   useRouteReset()
   const g = useGym()
+  const wide = useWide()
   useAppBadge(g.session ? pendingClients(g.clients, g.today).length : 0) // número rojo en el icono de la app instalada
   return (
-    <div className="mx-auto min-h-dvh max-w-[430px] pb-28 sm:border-x sm:border-line">
-      <main><Outlet /></main>
-      <BottomNav />
-    </div>
+    wide ? (
+      <div className="mx-auto flex min-h-dvh max-w-[1180px]">
+        <SideRail />
+        <main className="min-w-0 flex-1"><Outlet /></main>
+      </div>
+    ) : (
+      <div className="mx-auto min-h-dvh max-w-[430px] pb-28">
+        <main><Outlet /></main>
+        <BottomNav />
+      </div>
+    )
   )
 }
 

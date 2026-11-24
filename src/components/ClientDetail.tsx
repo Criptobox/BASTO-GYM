@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useWide } from '../lib/media'
 import { Pencil, Receipt, Snowflake } from 'lucide-react'
 import { useGym } from '../data/store'
 import { PLANS, clientAlerts, dueInfo, frozenDays, isFrozen, unfreezeDue } from '../lib/domain'
@@ -160,4 +161,22 @@ export function ClientSheet({ clientId, onClose, onPay }: { clientId: string | n
       <ClientDetail key={client.id} client={client} onPay={onPay} />
     </Sheet>
   )
+}
+
+/**
+ * Abre la ficha de un cliente: en móvil como hoja inferior, en tableta/escritorio en el panel lateral (<Split>).
+ * Devuelve `open(id)`, el `panel` (o null) y la `sheet` (o null) para pintarlas.
+ */
+export function useClientPanel(onPay?: (c: Client) => void) {
+  const g = useGym()
+  const wide = useWide()
+  const [id, setId] = useState<string | null>(null)
+  const live = id ? g.clients.find((c) => c.id === id) ?? null : null
+  const pay = onPay && ((c: Client) => { setId(null); onPay(c) })
+  return {
+    open: setId,
+    selected: wide ? id : null,
+    panel: wide && live ? <ClientDetail key={live.id} client={live} onPay={pay} /> : null,
+    sheet: wide ? null : <ClientSheet clientId={id} onClose={() => setId(null)} onPay={pay} />,
+  }
 }

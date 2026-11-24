@@ -164,7 +164,7 @@ export function PaymentSplit({ split, totalUsd }: { split: PaymentSplitState; to
               <span className="w-[4.2rem] shrink-0 text-sm font-bold">{ROW[id].label}</span>
               <div className="relative min-w-0 flex-1">
                 <input
-                  className="h-11 w-full rounded-xl border border-line bg-[#131417] pl-3 pr-11 text-right text-base font-semibold tabular-nums text-white placeholder:text-faint focus:border-amber focus:outline-none"
+                  className="h-11 w-full rounded-xl border border-line bg-field pl-3 pr-11 text-right text-base font-semibold tabular-nums text-ink placeholder:text-faint focus:border-amber focus:outline-none"
                   inputMode="decimal" autoComplete="off" placeholder="0" aria-label={aria} disabled={off}
                   value={split.raw[id]} onChange={(e) => split.set(id, e.target.value)}
                 />
@@ -194,7 +194,7 @@ export function PaymentSplit({ split, totalUsd }: { split: PaymentSplitState; to
             />
             <div className="relative min-w-0 flex-1">
               <input
-                className="h-11 w-full rounded-xl border border-line bg-[#131417] pl-3 pr-11 text-right text-base font-semibold tabular-nums text-white placeholder:text-faint focus:border-amber focus:outline-none"
+                className="h-11 w-full rounded-xl border border-line bg-field pl-3 pr-11 text-right text-base font-semibold tabular-nums text-ink placeholder:text-faint focus:border-amber focus:outline-none"
                 inputMode="decimal" autoComplete="off" placeholder="0" aria-label="Monto del vuelto"
                 value={split.changeRaw} onChange={(e) => split.setChangeRaw(e.target.value)}
               />
