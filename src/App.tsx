@@ -13,8 +13,11 @@ import { Products } from './admin/Products'
 import { Closings } from './admin/Closings'
 import { SettingsPage } from './admin/Settings'
 import { Outlet } from 'react-router-dom'
+import { ToastProvider } from './components/ui'
+import { useRouteReset } from './lib/nav'
 
 function WorkerShell() {
+  useRouteReset()
   return (
     <div className="mx-auto min-h-dvh max-w-[430px] pb-28 sm:border-x sm:border-line">
       <main><Outlet /></main>
@@ -26,6 +29,7 @@ function WorkerShell() {
 export default function App() {
   return (
     <GymProvider>
+      <ToastProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<WorkerShell />}>
@@ -45,6 +49,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </GymProvider>
   )
 }

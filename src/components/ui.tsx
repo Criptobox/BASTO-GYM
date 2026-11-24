@@ -1,4 +1,4 @@
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { initials } from '../lib/domain'
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
@@ -9,7 +9,7 @@ export function Screen({ eyebrow, title, action, children }: { eyebrow: string; 
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
-          <h1 className="mt-1 text-[32px] font-extrabold leading-9 tracking-tight">{title}</h1>
+          <h1 tabIndex={-1} className="mt-1 text-[32px] font-extrabold leading-9 tracking-tight">{title}</h1>
         </div>
         {action}
       </header>
@@ -84,32 +84,75 @@ export function Field({ label, error, children }: { label: string; error?: strin
 export const inputCls =
   'h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base text-white placeholder:text-faint focus:border-amber focus:outline-none'
 
-/** Hoja inferior accesible: Escape cierra, bloquea el scroll del fondo. */
+/**
+ * Hoja inferior con <dialog> nativo: el navegador aporta capa superior, foco contenido,
+ * Esc / gesto atrás, retorno del foco y fondo inerte. No se bloquea el scroll del body.
+ */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const openRef = useRef(open)
+  const titleId = useId()
+  openRef.current = open
+
   useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [open, onClose])
-  if (!open) return null
+    const d = ref.current
+    if (!d) return
+    if (open && !d.open) d.showModal()
+    if (!open && d.open) d.close()
+  }, [open])
+
+  // Safari aún no soporta closedby="any": cerrar al tocar fuera (pulsar y soltar fuera).
+  const outside = (e: React.PointerEvent<HTMLDialogElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+  }
+  const pressedOutside = useRef(false)
+  const needsFallback = typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/70 [animation:fade-in_.2s]" onClick={onClose} />
-      <div
-        role="dialog" aria-modal="true" aria-label={title}
-        className="relative max-h-[88dvh] w-full max-w-[430px] overflow-y-auto rounded-t-[32px] border border-b-0 border-line bg-surface px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 [animation:sheet-in_.25s_ease-out]"
-      >
-        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-surface-2" />
-        <h2 className="mb-4 text-xl font-extrabold">{title}</h2>
+    <dialog
+      ref={ref}
+      className="sheet"
+      aria-labelledby={titleId}
+      {...({ closedby: 'any' } as object)}
+      onClose={() => openRef.current && onClose()}
+      onPointerDown={needsFallback ? (e) => { pressedOutside.current = outside(e) } : undefined}
+      onPointerUp={needsFallback ? (e) => { if (pressedOutside.current && outside(e)) e.currentTarget.close() } : undefined}
+    >
+      <div className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-surface-2" aria-hidden />
+        <h1 id={titleId} className="mb-4 text-xl font-extrabold">{title}</h1>
         {children}
       </div>
-    </div>
+    </dialog>
+  )
+}
+
+/** Último valor no nulo: mantiene el contenido visible mientras la hoja se anima al cerrarse. */
+export function useLatest<T>(value: T | null): T | null {
+  const last = useRef(value)
+  if (value !== null) last.current = value
+  return value ?? last.current
+}
+
+const ToastCtx = createContext<(text: string) => void>(() => {})
+export const useToast = () => useContext(ToastCtx)
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [msg, setMsg] = useState<{ id: number; text: string } | null>(null)
+  const timer = useRef<number>(undefined)
+  const show = useCallback((text: string) => {
+    window.clearTimeout(timer.current)
+    setMsg({ id: Date.now(), text })
+    timer.current = window.setTimeout(() => setMsg(null), 2600)
+  }, [])
+  return (
+    <ToastCtx.Provider value={show}>
+      {children}
+      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[104px] z-[60] flex justify-center px-4">
+        {msg && <div key={msg.id} className="toast rounded-full bg-white px-5 py-3 text-sm font-bold text-black shadow-xl">✓ {msg.text}</div>}
+      </div>
+    </ToastCtx.Provider>
   )
 }
 

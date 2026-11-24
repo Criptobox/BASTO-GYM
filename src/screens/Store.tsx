@@ -3,7 +3,8 @@ import { Dumbbell, Minus, Plus, Search, ShoppingBag } from 'lucide-react'
 import { useGym } from '../data/store'
 import { METHODS } from '../lib/domain'
 import { makeMoney } from '../lib/format'
-import { Button, Card, cx, inputCls, Pill, Screen, Segmented, Sheet } from '../components/ui'
+import { Button, Card, cx, inputCls, Pill, Screen, Segmented, Sheet, useToast } from '../components/ui'
+import { haptic } from '../lib/nav'
 import type { Method, Product } from '../lib/types'
 
 const CATS = ['Todo', 'Proteínas', 'Bebidas', 'Ropa', 'Accesorios'] as const
@@ -16,7 +17,7 @@ export function Store() {
   const [cart, setCart] = useState<Record<string, number>>({})
   const [open, setOpen] = useState(false)
   const [method, setMethod] = useState<Method>('efectivo')
-  const [ok, setOk] = useState(false)
+  const toast = useToast()
 
   const products = useMemo(
     () => g.products.filter((p) => (cat === 'Todo' || p.category === cat) && `${p.name} ${p.variant}`.toLowerCase().includes(q.trim().toLowerCase())),
@@ -35,8 +36,9 @@ export function Store() {
 
   function confirm() {
     g.sell(lines, method)
-    setCart({}); setOpen(false); setOk(true)
-    setTimeout(() => setOk(false), 2500)
+    haptic(); toast(`Venta registrada · ${money(total)}`)
+    setOpen(false)
+    setTimeout(() => setCart({}), 320) // deja terminar la animación de cierre con el contenido visible
   }
 
   return (
@@ -108,7 +110,6 @@ export function Store() {
           <Button block disabled={!g.shiftOpen} onClick={() => setOpen(true)}>Ver carrito ({count}) · {money(total)}</Button>
         </div>
       )}
-      {ok && <div role="status" className="fixed inset-x-0 bottom-[100px] z-50 mx-auto w-fit rounded-full bg-white px-5 py-3 text-sm font-bold text-black shadow-xl">✓ Venta registrada</div>}
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Carrito">
         <ul className="divide-y divide-line">

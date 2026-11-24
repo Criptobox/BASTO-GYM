@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BarChart3, ExternalLink, Package, Receipt, Settings, Users } from 'lucide-react'
 import { useGym } from '../data/store'
 import { cx } from '../components/ui'
+import { useRouteReset, useViewNavigate } from '../lib/nav'
 
 const items = [
   { to: '/admin', label: 'Resumen', Icon: BarChart3, end: true },
@@ -15,12 +16,14 @@ const items = [
 export function AdminLayout() {
   const { settings } = useGym()
   const { pathname } = useLocation()
+  const go = useViewNavigate()
+  useRouteReset()
   useEffect(() => {
     document.querySelector('[aria-label="Administración"] [aria-current="page"]')?.scrollIntoView({ inline: 'center', block: 'nearest' })
   }, [pathname])
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="border-b border-line bg-[#0f0f0f] lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
+      <aside className="vt-static border-b border-line bg-[#0f0f0f] lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="px-6 pt-6 lg:pt-8">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">Administrador</p>
           <p className="mt-1 text-2xl font-extrabold tracking-tight">{settings.gymName}</p>
@@ -29,6 +32,7 @@ export function AdminLayout() {
           {items.map(({ to, label, Icon, end }) => (
             <NavLink
               key={to} to={to} end={end}
+              onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); go(to) }}
               className={({ isActive }) =>
                 cx(
                   'flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition',
@@ -56,7 +60,7 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
+        <h1 tabIndex={-1} className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
       </div>
       {action}
     </header>

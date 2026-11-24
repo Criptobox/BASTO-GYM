@@ -4,18 +4,21 @@ import { formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import type { Client, Method } from '../lib/types'
 import { useGym } from '../data/store'
-import { Avatar, Button, Segmented, Sheet } from './ui'
+import { Avatar, Button, Segmented, Sheet, useLatest, useToast } from './ui'
+import { haptic } from '../lib/nav'
 import { renewalDate } from '../lib/domain'
 
-export function PaySheet({ client, onClose }: { client: Client | null; onClose: () => void }) {
+export function PaySheet({ client: current, onClose }: { client: Client | null; onClose: () => void }) {
   const g = useGym()
+  const toast = useToast()
+  const client = useLatest(current)
   const money = makeMoney(g.settings)
   const [method, setMethod] = useState<Method>('efectivo')
-  if (!client) return <Sheet open={false} onClose={onClose} title="">{null}</Sheet>
+  if (!client) return null
   const amount = g.settings.planPrices[client.plan]
   const next = renewalDate(client.nextDue, client.plan, g.today)
   return (
-    <Sheet open onClose={onClose} title="Registrar pago">
+    <Sheet open={!!current} onClose={onClose} title="Registrar pago">
       <div className="mb-5 flex items-center gap-3">
         <Avatar name={client.name} photo={client.photo} />
         <div>
@@ -30,7 +33,7 @@ export function PaySheet({ client, onClose }: { client: Client | null; onClose: 
       </div>
       <p className="mb-2 text-sm text-muted">Método de pago</p>
       <Segmented label="Método de pago" value={method} onChange={setMethod} options={METHODS} />
-      <Button block className="mt-6" onClick={() => { g.pay(client.id, method); onClose() }}>
+      <Button block className="mt-6" onClick={() => { g.pay(client.id, method); haptic(); toast(`Cobro registrado · ${client.name.split(' ')[0]}`); onClose() }}>
         Confirmar cobro
       </Button>
     </Sheet>

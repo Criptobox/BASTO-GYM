@@ -4,7 +4,8 @@ import { useGym } from '../data/store'
 import { METHODS, PLANS, whatsappLink } from '../lib/domain'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
-import { Button, Card, Field, inputCls, Screen, Segmented, Sheet } from '../components/ui'
+import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
+import { haptic } from '../lib/nav'
 import type { Client, Method, PlanId } from '../lib/types'
 import { blobToDataURL, CLIENT_PHOTO, toWebP } from '../lib/image'
 
@@ -20,6 +21,7 @@ export function Enroll() {
   const [method, setMethod] = useState<Method>('efectivo')
   const [done, setDone] = useState<Client | null>(null)
   const [touched, setTouched] = useState(false)
+  const shown = useLatest(done)
 
   const phoneOk = phone.replace(/\D/g, '').length >= 10
   const emailOk = email === '' || /^\S+@\S+\.\S+$/.test(email)
@@ -33,7 +35,7 @@ export function Enroll() {
     e.preventDefault()
     setTouched(true)
     if (!valid || !g.shiftOpen) return
-    setDone(g.enroll({ name, phone, email, plan, photo, method }))
+    setDone(g.enroll({ name, phone, email, plan, photo, method })); haptic()
   }
   function reset() {
     setDone(null); setName(''); setPhone(''); setEmail(''); setPhoto(undefined); setPlan('mes'); setTouched(false)
@@ -89,11 +91,11 @@ export function Enroll() {
       </form>
 
       <Sheet open={!!done} onClose={reset} title="¡Cliente inscrito!">
-        {done && (
+        {shown && (
           <>
-            <p className="text-muted"><b className="text-white">{done.name}</b> quedó inscrito con vigencia hasta el {formatDate(done.nextDue, g.settings.locale)}.</p>
+            <p className="text-muted"><b className="text-white">{shown.name}</b> quedó inscrito con vigencia hasta el {formatDate(shown.nextDue, g.settings.locale)}.</p>
             <a
-              href={whatsappLink(done.phone, g.settings.countryCode, `¡Bienvenido/a a ${g.settings.gymName}, ${done.name.split(' ')[0]}! Tu membresía está activa hasta el ${formatDate(done.nextDue, g.settings.locale)}. 💪`)}
+              href={whatsappLink(shown.phone, g.settings.countryCode, `¡Bienvenido/a a ${g.settings.gymName}, ${shown.name.split(' ')[0]}! Tu membresía está activa hasta el ${formatDate(shown.nextDue, g.settings.locale)}. 💪`)}
               target="_blank" rel="noreferrer"
               className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full border border-amber font-bold text-amber"
             >

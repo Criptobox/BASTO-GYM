@@ -14,21 +14,26 @@
   --color-ok: #4ade80;
 }
 
+html { color-scheme: dark; }
 html, body, #root { height: 100%; }
 body {
   background: var(--color-bg);
   color: #fff;
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums; /* los montos no bailan al cambiar */
   overscroll-behavior-y: none;
 }
 input, button, select { font: inherit; }
+button, a, input, select, label, summary { touch-action: manipulation; }
+h1, h2 { text-wrap: balance; }
+p { text-wrap: pretty; }
+h1:focus { outline: none; } /* foco programático al cambiar de pantalla */
 :focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@keyframes sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Tablas del admin: en móvil cada fila pasa a ser una tarjeta con etiquetas. */
 @media (max-width: 767px) {
@@ -47,4 +52,54 @@ input, button, select { font: inherit; }
     font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--color-faint);
   }
+}
+
+/* ---------- Hoja inferior: <dialog> nativo (top layer, Esc, foco y backdrop gratis) ---------- */
+dialog.sheet {
+  margin: auto auto 0; padding: 0; width: 100%; max-width: 430px; max-height: 88dvh;
+  border: 1px solid var(--color-line); border-bottom: 0; border-radius: 32px 32px 0 0;
+  background: var(--color-surface); color: #fff;
+  overflow-y: auto; overscroll-behavior: contain;
+  transform: translateY(100%);
+  transition-property: transform, display, overlay;
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  transition-behavior: allow-discrete;
+}
+dialog.sheet[open] {
+  transform: translateY(0);
+  @starting-style { transform: translateY(100%); }
+}
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0); overflow: hidden; overscroll-behavior: contain;
+  transition-property: background-color, display, overlay;
+  transition-duration: 0.3s; transition-timing-function: ease-out; transition-behavior: allow-discrete;
+}
+dialog.sheet[open]::backdrop {
+  background: rgb(0 0 0 / 0.7);
+  @starting-style { background: rgb(0 0 0 / 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.sheet { transform: none; opacity: 0; transition-property: opacity, display, overlay; transition-duration: 0.1s; }
+  dialog.sheet[open] { opacity: 1; @starting-style { opacity: 0; } }
+}
+
+/* ---------- Aviso de confirmación ---------- */
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } }
+.toast { animation: toast-in 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+/* ---------- Transiciones entre pantallas (View Transitions) ---------- */
+@keyframes vt-out-left { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes vt-in-right { from { opacity: 0; transform: translateX(28px); } }
+@keyframes vt-out-right { to { opacity: 0; transform: translateX(28px); } }
+@keyframes vt-in-left { from { opacity: 0; transform: translateX(-28px); } }
+::view-transition-group(root) { animation-duration: 0.22s; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+html:active-view-transition-type(forward)::view-transition-old(root) { animation-name: vt-out-left; }
+html:active-view-transition-type(forward)::view-transition-new(root) { animation-name: vt-in-right; }
+html:active-view-transition-type(backward)::view-transition-old(root) { animation-name: vt-out-right; }
+html:active-view-transition-type(backward)::view-transition-new(root) { animation-name: vt-in-left; }
+.vt-static { view-transition-name: static-chrome; } /* la barra de navegación no se desliza */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
