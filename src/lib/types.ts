@@ -5,11 +5,10 @@ export interface Client {
   id: string
   name: string
   phone: string
-  email: string
+  carnet: string // documento de identidad, normalizado (sin espacios ni guiones, en mayúsculas)
   plan: PlanId
   startDate: string // YYYY-MM-DD
   nextDue: string // YYYY-MM-DD
-  photo?: string // data URL
 }
 
 export interface Product {

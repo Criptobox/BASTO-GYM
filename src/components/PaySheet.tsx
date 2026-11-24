@@ -20,7 +20,7 @@ export function PaySheet({ client: current, onClose }: { client: Client | null; 
   return (
     <Sheet open={!!current} onClose={onClose} title="Registrar pago">
       <div className="mb-5 flex items-center gap-3">
-        <Avatar name={client.name} photo={client.photo} />
+        <Avatar name={client.name} />
         <div>
           <p className="font-bold">{client.name}</p>
           <p className="text-sm text-muted">{dueInfo(client.nextDue, g.today).text}</p>

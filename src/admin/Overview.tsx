@@ -52,7 +52,7 @@ export function Overview() {
           <ul className="mt-4 space-y-3">
             {soon.map((c) => (
               <li key={c.id} className="flex items-center gap-3">
-                <Avatar name={c.name} photo={c.photo} size={38} />
+                <Avatar name={c.name} size={38} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{c.name}</p>
                   <p className="text-xs text-muted">{dueInfo(c.nextDue, g.today).text}</p>

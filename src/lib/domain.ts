@@ -49,6 +49,15 @@ export function renewalDate(nextDue: string, plan: PlanId, today: string): strin
   return addPlan(base, plan)
 }
 
+/** Quita espacios, puntos y guiones y pasa a mayúsculas: "12.345-678 a" → "12345678A". */
+export const normalizeCarnet = (s: string) => s.replace(/[\s.\-]/g, '').toUpperCase()
+/** El formato del carnet varía por país: solo se exige que sea alfanumérico y de 5 a 15 caracteres. */
+export const isValidCarnet = (s: string) => /^[A-Z0-9]{5,15}$/.test(normalizeCarnet(s))
+export const findByCarnet = (clients: Client[], carnet: string) => {
+  const n = normalizeCarnet(carnet)
+  return clients.find((c) => c.carnet === n)
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase()

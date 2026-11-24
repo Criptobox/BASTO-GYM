@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { useGym } from '../data/store'
-import { dueInfo, pendingClients, summarize } from '../lib/domain'
+import { dueInfo, normalizeCarnet, pendingClients, summarize } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
 import { Avatar, Button, Card, inputCls, Pill, Screen } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
@@ -19,7 +19,11 @@ export function Home() {
   const list = useMemo(() => {
     const term = q.trim().toLowerCase()
     if (!term) return pendingClients(g.clients, g.today)
-    return g.clients.filter((c) => c.name.toLowerCase().includes(term) || c.phone.replace(/\D/g, '').includes(term.replace(/\D/g, '') || '§'))
+    const digits = term.replace(/\D/g, '')
+    const carnet = normalizeCarnet(term)
+    return g.clients.filter(
+      (c) => c.name.toLowerCase().includes(term) || (digits && c.phone.replace(/\D/g, '').includes(digits)) || (carnet.length >= 3 && c.carnet.includes(carnet)),
+    )
   }, [q, g.clients, g.today])
 
   return (
@@ -49,7 +53,7 @@ export function Home() {
         <Search size={18} aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint" />
         <input
           type="search" value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre o teléfono" aria-label="Buscar cliente"
+          placeholder="Nombre, carnet o teléfono" aria-label="Buscar cliente"
           className={`${inputCls} pl-11`}
         />
       </div>
@@ -64,7 +68,7 @@ export function Home() {
           return (
             <li key={c.id}>
               <Card className="flex items-center gap-3 !p-3.5">
-                <Avatar name={c.name} photo={c.photo} />
+                <Avatar name={c.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{c.name}</p>
                   <p className="text-sm text-muted">{info.text}</p>

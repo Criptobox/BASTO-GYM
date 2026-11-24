@@ -1,74 +1,55 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { Camera } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
-import { METHODS, PLANS, whatsappLink } from '../lib/domain'
+import { METHODS, PLANS, findByCarnet, isValidCarnet, whatsappLink } from '../lib/domain'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
 import { haptic } from '../lib/nav'
 import type { Client, Method, PlanId } from '../lib/types'
-import { blobToDataURL, CLIENT_PHOTO, toWebP } from '../lib/image'
 
 export function Enroll() {
   const g = useGym()
   const money = makeMoney(g.settings)
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [photo, setPhoto] = useState<string>()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [carnet, setCarnet] = useState('')
   const [plan, setPlan] = useState<PlanId>('mes')
   const [method, setMethod] = useState<Method>('efectivo')
   const [done, setDone] = useState<Client | null>(null)
   const [touched, setTouched] = useState(false)
   const shown = useLatest(done)
 
-  const phoneOk = phone.replace(/\D/g, '').length >= 10
-  const emailOk = email === '' || /^\S+@\S+\.\S+$/.test(email)
-  const valid = name.trim().length >= 3 && phoneOk && emailOk
+  const phoneOk = phone.replace(/\D/g, '').length >= 7
+  const carnetOk = isValidCarnet(carnet)
+  const duplicate = carnetOk ? findByCarnet(g.clients, carnet) : undefined
+  const valid = name.trim().length >= 3 && carnetOk && !duplicate && phoneOk
   const next = addPlan(g.today, plan)
 
-  async function onFile(f?: File) {
-    if (f) try { setPhoto(await blobToDataURL(await toWebP(f, CLIENT_PHOTO))) } catch { /* imagen inválida: se ignora */ }
-  }
   function submit(e: FormEvent) {
     e.preventDefault()
     setTouched(true)
     if (!valid || !g.shiftOpen) return
-    setDone(g.enroll({ name, phone, email, plan, photo, method })); haptic()
+    setDone(g.enroll({ name, phone, carnet, plan, method })); haptic()
   }
   function reset() {
-    setDone(null); setName(''); setPhone(''); setEmail(''); setPhoto(undefined); setPlan('mes'); setTouched(false)
+    setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false)
   }
   const err = (bad: boolean, msg: string) => touched && bad && msg
 
   return (
     <Screen eyebrow="Recepción" title="Nuevo cliente">
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <button
-          type="button" onClick={() => fileRef.current?.click()}
-          className="flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-4 text-left active:scale-[0.99]"
-        >
-          {photo ? (
-            <img src={photo} alt="Foto del cliente" className="size-16 rounded-full object-cover" />
-          ) : (
-            <span className="grid size-16 place-items-center rounded-full bg-surface-2 text-amber"><Camera size={26} aria-hidden /></span>
-          )}
-          <span>
-            <span className="block font-bold">Foto del cliente</span>
-            <span className="text-sm text-muted">{photo ? 'Toca para cambiarla' : 'Toca para tomar foto'}</span>
-          </span>
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-
         <Field label="Nombre completo" error={err(name.trim().length < 3, 'Escribe el nombre completo.')}>
-          <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" placeholder="Ej. María Fernanda López" />
+          <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" autoCapitalize="words" placeholder="Nombre y apellidos" />
         </Field>
-        <Field label="Teléfono (WhatsApp)" error={err(!phoneOk, 'Ingresa un teléfono de 10 dígitos.')}>
-          <input className={inputCls} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="55 1234 5678" />
+        <Field
+          label="Carnet"
+          error={err(!carnetOk || !!duplicate, duplicate ? `Ya está inscrito: ${duplicate.name}.` : 'Escribe el carnet (5 a 15 letras o números).')}
+        >
+          <input className={inputCls} value={carnet} onChange={(e) => setCarnet(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="Número de carnet" />
         </Field>
-        <Field label="Correo (opcional)" error={err(!emailOk, 'El correo no parece válido.')}>
-          <input className={inputCls} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" />
+        <Field label="Teléfono (WhatsApp)" error={err(!phoneOk, 'Ingresa un teléfono válido.')}>
+          <input className={inputCls} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" placeholder="Número de teléfono" />
         </Field>
 
         <div>

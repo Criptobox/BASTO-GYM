@@ -38,7 +38,7 @@ export function Payments() {
             <li key={c.id}>
               <Card className="!p-3.5">
                 <div className="flex items-center gap-3">
-                  <Avatar name={c.name} photo={c.photo} />
+                  <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{c.name}</p>
                     <p className="text-sm text-muted">{info.text}</p>
@@ -61,7 +61,7 @@ export function Payments() {
         {upToDate.map((c) => (
           <li key={c.id}>
             <Card className="flex items-center gap-3 !p-3.5">
-              <Avatar name={c.name} photo={c.photo} />
+              <Avatar name={c.name} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{c.name}</p>
                 <p className="text-sm text-muted">{dueInfo(c.nextDue, g.today).text}</p>
@@ -81,7 +81,7 @@ export function Payments() {
           {pending.map((c) => (
             <li key={c.id}>
               <a href={wa(c)} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-2xl border border-line bg-surface-2 p-3 active:scale-[0.98]">
-                <Avatar name={c.name} photo={c.photo} size={40} />
+                <Avatar name={c.name} size={40} />
                 <span className="flex-1 font-semibold">{c.name}</span>
                 <MessageCircle size={20} className="text-amber" aria-hidden />
               </a>

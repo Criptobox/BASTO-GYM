@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
-import { cashDifference, dueInfo, pendingClients, renewalDate, summarize, whatsappLink } from './domain'
+import { cashDifference, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, renewalDate, summarize, whatsappLink } from './domain'
 import type { Client, Movement } from './types'
 
 describe('fechas', () => {
@@ -58,5 +58,23 @@ describe('whatsapp', () => {
   it('agrega el prefijo de país una sola vez', () => {
     expect(whatsappLink('55 1234 5678', '52', 'hola')).toBe('https://wa.me/525512345678?text=hola')
     expect(whatsappLink('+52 55 1234 5678', '52', 'hola')).toBe('https://wa.me/525512345678?text=hola')
+  })
+})
+
+describe('carnet', () => {
+  it('normaliza espacios, puntos y guiones', () => {
+    expect(normalizeCarnet(' 12.345-678 a ')).toBe('12345678A')
+  })
+  it('valida longitud y caracteres', () => {
+    expect(isValidCarnet('90010112345')).toBe(true)
+    expect(isValidCarnet('1234')).toBe(false)
+    expect(isValidCarnet('1234567890123456')).toBe(false)
+    expect(isValidCarnet('12 34$5')).toBe(false)
+    expect(isValidCarnet('')).toBe(false)
+  })
+  it('detecta duplicados aunque cambie el formato', () => {
+    const cs = [{ id: 'a', carnet: '12345678A' }] as Client[]
+    expect(findByCarnet(cs, '12.345-678 a')?.id).toBe('a')
+    expect(findByCarnet(cs, '99999')).toBeUndefined()
   })
 })

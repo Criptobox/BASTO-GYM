@@ -11,7 +11,6 @@ export interface WebPOptions {
 }
 
 export const PRODUCT_PHOTO: WebPOptions = { maxSide: 800, quality: 0.8 }
-export const CLIENT_PHOTO: WebPOptions = { maxSide: 320, quality: 0.8 }
 
 export function fitSize(w: number, h: number, maxSide: number) {
   const s = Math.min(1, maxSide / Math.max(w, h))

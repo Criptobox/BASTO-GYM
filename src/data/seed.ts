@@ -15,15 +15,15 @@ export const defaultSettings: Settings = {
 
 export function seedClients(): Client[] {
   const t = today()
-  const mk = (id: string, name: string, phone: string, nextDue: string, plan: Client['plan'] = 'mes'): Client => ({
-    id, name, phone, email: '', plan, startDate: addDays(nextDue, -30), nextDue,
+  const mk = (id: string, name: string, phone: string, carnet: string, nextDue: string, plan: Client['plan'] = 'mes'): Client => ({
+    id, name, phone, carnet, plan, startDate: addDays(nextDue, -30), nextDue,
   })
   return [
-    mk('c1', 'Carlos Ramírez', '55 1111 2222', addDays(t, -5)),
-    mk('c2', 'Ana García', '55 3333 4444', addDays(t, -2)),
-    mk('c3', 'Luis Martínez', '55 5555 6666', t),
-    mk('c4', 'Sofía Pérez', '55 7777 8888', addDays(t, 26)),
-    mk('c5', 'Jorge Hernández', '55 9999 0000', addDays(t, 12), 'anio'),
+    mk('c1', 'Carlos Ramírez', '55 1111 2222', '90010112345', addDays(t, -5)),
+    mk('c2', 'Ana García', '55 3333 4444', '92051223456', addDays(t, -2)),
+    mk('c3', 'Luis Martínez', '55 5555 6666', '88123034567', t),
+    mk('c4', 'Sofía Pérez', '55 7777 8888', '95032145678', addDays(t, 26)),
+    mk('c5', 'Jorge Hernández', '55 9999 0000', '85070756789', addDays(t, 12), 'anio'),
   ]
 }
 

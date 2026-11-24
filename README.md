@@ -18,7 +18,7 @@ npm run build    # typecheck + build PWA
 Moneda, país y precios de planes: `src/data/seed.ts` (`defaultSettings`).
 
 ## Fotos (WebP + GitHub)
-- **Productos → GitHub** (rama `media`, servidas por jsDelivr). **Clientes → Supabase** (son datos personales; nunca en un repo).
+- Solo hay fotos de **productos** → GitHub (rama `media`, servidas por jsDelivr). Los clientes no llevan foto: solo nombre, carnet y teléfono.
 - El navegador convierte a **WebP** antes de subir (`src/lib/image.ts`; en Safari usa un módulo WASM de respaldo). El JPG original no se sube ni se guarda.
 - Subir a GitHub desde el navegador expondría el token, así que lo hace la función `supabase/functions/upload-image`:
   solo acepta WebP reales (≤ 300 KB), solo en `products/`, y solo del usuario con `app_metadata.role = "admin"`.
@@ -30,6 +30,6 @@ Moneda, país y precios de planes: `src/data/seed.ts` (`defaultSettings`).
 3. `supabase secrets set GITHUB_TOKEN=... GITHUB_REPO=criptobox/basto-gym ALLOWED_ORIGIN=https://tu-dominio`
 4. `supabase functions deploy upload-image`
 5. Poner la URL de la función en `.env` → `VITE_MEDIA_UPLOAD_URL` (ver `.env.example`).
-6. jsDelivr solo sirve repos **públicos**: está bien para fotos de productos, no para fotos de clientes.
+6. jsDelivr solo sirve repos **públicos**: está bien para fotos de productos. Nunca subas datos de clientes a un repo.
 
 Sin `VITE_MEDIA_UPLOAD_URL` (desarrollo) las fotos se guardan localmente como data URL.

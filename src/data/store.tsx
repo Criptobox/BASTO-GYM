@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
-import { renewalDate, summarize } from '../lib/domain'
+import { normalizeCarnet, renewalDate, summarize } from '../lib/domain'
 import type { Client, Method, Movement, PlanId, Product, Settings, Shift } from '../lib/types'
 import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, today } from './seed'
 
@@ -26,7 +26,7 @@ type Action =
   | { type: 'updateProduct'; id: string; patch: Partial<Product> }
   | { type: 'setSettings'; patch: Partial<Settings> }
 
-const KEY = 'basto-gym:v2'
+const KEY = 'basto-gym:v3'
 
 function initial(): State {
   try {
@@ -87,7 +87,7 @@ interface Api extends State {
   shift: Shift // turno actual (abierto o recién cerrado)
   shiftOpen: boolean
   shiftMovements: Movement[]
-  enroll(input: { name: string; phone: string; email: string; plan: PlanId; photo?: string; method: Method }): Client
+  enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; method: Method }): Client
   pay(clientId: string, method: Method): void
   sell(items: { product: Product; qty: number }[], method: Method): void
   closeShift(countedCash: number): void
@@ -126,11 +126,11 @@ export function GymProvider({ children }: { children: ReactNode }) {
     shift,
     shiftOpen,
     shiftMovements,
-    enroll({ name, phone, email, plan, photo, method }) {
+    enroll({ name, phone, carnet, plan, method }) {
       const t = today()
       const client: Client = {
-        id: crypto.randomUUID(), name: name.trim(), phone: phone.trim(), email: email.trim(),
-        plan, startDate: t, nextDue: renewalDate(t, plan, t), photo,
+        id: crypto.randomUUID(), name: name.trim(), phone: phone.trim(), carnet: normalizeCarnet(carnet),
+        plan, startDate: t, nextDue: renewalDate(t, plan, t),
       }
       dispatch({
         type: 'enroll', client,
