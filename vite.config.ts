@@ -7,12 +7,21 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 export default defineConfig(({ mode }) => ({
   // La demo publicada vive en una ruta cualquiera y no admite service workers.
   base: mode === 'artifact' ? './' : (process.env.BASE_PATH ?? '/'),
-  resolve: mode === 'artifact' ? { alias: { '@jsquash/webp': new URL('./src/lib/webp-stub.ts', import.meta.url).pathname } } : {},
+  resolve: {
+    alias: {
+      // La demo (un solo archivo) reúne recepción y administración; la app real solo lleva la recepción.
+      '@entry': new URL(mode === 'artifact' ? './src/DemoApp.tsx' : './src/WorkerApp.tsx', import.meta.url).pathname,
+      ...(mode === 'artifact' ? { '@jsquash/webp': new URL('./src/lib/webp-stub.ts', import.meta.url).pathname } : {}),
+    },
+  },
+  // Dos páginas: index.html (recepción) y admin.html (administración), cada una con su propio JS.
+  build: mode === 'artifact' ? {} : { rollupOptions: { input: { main: new URL('./index.html', import.meta.url).pathname, admin: new URL('./admin.html', import.meta.url).pathname } } },
   plugins: [
     react(),
     tailwindcss(),
     ...(mode === 'artifact' ? [viteSingleFile()] : [VitePWA({
       registerType: 'autoUpdate',
+      workbox: { navigateFallbackDenylist: [/admin\.html$/] },
       manifest: {
         name: 'BASTO GYM',
         short_name: 'BASTO GYM',

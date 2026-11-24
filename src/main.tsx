@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App'
+import App from '@entry' // WorkerApp (recepción); en la demo, DemoApp
 import './index.css'
 import { applyTheme, readTheme } from './lib/theme'
 

@@ -1,55 +1,16 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Delete } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
-import { Avatar, Button, Field, inputCls } from '../components/ui'
+import { Avatar } from '../components/ui'
 import { LogoMark, type LogoState } from '../components/Logo'
 import { isValidPin } from '../lib/pin'
 import { haptic } from '../lib/nav'
 import { DEMO, DEMO_LOGINS } from '../data/demo'
+import { adminUrl } from '../app/shared'
 import type { Worker } from '../lib/types'
 
 const home = (role: Worker['role']) => (role === 'admin' ? '/admin' : '/')
-
-/** Primer uso: el administrador crea su clave. Así no existen claves de fábrica. */
-function Setup() {
-  const g = useGym()
-  const nav = useNavigate()
-  const [name, setName] = useState('Administrador')
-  const [pin, setPin] = useState('')
-  const [pin2, setPin2] = useState('')
-  const [touched, setTouched] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const nameOk = name.trim().length >= 3
-  const ok = nameOk && isValidPin(pin) && pin === pin2
-
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setTouched(true)
-    if (!ok || busy) return
-    setBusy(true); setError('')
-    try { await g.setupAdmin(name, pin); nav('/admin', { replace: true }) }
-    catch (err) { setError(err instanceof Error ? err.message : 'No se pudo crear la clave.') }
-    finally { setBusy(false) }
-  }
-  return (
-    <form onSubmit={submit} noValidate className="space-y-4">
-      <h1 tabIndex={-1} className="text-3xl font-extrabold tracking-tight">Bienvenido</h1>
-      <p className="text-muted">Crea la clave del administrador. Con ella entrarás al panel y podrás dar su clave a cada trabajador.</p>
-      <Field label="Tu nombre" error={touched && !nameOk && 'Escribe tu nombre.'}>
-        <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
-      </Field>
-      <Field label="Clave (4 a 6 números)" error={touched && !isValidPin(pin) && 'Usa de 4 a 6 números.'}>
-        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin} maxLength={6} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
-      </Field>
-      <Field label="Repite la clave" error={touched && isValidPin(pin) && pin !== pin2 && 'No coinciden.'}>
-        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin2} maxLength={6} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} />
-      </Field>
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      <Button type="submit" block disabled={busy}>{busy ? 'Creando…' : 'Crear y entrar'}</Button>
-    </form>
-  )
-}
 
 function message(r: Extract<LoginResult, { ok: false }>): string {
   switch (r.reason) {
@@ -64,7 +25,7 @@ function message(r: Extract<LoginResult, { ok: false }>): string {
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 
-function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () => void; onLogoState: (s: LogoState) => void }) {
+export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () => void; onLogoState: (s: LogoState) => void }) {
   const g = useGym()
   const nav = useNavigate()
   const [pin, setPin] = useState('')
@@ -141,11 +102,58 @@ function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () =
   )
 }
 
-/**
- * Dos entradas separadas: `/login` es solo para trabajadores; la administración entra por `/admin/acceso`,
- * a la que se llega con 3 toques seguidos en el logo (no hay ningún botón a la vista).
- */
-export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
+/** Marco común de las pantallas de acceso: logo, nombre del gimnasio y el logo enorme y translúcido de fondo. */
+export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebrow: string; logoState: LogoState; onLogoTap?: () => void; children: ReactNode }) {
+  const g = useGym()
+  return (
+    <div className="relative min-h-dvh overflow-hidden">
+      {/* Logo enorme y casi transparente de fondo: decorativo */}
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
+        <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
+      </div>
+      <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+        <div className="mb-8 flex items-center gap-4">
+          <div onClick={onLogoTap} className="select-none"><LogoMark size={72} state={logoState} /></div>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
+            <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
+          </div>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** Una pesa por trabajador: discos a los lados y la barra en medio con su nombre. */
+function DumbbellCard({ worker, onPick }: { worker: Worker; onPick: () => void }) {
+  const locked = !worker.pinHash
+  const plate = (h: string, w = 'w-3.5') => <span aria-hidden className={`${h} ${w} shrink-0 rounded-md ${locked ? 'bg-surface-2' : 'bg-gold'}`} />
+  const side = (flip: boolean) => (
+    <span aria-hidden className={`flex shrink-0 items-center gap-1 ${flip ? 'flex-row-reverse' : ''}`}>
+      {plate('h-[4.5rem]')}{plate('h-14')}<span className={`h-4 w-2 shrink-0 rounded-sm ${locked ? 'bg-line' : 'bg-line'}`} />
+    </span>
+  )
+  return (
+    <button
+      onClick={onPick} disabled={locked}
+      className="flex w-full items-center transition active:scale-[0.98] disabled:opacity-55"
+    >
+      {side(false)}
+      <span className="relative flex min-w-0 flex-1 items-center gap-4 rounded-xl border border-line surface-card px-4 py-4 text-left">
+        <Avatar name={worker.name} size={48} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-lg font-extrabold">{worker.name}</span>
+          <span className="text-sm text-muted">{locked ? 'Sin clave: pídesela al administrador' : 'Toca para entrar'}</span>
+        </span>
+      </span>
+      {side(true)}
+    </button>
+  )
+}
+
+/** Acceso de trabajadores. La administración entra por otra página (admin.html), con 3 toques seguidos en el logo. */
+export function Login() {
   const g = useGym()
   const nav = useNavigate()
   const [picked, setPicked] = useState<Worker | null>(null)
@@ -153,59 +161,30 @@ export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
   const taps = useRef<number[]>([])
   if (g.session) return <Navigate to={home(g.session.role)} replace />
 
-  const admin = mode === 'admin'
-  const people = g.workers
-    .filter((w) => w.active && (w.role === 'admin') === admin)
-    .sort((a, b) => a.name.localeCompare(b.name))
-  const only = admin && people.length === 1 ? people[0] : null
-  const who = picked ?? only
+  const people = g.workers.filter((w) => w.active && w.role === 'worker').sort((a, b) => a.name.localeCompare(b.name))
   const logoTap = () => {
-    if (admin) return
     const now = Date.now()
     taps.current = [...taps.current.filter((t) => now - t < 1500), now]
-    if (taps.current.length >= 3) { taps.current = []; nav('/admin/acceso') }
+    if (taps.current.length < 3) return
+    taps.current = []
+    if (DEMO) nav('/admin/acceso') // la demo es un solo archivo: no hay otra página
+    else window.location.assign(adminUrl)
   }
   return (
-    <div className="relative min-h-dvh overflow-hidden">
-     {/* Logo enorme y casi transparente de fondo: decorativo */}
-     <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
-       <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
-     </div>
-     <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="mb-8 flex items-center gap-4">
-        <div onClick={logoTap} className="select-none"><LogoMark size={72} state={logoState} /></div>
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{admin ? 'Administración' : 'Acceso'}</p>
-          <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
-        </div>
-      </div>
-
+    <LoginShell eyebrow="Acceso" logoState={logoState} onLogoTap={logoTap}>
       {g.needsSetup ? (
-        admin ? <Setup /> : (
-          <div className="rounded-3xl border border-amber/50 bg-surface p-5">
-            <h1 tabIndex={-1} className="mb-1 text-2xl font-extrabold tracking-tight">Falta configurar la app</h1>
-            <p className="text-muted">Todavía no hay cuentas. El administrador debe entrar primero y crear su clave y las de los trabajadores.</p>
-          </div>
-        )
-      ) : who ? <PinStep worker={who} onBack={() => (only ? nav('/login') : setPicked(null))} onLogoState={setLogoState} /> : (
+        <div className="rounded-3xl border border-amber/50 bg-surface p-5">
+          <h1 tabIndex={-1} className="mb-1 text-2xl font-extrabold tracking-tight">Falta configurar la app</h1>
+          <p className="text-muted">Todavía no hay cuentas. El administrador debe entrar primero y crear las claves de los trabajadores.</p>
+        </div>
+      ) : picked ? (
+        <PinStep worker={picked} onBack={() => setPicked(null)} onLogoState={setLogoState} />
+      ) : (
         <>
-          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">{admin ? 'Administración' : '¿Quién eres?'}</h1>
-          <p className="mb-5 text-muted">{admin ? 'Elige tu cuenta de administrador.' : 'Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.'}</p>
-          <ul className="space-y-3">
-            {people.map((w) => (
-              <li key={w.id}>
-                <button
-                  onClick={() => setPicked(w)} disabled={!w.pinHash}
-                  className="flex w-full items-center gap-4 rounded-3xl border border-line surface-card p-4 text-left transition active:scale-[0.98] disabled:opacity-50"
-                >
-                  <Avatar name={w.name} size={48} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{w.name}</span>
-                    <span className="text-sm text-muted">{!w.pinHash ? 'Sin clave: pídesela al administrador' : w.role === 'admin' ? 'Administración' : 'Trabajador'}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
+          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres?</h1>
+          <p className="mb-6 text-muted">Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.</p>
+          <ul className="space-y-4">
+            {people.map((w) => <li key={w.id}><DumbbellCard worker={w} onPick={() => setPicked(w)} /></li>)}
             {people.length === 0 && <li className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">Todavía no hay trabajadores. Pídele al administrador que los agregue.</li>}
           </ul>
           {DEMO && (
@@ -213,14 +192,13 @@ export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
               <p className="mb-1 font-bold text-amber">Modo demostración</p>
               <p className="mb-2 text-muted">Datos de ejemplo. Claves de prueba:</p>
               <ul className="space-y-0.5">
-                {DEMO_LOGINS.filter((d) => (d.name === 'Admin' || d.name === 'Administrador') === admin).map((d) => <li key={d.name}><b>{d.name}</b> · <span className="tabular-nums">{d.pin}</span></li>)}
+                {DEMO_LOGINS.filter((d) => d.name !== 'Administrador').map((d) => <li key={d.name}><b>{d.name}</b> · <span className="tabular-nums">{d.pin}</span></li>)}
               </ul>
-              {!admin && <p className="mt-2 text-muted">Administrador: toca 3 veces seguidas el logo.</p>}
+              <p className="mt-2 text-muted">Administrador (clave 9999): toca 3 veces seguidas el logo.</p>
             </aside>
           )}
         </>
       )}
-     </div>
-    </div>
+    </LoginShell>
   )
 }
