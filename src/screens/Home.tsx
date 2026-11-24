@@ -9,6 +9,7 @@ import { PaySheet } from '../components/PaySheet'
 import { accentFor, DuePill } from './Payments'
 import { ClientSheet } from '../components/ClientDetail'
 import { StatusPill } from '../components/ClientStatus'
+import { AlertedTag } from '../components/Alert'
 import { RateForm } from '../components/Payment'
 import { CashOutSheet, OpenShiftSheet } from '../components/Cash'
 import type { Client } from '../lib/types'
@@ -128,7 +129,7 @@ export function Home() {
                   <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{c.name}</p>
-                    <div className="mt-1">{isFrozen(c) ? <StatusPill client={c} today={g.today} /> : <DuePill info={info} />}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">{isFrozen(c) ? <StatusPill client={c} today={g.today} /> : <DuePill info={info} />}<AlertedTag client={c} /></div>
                   </div>
                 </button>
                 {!isFrozen(c) && (due || q) ? (

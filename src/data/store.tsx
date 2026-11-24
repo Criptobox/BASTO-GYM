@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
-import { isFrozen, normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, unfreezeDue, type ChangeInput, type PartInput, type ShiftSummary } from '../lib/domain'
+import { dueInfo, isFrozen, normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, unfreezeDue, type ChangeInput, type PartInput, type ShiftSummary } from '../lib/domain'
 import { attemptsLeft, failLock, hashPin, randomSalt, secondsLeft, verifyPin, type LockState } from '../lib/pin'
-import type { CashOut, Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
-import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
+import type { AlertLog, CashOut, Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
+import { defaultSettings, newShift, seedAlerts, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
 
 /**
  * Estado local persistido en localStorage. Todas las escrituras pasan por las
@@ -21,6 +21,7 @@ interface State {
   shifts: Shift[]
   workers: Worker[]
   cashOuts: CashOut[]
+  alerts: AlertLog[]
 }
 
 type Action =
@@ -31,13 +32,14 @@ type Action =
   | { type: 'openShift'; shift: Shift }
   | { type: 'addCashOut'; out: CashOut }
   | { type: 'updateClient'; id: string; patch: Partial<Client> }
+  | { type: 'logAlert'; alert: AlertLog }
   | { type: 'addProduct'; product: Product }
   | { type: 'updateProduct'; id: string; patch: Partial<Product> }
   | { type: 'setSettings'; patch: Partial<Settings> }
   | { type: 'addWorker'; worker: Worker }
   | { type: 'updateWorker'; id: string; patch: Partial<Worker> }
 
-const KEY = 'basto-gym:v7'
+const KEY = 'basto-gym:v8'
 const SESSION_KEY = 'basto-gym:session'
 const LOCK_KEY = 'basto-gym:locks'
 
@@ -54,6 +56,7 @@ function initial(): State {
     shifts: seedHistory().shifts,
     workers: seedWorkers(),
     cashOuts: seedHistory().cashOuts,
+    alerts: seedAlerts(),
   }
 }
 
@@ -87,6 +90,8 @@ function reducer(s: State, a: Action): State {
       }
     case 'openShift':
       return { ...s, shifts: [a.shift, ...s.shifts] }
+    case 'logAlert':
+      return { ...s, alerts: [a.alert, ...s.alerts] }
     case 'updateClient':
       return { ...s, clients: s.clients.map((c) => (c.id === a.id ? { ...c, ...a.patch } : c)) }
     case 'addCashOut':
@@ -159,6 +164,8 @@ interface Api extends State {
   enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; parts: PartInput[]; change?: ChangeInput }): { client: Client; movement: Movement } | null
   pay(clientId: string, parts: PartInput[], change?: ChangeInput): Movement | null
   sell(items: { product: Product; qty: number }[], parts: PartInput[], change?: ChangeInput): Movement | null
+  /** Registra que se avisó de un cobro a este cliente (al abrir su mensaje de WhatsApp). */
+  logAlert(clientId: string): void
   /** Edita nombre, teléfono o plan (el carnet no cambia: es la identidad). */
   updateClient(id: string, patch: { name?: string; phone?: string; plan?: PlanId }): boolean
   /** Congela la membresía desde hoy: no se cobra ni se avisa. */
@@ -319,6 +326,13 @@ export function GymProvider({ children }: { children: ReactNode }) {
       const movement = mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, parts: pay.parts, change: pay.change })
       dispatch({ type: 'sell', items: items.map((i) => ({ id: i.product.id, qty: i.qty })), movement })
       return movement
+    },
+    logAlert(clientId) {
+      const c = state.clients.find((x) => x.id === clientId)
+      if (!session || !c || isFrozen(c)) return
+      const st = dueInfo(c.nextDue, today()).state
+      if (st === 'aldia') return // solo se avisa de lo vencido, lo de hoy y lo próximo
+      dispatch({ type: 'logAlert', alert: { id: crypto.randomUUID(), clientId, at: new Date().toISOString(), state: st, worker: session.name, workerId: session.id } })
     },
     updateClient(id, patch) {
       if (!session) return false

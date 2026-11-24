@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
 import { receiptText } from './receipt'
-import { cashDifference, frozenDays, isFrozen, unfreezeDue, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
-import type { CashOut, Client, Movement } from './types'
+import { alertToday, clientAlerts, reminderMessage, upcomingClients, type DueInfo, cashDifference, frozenDays, isFrozen, unfreezeDue, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
+import type { AlertLog, CashOut, Client, Movement } from './types'
 
 describe('fechas', () => {
   it('no desborda meses cortos', () => {
@@ -229,5 +229,38 @@ describe('recibo', () => {
     expect(txt).toContain('120 MN (tarjeta)')
     expect(txt).not.toContain('Cliente:')
     expect(txt).not.toContain('Vence:')
+  })
+})
+
+describe('avisos de cobro', () => {
+  const today = '2026-11-24'
+  const cs = [
+    { id: 'vencido', nextDue: '2026-11-20' },
+    { id: 'hoy', nextDue: '2026-11-24' },
+    { id: 'manana', nextDue: '2026-11-25' },
+    { id: 'tres', nextDue: '2026-11-27' },
+    { id: 'cuatro', nextDue: '2026-11-28' },
+    { id: 'congelado', nextDue: '2026-11-25', frozenAt: '2026-11-22' },
+  ] as Client[]
+  it('lista a quienes vencen en los próximos 3 días, sin hoy, vencidos ni congelados', () => {
+    expect(upcomingClients(cs, today).map((c) => c.id)).toEqual(['manana', 'tres'])
+  })
+  it('sabe si ya se avisó hoy (y no confunde otro día u otro cliente)', () => {
+    const at = (iso: string) => new Date(iso).toISOString()
+    const alerts = [
+      { id: '1', clientId: 'a', at: at('2026-11-24T09:00:00'), state: 'hoy' },
+      { id: '2', clientId: 'a', at: at('2026-11-23T09:00:00'), state: 'vencido' },
+      { id: '3', clientId: 'b', at: at('2026-11-23T20:00:00'), state: 'vencido' },
+    ] as AlertLog[]
+    expect(alertToday(alerts, 'a', today)?.id).toBe('1')
+    expect(alertToday(alerts, 'b', today)).toBeUndefined()
+    expect(clientAlerts(alerts, 'a').map((x) => x.id)).toEqual(['1', '2'])
+  })
+  it('el mensaje cambia según la urgencia', () => {
+    const info = (state: 'vencido' | 'hoy' | 'pronto', days: number) => ({ state, days, text: '' }) as DueInfo
+    expect(reminderMessage('Ana García', info('vencido', -2), 'BASTO GYM')).toContain('ya venció')
+    expect(reminderMessage('Ana García', info('hoy', 0), 'BASTO GYM')).toContain('vence hoy')
+    expect(reminderMessage('Ana García', info('pronto', 1), 'BASTO GYM')).toContain('vence mañana')
+    expect(reminderMessage('Ana García', info('pronto', 3), 'BASTO GYM')).toContain('vence en 3 días')
   })
 })

@@ -82,6 +82,17 @@ export interface Shift {
   expectedUSD?: number
 }
 
+/** Aviso de cobro enviado a un cliente (se registra al abrir el mensaje de WhatsApp). */
+export interface AlertLog {
+  id: string
+  clientId: string
+  at: string // ISO datetime
+  /** Urgencia en el momento del aviso. */
+  state: 'vencido' | 'hoy' | 'pronto'
+  workerId?: string
+  worker?: string
+}
+
 /** Salida de efectivo de la caja durante un turno: un gasto del local o un retiro. */
 export interface CashOut {
   id: string

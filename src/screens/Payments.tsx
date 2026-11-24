@@ -1,35 +1,91 @@
 import { useState } from 'react'
-import { BellRing, MessageCircle } from 'lucide-react'
+import { BellRing, Check, MessageCircle } from 'lucide-react'
 import { useGym } from '../data/store'
-import { PLANS, dueInfo, pendingClients, reminderMessage, whatsappLink, type DueInfo } from '../lib/domain'
+import { alertToday, dueInfo, isFrozen, pendingClients, upcomingClients, type DueInfo } from '../lib/domain'
 import { formatTime, makeMoney } from '../lib/format'
+import { formatShortDate } from '../lib/dates'
 import { Avatar, Button, Card, Pill, Screen, Sheet } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
+import { ClientSheet } from '../components/ClientDetail'
+import { StatusPill } from '../components/ClientStatus'
+import { AlertButton, AlertedTag, useAlertLink } from '../components/Alert'
 import type { Client } from '../lib/types'
 
-/** Estado de cobro en una pastilla: rojo si ya venció, dorado si vence hoy. */
+/** Estado de cobro en una pastilla: rojo si ya venció, dorado si vence hoy o pronto. */
 export function DuePill({ info }: { info: DueInfo }) {
   if (info.state === 'vencido') return <Pill tone="danger">Vencido · {-info.days} {info.days === -1 ? 'día' : 'días'}</Pill>
   if (info.state === 'hoy') return <Pill tone="amber">Vence hoy</Pill>
+  if (info.state === 'pronto') return <Pill tone="amber">{info.days === 1 ? 'Vence mañana' : `En ${info.days} días`}</Pill>
   return <Pill>Al día</Pill>
 }
 export const accentFor = (info: DueInfo) => (info.state === 'vencido' ? 'danger' : info.state === 'hoy' ? 'gold' : undefined)
 
+function Heading({ children, count }: { children: string; count: number }) {
+  return (
+    <h2 className="mb-2 mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">
+      {children} <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-muted">{count}</span>
+    </h2>
+  )
+}
+
 export function Payments() {
   const g = useGym()
+  const money = makeMoney(g.settings)
+  const { message, href } = useAlertLink()
   const [paying, setPaying] = useState<Client | null>(null)
+  const [detail, setDetail] = useState<string | null>(null)
   const [bulk, setBulk] = useState(false)
+
   const pending = pendingClients(g.clients, g.today)
+  const upcoming = upcomingClients(g.clients, g.today)
+  const frozen = g.clients.filter(isFrozen)
+  const upToDate = g.clients.filter((c) => !isFrozen(c) && !pending.includes(c) && !upcoming.includes(c))
   const overdue = pending.filter((c) => dueInfo(c.nextDue, g.today).state === 'vencido').length
   const dueToday = pending.length - overdue
-  const upToDate = g.clients.filter((c) => !pending.includes(c))
 
-  const msg = (c: Client) => reminderMessage(c.name, dueInfo(c.nextDue, g.today), g.settings.gymName)
-  const wa = (c: Client) => whatsappLink(c.phone, g.settings.countryCode, msg(c))
-  const sample = pending[0]
-  const money = makeMoney(g.settings)
-  // La pastilla ya dice cuánto lleva vencido: la línea de abajo da el dato útil para cobrar.
-  const detail = (c: Client) => `${money.usd(g.settings.planPrices[c.plan])} · ${PLANS.find((p) => p.id === c.plan)?.label}`
+  const alertable = [...pending, ...upcoming]
+  const alerted = alertable.filter((c) => alertToday(g.alerts, c.id, g.today))
+  const notAlerted = alertable.filter((c) => !alertToday(g.alerts, c.id, g.today))
+  const detailOf = (c: Client) => money.usd(g.settings.planPrices[c.plan])
+
+  const row = (c: Client) => {
+    const info = dueInfo(c.nextDue, g.today)
+    return (
+      <li key={c.id}>
+        <Card accent={accentFor(info)} className="!p-3.5 !pl-5">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+              <Avatar name={c.name} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">{c.name}</p>
+                <p className="truncate text-sm text-muted">{detailOf(c)}</p>
+              </div>
+            </button>
+            <DuePill info={info} />
+          </div>
+          <div className="mt-1.5 pl-[3.75rem]"><AlertedTag client={c} full /></div>
+          <div className="mt-3 grid grid-cols-2 gap-2.5">
+            <AlertButton client={c} />
+            <Button size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>{info.state === 'pronto' ? 'Cobrar ya' : 'Registrar pago'}</Button>
+          </div>
+        </Card>
+      </li>
+    )
+  }
+  const simple = (c: Client) => (
+    <li key={c.id}>
+      <Card className="!p-3.5">
+        <button onClick={() => setDetail(c.id)} aria-label={`Ver ficha de ${c.name}`} className="flex w-full items-center gap-3 text-left">
+          <Avatar name={c.name} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-bold">{c.name}</p>
+            <p className="text-sm text-muted">{isFrozen(c) ? `Congelada desde ${formatShortDate(c.frozenAt!, g.settings.locale)}` : dueInfo(c.nextDue, g.today).text}</p>
+          </div>
+          <StatusPill client={c} today={g.today} />
+        </button>
+      </Card>
+    </li>
+  )
 
   return (
     <Screen eyebrow="Registro de pagos" title="Quién debe pagar">
@@ -44,76 +100,70 @@ export function Payments() {
         <div className="mt-1 flex flex-wrap gap-2">
           <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-[#ff9a92]">{overdue} {overdue === 1 ? 'vencido' : 'vencidos'}</span>
           <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-amber">{dueToday} {dueToday === 1 ? 'vence' : 'vencen'} hoy</span>
+          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-white/85">{upcoming.length} por vencer</span>
         </div>
-        <Button variant="dark" size="sm" className="mt-4" disabled={pending.length === 0} onClick={() => setBulk(true)}>
-          <MessageCircle size={16} aria-hidden /> Alertar a todos
+        <p className="mt-3 text-sm font-semibold">
+          Avisados hoy: {alerted.length} de {alertable.length}
+        </p>
+        <Button variant="dark" size="sm" className="mt-3" disabled={notAlerted.length === 0} onClick={() => setBulk(true)}>
+          {notAlerted.length === 0 ? <><Check size={16} aria-hidden /> Todos avisados</> : <><MessageCircle size={16} aria-hidden /> Alertar a {notAlerted.length === alertable.length ? 'todos' : `los ${notAlerted.length} que faltan`}</>}
         </Button>
       </div>
 
-      <ul className="mt-4 space-y-3">
-        {pending.map((c) => {
-          const info = dueInfo(c.nextDue, g.today)
-          return (
-            <li key={c.id}>
-              <Card accent={accentFor(info)} className="!p-3.5 !pl-5">
-                <div className="flex items-center gap-3">
-                  <Avatar name={c.name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold">{c.name}</p>
-                    <p className="truncate text-sm text-muted">{detail(c)}</p>
-                  </div>
-                  <DuePill info={info} />
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2.5">
-                  <a
-                    href={wa(c)} target="_blank" rel="noreferrer"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-amber/70 text-sm font-bold text-amber active:scale-[0.97]"
-                  >
-                    <MessageCircle size={16} aria-hidden /> Enviar alerta
-                  </a>
-                  <Button size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>Registrar pago</Button>
-                </div>
-              </Card>
-            </li>
-          )
-        })}
-        {upToDate.map((c) => (
-          <li key={c.id}>
-            <Card className="flex items-center gap-3 !p-3.5">
-              <Avatar name={c.name} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold">{c.name}</p>
-                <p className="text-sm text-muted">{dueInfo(c.nextDue, g.today).text}</p>
-              </div>
-              <Pill>Al día</Pill>
-            </Card>
-          </li>
-        ))}
+      <Heading count={pending.length}>Por cobrar</Heading>
+      <ul className="space-y-3">
+        {pending.map(row)}
+        {pending.length === 0 && <li className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">Nadie debe pagar hoy 🎉</li>}
       </ul>
 
+      {upcoming.length > 0 && (
+        <>
+          <Heading count={upcoming.length}>Vencen pronto</Heading>
+          <ul className="space-y-3">{upcoming.map(row)}</ul>
+        </>
+      )}
+      {upToDate.length > 0 && (
+        <>
+          <Heading count={upToDate.length}>Al día</Heading>
+          <ul className="space-y-2">{upToDate.map(simple)}</ul>
+        </>
+      )}
+      {frozen.length > 0 && (
+        <>
+          <Heading count={frozen.length}>Congelados</Heading>
+          <ul className="space-y-2">{frozen.map(simple)}</ul>
+        </>
+      )}
+
       <PaySheet client={paying} onClose={() => setPaying(null)} />
+      <ClientSheet clientId={detail} onClose={() => setDetail(null)} onPay={(c) => { setDetail(null); setPaying(c) }} />
       <Sheet open={bulk} onClose={() => setBulk(false)} title="Alertar a todos">
-        {sample && (
+        {alertable[0] && (
           <>
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-muted">Así lo recibe el cliente</p>
             <div className="mb-4 rounded-2xl rounded-tl-md bg-[#005c4b] px-4 py-3 text-[15px] leading-snug shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]">
-              <p>{msg(sample)}</p>
+              <p>{message(notAlerted[0] ?? alertable[0])}</p>
               <p className="mt-1 text-right text-[11px] text-white/60">{formatTime(new Date().toISOString(), g.settings.locale)} ✓✓</p>
             </div>
           </>
         )}
         <p className="mb-3 text-sm text-muted">
-          WhatsApp no permite enviar varios mensajes a la vez. Toca cada cliente para abrir su mensaje ya escrito.
+          WhatsApp no permite enviar varios mensajes a la vez. Toca cada cliente: se abre su mensaje ya escrito y queda anotado que se le avisó.
         </p>
         <ul className="space-y-2.5">
-          {pending.map((c) => {
+          {[...notAlerted, ...alerted].map((c) => {
+            const done = Boolean(alertToday(g.alerts, c.id, g.today))
             const info = dueInfo(c.nextDue, g.today)
             return (
               <li key={c.id}>
-                <a href={wa(c)} target="_blank" rel="noreferrer" className="surface-card flex items-center gap-3 rounded-2xl border border-line p-3 active:scale-[0.98]">
+                <a
+                  href={href(c)}
+                  target="_blank" rel="noreferrer" onClick={() => g.logAlert(c.id)}
+                  className={`surface-card flex items-center gap-3 rounded-2xl border border-line p-3 active:scale-[0.98] ${done ? 'opacity-60' : ''}`}
+                >
                   <Avatar name={c.name} size={40} />
                   <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{c.name}</span><span className="text-xs text-muted">{info.text}</span></span>
-                  <MessageCircle size={20} className="text-amber" aria-hidden />
+                  {done ? <span className="inline-flex items-center gap-1 text-xs font-bold text-ok"><Check size={14} aria-hidden /> Avisado</span> : <MessageCircle size={20} className="text-amber" aria-hidden />}
                 </a>
               </li>
             )

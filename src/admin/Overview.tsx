@@ -1,6 +1,6 @@
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
-import { dueInfo } from '../lib/domain'
+import { alertToday, dueInfo, pendingClients, upcomingClients } from '../lib/domain'
 import { makeMoney } from '../lib/format'
 import { Avatar, Card, Pill } from '../components/ui'
 import { AdminHeader, Stat } from './AdminLayout'
@@ -15,6 +15,8 @@ export function Overview() {
   const active = g.clients.filter((c) => c.nextDue >= g.today).length
   const overdue = g.clients.filter((c) => c.nextDue < g.today).length
   const lowStock = g.products.filter((p) => p.stock <= 5).length
+  // clientes a los que toca avisar (vencidos, de hoy y próximos) y todavía no se avisó hoy
+  const withoutAlert = [...pendingClients(g.clients, g.today), ...upcomingClients(g.clients, g.today)].filter((c) => !alertToday(g.alerts, c.id, g.today)).length
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(g.today, i - 6))
   const totals = days.map((d) => g.movements.filter((m) => day(m.at) === d).reduce((n, m) => n + m.amount, 0))
@@ -31,6 +33,7 @@ export function Overview() {
         <Stat label="Clientes activos" value={active} />
         <Stat label="Pagos vencidos" value={overdue} tone="amber" />
         <Stat label="Productos con poco stock" value={lowStock} tone="amber" />
+        <Stat label="Sin avisar hoy" value={withoutAlert} tone={withoutAlert > 0 ? 'amber' : undefined} />
         <Stat label="Tasa USD de hoy" value={g.rateFresh ? `${g.settings.usdRate} MN` : 'Sin fijar'} tone={g.rateFresh ? undefined : 'amber'} />
       </div>
 

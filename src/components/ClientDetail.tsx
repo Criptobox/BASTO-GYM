@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Receipt, Snowflake } from 'lucide-react'
 import { useGym } from '../data/store'
-import { PLANS, dueInfo, frozenDays, isFrozen, unfreezeDue } from '../lib/domain'
+import { PLANS, clientAlerts, dueInfo, frozenDays, isFrozen, unfreezeDue } from '../lib/domain'
 import { formatDate } from '../lib/dates'
 import { formatTime, makeMoney } from '../lib/format'
 import { receiptConcept } from '../lib/receipt'
@@ -9,6 +9,7 @@ import type { Client, Movement, PaymentPart, PlanId } from '../lib/types'
 import { Avatar, Button, Card, Field, inputCls, Segmented, Sheet, useLatest, useToast } from './ui'
 import { StatusPill } from './ClientStatus'
 import { useReceipt } from './Receipt'
+import { AlertButton } from './Alert'
 
 /**
  * Ficha del cliente: datos, acciones (cobrar, editar, congelar/reactivar) e historial de pagos con recibo.
@@ -29,6 +30,7 @@ export function ClientDetail({ client, onPay }: { client: Client; onPay?: (c: Cl
     m.parts.map((p: PaymentPart) => (p.method === 'usd' ? money.usd(p.paid) : p.method === 'mn' ? money.mn(p.paid) : `${money.mn(p.paid)} tarjeta`)).join(' + ')
 
   const info = dueInfo(client.nextDue, g.today)
+  const alerts = clientAlerts(g.alerts, client.id)
   const stat = (label: string, value: string) => (
     <div className="min-w-0 rounded-2xl border border-line px-3 py-2">
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-faint">{label}</p>
@@ -56,6 +58,7 @@ export function ClientDetail({ client, onPay }: { client: Client; onPay?: (c: Cl
 
       <div className="mt-4 flex flex-wrap gap-2">
         {onPay && !frozen && <Button size="sm" disabled={!g.shiftOpen} onClick={() => onPay(client)}>Cobrar</Button>}
+        {info.state !== 'aldia' && <AlertButton client={client} className="!h-11 px-4" />}
         <Button size="sm" variant="outline" onClick={() => setEditing(true)}><Pencil size={15} aria-hidden /> Editar</Button>
         {frozen ? (
           <Button
@@ -69,6 +72,20 @@ export function ClientDetail({ client, onPay }: { client: Client; onPay?: (c: Cl
         )}
       </div>
       {frozen && <p className="mt-2 text-xs text-muted">Congelada: no se cobra ni se avisa. Para cobrar, reactívala primero.</p>}
+
+      {alerts.length > 0 && (
+        <>
+          <h3 className="mb-2 mt-6 text-xs font-bold uppercase tracking-[0.14em] text-amber">Avisos enviados</h3>
+          <ul className="space-y-1.5">
+            {alerts.slice(0, 4).map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2 text-sm">
+                <span className="text-muted">{formatDate(a.at.slice(0, 10), g.settings.locale)} · {formatTime(a.at, g.settings.locale)}{a.worker ? ` · ${a.worker}` : ''}</span>
+                <span className="text-xs font-bold text-faint">{a.state === 'vencido' ? 'vencido' : a.state === 'hoy' ? 'vence hoy' : 'por vencer'}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h3 className="mb-2 mt-6 text-xs font-bold uppercase tracking-[0.14em] text-amber">Historial de pagos</h3>
       <ul className="space-y-2">

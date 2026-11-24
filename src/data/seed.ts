@@ -1,5 +1,5 @@
 import { addDays, toISODate } from '../lib/dates'
-import type { CashOut, Client, Movement, PaymentPart, Product, Settings, Shift, Worker } from '../lib/types'
+import type { AlertLog, CashOut, Client, Movement, PaymentPart, Product, Settings, Shift, Worker } from '../lib/types'
 import { summarize } from '../lib/domain'
 import { DEMO, demoWorkers } from './demo'
 
@@ -56,6 +56,17 @@ const at = (date: string, h: number, m = 0) => {
 }
 
 /** Turnos cerrados de ejemplo para el historial del administrador. */
+/** Avisos de ejemplo: Carlos fue avisado ayer y anteayer; Ana, hace un rato. */
+export function seedAlerts(): AlertLog[] {
+  const ago = (ms: number) => new Date(Date.now() - ms).toISOString()
+  const h = 3_600_000
+  return [
+    { id: 'al-3', clientId: 'c2', at: ago(0.75 * h), state: 'vencido', worker: 'Daniela', workerId: 'w-daniela' },
+    { id: 'al-2', clientId: 'c1', at: ago(26 * h), state: 'vencido', worker: 'Jorge', workerId: 'w-jorge' },
+    { id: 'al-1', clientId: 'c1', at: ago(50 * h), state: 'vencido', worker: 'Daniela', workerId: 'w-daniela' },
+  ]
+}
+
 const SEED_NAMES = ['Carlos Ramírez', 'Ana García', 'Luis Martínez', 'Sofía Pérez', 'Jorge Hernández']
 
 export function seedHistory(): { shifts: Shift[]; movements: Movement[]; cashOuts: CashOut[] } {

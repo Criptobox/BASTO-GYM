@@ -1,5 +1,5 @@
-import { addDays, addPlan, diffDays } from './dates'
-import type { CashOut, Client, Method, Movement, PaymentPart, PlanId } from './types'
+import { addDays, addPlan, diffDays, toISODate } from './dates'
+import type { AlertLog, CashOut, Client, Method, Movement, PaymentPart, PlanId } from './types'
 
 export const PLANS: { id: PlanId; label: string; days: string }[] = [
   { id: 'dia', label: 'Día', days: '1 día' },
@@ -113,6 +113,24 @@ export function pendingClients(clients: Client[], today: string): Client[] {
     .filter((c) => !c.frozenAt && diffDays(c.nextDue, today) <= 0)
     .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
 }
+
+/** Días de anticipación con los que se avisa de un vencimiento próximo. */
+export const ALERT_DAYS = 3
+
+/** Clientes que vencen en los próximos `days` días (sin contar hoy ni los ya vencidos), los más cercanos primero. */
+export function upcomingClients(clients: Client[], today: string, days = ALERT_DAYS): Client[] {
+  return clients
+    .filter((c) => !c.frozenAt && diffDays(c.nextDue, today) > 0 && diffDays(c.nextDue, today) <= days)
+    .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
+}
+
+/** El aviso de hoy a este cliente, si ya se le hizo (evita avisar dos veces por error). */
+export const alertToday = (alerts: AlertLog[], clientId: string, today: string): AlertLog | undefined =>
+  alerts.find((a) => a.clientId === clientId && toISODate(new Date(a.at)) === today)
+
+/** Avisos a un cliente, del más reciente al más antiguo. */
+export const clientAlerts = (alerts: AlertLog[], clientId: string): AlertLog[] =>
+  alerts.filter((a) => a.clientId === clientId).sort((a, b) => b.at.localeCompare(a.at))
 
 /**
  * Nueva fecha de vencimiento al pagar: si ya venció se cuenta desde hoy
@@ -230,6 +248,6 @@ export function whatsappLink(phone: string, countryCode: string, message: string
 export function reminderMessage(name: string, info: DueInfo, gymName: string): string {
   const first = name.split(' ')[0]
   const when =
-    info.state === 'vencido' ? 'ya venció' : info.state === 'hoy' ? 'vence hoy' : `vence en ${info.days} días`
+    info.state === 'vencido' ? 'ya venció' : info.state === 'hoy' ? 'vence hoy' : info.days === 1 ? 'vence mañana' : `vence en ${info.days} días`
   return `Hola ${first}, te escribimos de ${gymName}. Tu membresía ${when}. ¡Te esperamos para renovarla y seguir entrenando! 💪`
 }
