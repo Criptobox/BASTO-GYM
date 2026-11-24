@@ -36,6 +36,23 @@ export function AlertButton({ client, className }: { client: Client; className?:
   )
 }
 
+/** Versión compacta del botón de alerta: solo el icono, para filas apretadas. */
+export function AlertIconButton({ client }: { client: Client }) {
+  const g = useGym()
+  const { href } = useAlertLink()
+  if (isFrozen(client)) return null
+  const already = alertToday(g.alerts, client.id, g.today)
+  return (
+    <a
+      href={href(client)} target="_blank" rel="noreferrer" onClick={() => g.logAlert(client.id)}
+      aria-label={already ? `Avisar de nuevo a ${client.name}` : `Enviar alerta a ${client.name}`}
+      className={cx('grid size-11 shrink-0 place-items-center rounded-full border active:scale-95', already ? 'border-line text-muted' : 'border-amber/70 text-amber')}
+    >
+      {already ? <BellRing size={18} aria-hidden /> : <MessageCircle size={18} aria-hidden />}
+    </a>
+  )
+}
+
 /** "Avisado hoy 3:20 p. m. · Daniela": para no avisar dos veces por error. */
 export function AlertedTag({ client, full = false }: { client: Client; full?: boolean }) {
   const g = useGym()
