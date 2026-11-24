@@ -1,5 +1,5 @@
 import { addDays, toISODate } from '../lib/dates'
-import type { Client, Movement, PaymentPart, Product, Settings, Shift, Worker } from '../lib/types'
+import type { CashOut, Client, Movement, PaymentPart, Product, Settings, Shift, Worker } from '../lib/types'
 import { summarize } from '../lib/domain'
 import { DEMO, demoWorkers } from './demo'
 
@@ -40,8 +40,8 @@ export const seedProducts: Product[] = [
   { id: 'p7', name: 'Guantes de gym', variant: 'Talla L', category: 'Accesorios', price: 7, stock: 6 },
 ]
 
-export function newShift(w: Pick<Worker, 'id' | 'name'>): Shift {
-  return { id: crypto.randomUUID(), worker: w.name, workerId: w.id, openedAt: new Date().toISOString() }
+export function newShift(w: Pick<Worker, 'id' | 'name'>, opening = { mn: 0, usd: 0 }): Shift {
+  return { id: crypto.randomUUID(), worker: w.name, workerId: w.id, openedAt: new Date().toISOString(), openingMN: opening.mn, openingUSD: opening.usd }
 }
 
 /** Trabajadores de ejemplo, sin clave: el administrador se la asigna en Trabajadores. */
@@ -56,11 +56,14 @@ const at = (date: string, h: number, m = 0) => {
 }
 
 /** Turnos cerrados de ejemplo para el historial del administrador. */
-export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
+const SEED_NAMES = ['Carlos Ramírez', 'Ana García', 'Luis Martínez', 'Sofía Pérez', 'Jorge Hernández']
+
+export function seedHistory(): { shifts: Shift[]; movements: Movement[]; cashOuts: CashOut[] } {
   const t = today()
   const rate = 120
   const shifts: Shift[] = []
   const movements: Movement[] = []
+  const cashOuts: CashOut[] = []
   // díasAtrás, horaInicio, horaFin, trabajador, diferenciaMN, diferenciaUSD
   const spec: [number, number, number, string, number, number][] = [
     [1, 14, 21, 'Jorge', -100, 0],
@@ -73,23 +76,35 @@ export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
     const date = addDays(t, -ago)
     const id = `h${i}`
     const wid = worker === 'Daniela' ? 'w-daniela' : 'w-jorge'
+    const opening = { mn: 2000, usd: 20 }
     const part = (method: PaymentPart['method'], usd: number): PaymentPart =>
       method === 'usd' ? { method, paid: usd, usd } : { method, paid: Math.round(usd * rate), rate, usd }
     // "mixto": mitad en USD y el resto en MN
-    const mv = (n: number, kind: Movement['kind'], label: string, amount: number, how: PaymentPart['method'] | 'mixto', hh: number, mm: number) =>
+    const mv = (
+      n: number, kind: Movement['kind'], label: string, amount: number, how: PaymentPart['method'] | 'mixto', hh: number, mm: number,
+      extra: Partial<Movement> = {},
+    ) =>
       movements.push({
         id: `${id}-${n}`, shiftId: id, kind, label, amount, worker, workerId: wid, at: at(date, hh, mm),
         parts: how === 'mixto' ? [part('usd', amount / 2), part('mn', amount / 2)] : [part(how, amount)],
+        ...extra,
       })
-    mv(1, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, 'mn', h0 + 1, 10)
+    const c1 = i % 5, c2 = (i + 2) % 5
+    mv(1, 'mensualidad', `Mensualidad · ${SEED_NAMES[c1]}`, 20, 'mn', h0 + 1, 10, { clientId: `c${c1 + 1}` })
     mv(2, 'venta', 'Venta · Proteína Whey 2 lb', 25, 'tarjeta', h0 + 2, 30)
-    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 20, i % 2 ? 'mixto' : 'usd', h0 + 3, 5)
-    mv(4, 'venta', 'Venta · Agua 600 ml', 0.5, 'mn', h0 + 4, 45)
-    const { expected } = summarize(movements.filter((m) => m.shiftId === id))
+    mv(3, 'mensualidad', `Mensualidad · ${SEED_NAMES[c2]}`, 20, i % 2 ? 'mixto' : 'usd', h0 + 3, 5, { clientId: `c${c2 + 1}` })
+    // un cobro con vuelto: paga 1 USD por un agua de 0.5 USD y recibe 60 MN de vuelto
+    mv(4, 'venta', 'Venta · Agua 600 ml', 0.5, i === 2 ? 'usd' : 'mn', h0 + 4, 45,
+      i === 2 ? { parts: [{ method: 'usd', paid: 1, usd: 1 }], change: { method: 'mn', paid: 60, rate, usd: 0.5 } } : {})
+    if (i === 1) cashOuts.push({ id: `${id}-o1`, shiftId: id, kind: 'gasto', concept: 'Agua y limpieza del local', mn: 300, usd: 0, at: at(date, h0 + 2, 0), worker, workerId: wid })
+    if (i === 3) cashOuts.push({ id: `${id}-o1`, shiftId: id, kind: 'retiro', concept: 'Retiro del administrador', mn: 0, usd: 10, at: at(date, h0 + 5, 0), worker, workerId: wid })
+    const outs = cashOuts.filter((o) => o.shiftId === id)
+    const { expected } = summarize(movements.filter((m) => m.shiftId === id), { opening, outs })
     shifts.push({
       id, worker, workerId: wid, openedAt: at(date, h0), closedAt: at(date, h1), closedBy: worker,
+      openingMN: opening.mn, openingUSD: opening.usd,
       expectedMN: expected.mn, expectedUSD: expected.usd, countedMN: expected.mn + dMN, countedUSD: expected.usd + dUSD,
     })
   })
-  return { shifts, movements }
+  return { shifts, movements, cashOuts }
 }

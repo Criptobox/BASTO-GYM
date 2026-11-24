@@ -36,7 +36,7 @@ export function Store() {
     })
 
   function confirm() {
-    if (!g.sell(lines, split.inputs)) return
+    if (!g.sell(lines, split.inputs, split.change)) return
     haptic(); toast(`Venta registrada · ${money.usd(total)}`); split.reset()
     setOpen(false)
     setTimeout(() => setCart({}), 320) // deja terminar la animación de cierre con el contenido visible

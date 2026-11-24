@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addMonths, addPlan } from './dates'
+import type { CashOut } from './types'
 import { cashDifference, dueInfo, findByCarnet, isValidCarnet, normalizeCarnet, pendingClients, rateIsFresh, remainingUsd, renewalDate, settle, shiftDifference, summarize, whatsappLink } from './domain'
 import type { Client, Movement } from './types'
 
@@ -92,6 +93,36 @@ describe('pagos (uno solo o combinados)', () => {
   })
 })
 
+describe('vuelto', () => {
+  const s = { usdRate: 120, usdRateDate: '2026-11-24' }
+  const today = '2026-11-24'
+  it('paga de más en USD y devuelve el vuelto en USD', () => {
+    const r = settle(20, [{ method: 'usd', paid: 30 }], s, today, { method: 'usd', paid: 10 })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.change).toEqual({ method: 'usd', paid: 10, usd: 10 })
+  })
+  it('paga en USD y devuelve el vuelto en MN a la tasa del día', () => {
+    // 20 USD de precio, recibe 25 USD: sobran 5 USD = 600 MN
+    const r = settle(20, [{ method: 'usd', paid: 25 }], s, today, { method: 'mn', paid: 600 })
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.change).toEqual({ method: 'mn', paid: 600, rate: 120, usd: 5 })
+  })
+  it('sin vuelto, pasarse sigue siendo error; vuelto incompleto también', () => {
+    expect(settle(20, [{ method: 'usd', paid: 30 }], s, today)).toMatchObject({ ok: false, reason: 'over' })
+    expect(settle(20, [{ method: 'usd', paid: 30 }], s, today, { method: 'usd', paid: 4 })).toMatchObject({ ok: false, reason: 'over' })
+  })
+  it('un vuelto de más deja el cobro corto', () => {
+    expect(settle(20, [{ method: 'usd', paid: 30 }], s, today, { method: 'usd', paid: 12 })).toMatchObject({ ok: false, reason: 'short' })
+  })
+  it('no da vuelto en MN con una tasa de otro día', () => {
+    expect(settle(20, [{ method: 'usd', paid: 25 }], { usdRate: 120, usdRateDate: '2026-11-23' }, today, { method: 'mn', paid: 600 })).toMatchObject({ ok: false, reason: 'rate' })
+  })
+  it('remainingUsd descuenta el vuelto entregado', () => {
+    expect(remainingUsd(20, [{ method: 'usd', paid: 30 }], 120, { method: 'usd', paid: 10 })).toBe(0)
+    expect(remainingUsd(20, [{ method: 'usd', paid: 30 }], 120)).toBe(-10)
+  })
+})
+
 describe('caja', () => {
   it('detecta cuadre, faltante y sobrante sin errores de decimales', () => {
     expect(cashDifference(0.3, 0.1 + 0.2)).toEqual({ status: 'cuadra', amount: 0 })
@@ -107,6 +138,19 @@ describe('caja', () => {
     expect(s.sales).toEqual({ count: 2, total: 25.5 })
     expect(s.expected).toEqual({ usd: 30.5, mn: 3000, card: 3600 })
     expect(s.total).toBe(85.5)
+  })
+  it('el efectivo esperado = fondo inicial + recibido − vuelto − salidas', () => {
+    const mv = [
+      { kind: 'mensualidad', amount: 20, parts: [{ method: 'usd', paid: 30, usd: 30 }], change: { method: 'mn', paid: 1200, rate: 120, usd: 10 } },
+      { kind: 'venta', amount: 25, parts: [{ method: 'mn', paid: 3000, rate: 120, usd: 25 }] },
+      { kind: 'venta', amount: 10, parts: [{ method: 'tarjeta', paid: 1200, rate: 120, usd: 10 }] },
+    ] as Movement[]
+    const outs = [{ mn: 500, usd: 0 }, { mn: 0, usd: 5 }] as CashOut[]
+    const r = summarize(mv, { opening: { mn: 2000, usd: 40 }, outs })
+    // MN: 2000 + 3000 − 1200 − 500 = 3300   USD: 40 + 30 − 0 − 5 = 65   tarjeta aparte
+    expect(r.expected).toEqual({ mn: 3300, usd: 65, card: 1200 })
+    expect(r.cash.mn).toEqual({ opening: 2000, received: 3000, change: 1200, outs: 500 })
+    expect(r.total).toBe(55)
   })
   it('cuadra cada cajón por separado', () => {
     const base = { expectedMN: 2460, expectedUSD: 20 }

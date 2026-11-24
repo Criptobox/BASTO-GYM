@@ -1,5 +1,5 @@
 import { addPlan, diffDays } from './dates'
-import type { Client, Method, Movement, PaymentPart, PlanId } from './types'
+import type { CashOut, Client, Method, Movement, PaymentPart, PlanId } from './types'
 
 export const PLANS: { id: PlanId; label: string; days: string }[] = [
   { id: 'dia', label: 'Día', days: '1 día' },
@@ -31,29 +31,40 @@ export const partUsd = (method: Method, paid: number, rate: number) => (method =
 /** Un cobro queda cubierto si lo que falta o sobra es menos de medio peso (o un centavo) por redondeos. */
 export const isCovered = (diffUsd: number, rate: number) => diffUsd <= 0.005 || (rate > 0 && diffUsd * rate <= 0.51)
 
-/** USD que faltan (positivo) o sobran (negativo). Sin tasa vigente, las partes en MN/tarjeta no cuentan. */
-export function remainingUsd(total: number, inputs: PartInput[], rate: number): number {
-  const paid = inputs.reduce((n, i) => n + (i.method === 'usd' ? i.paid : rate > 0 ? i.paid / rate : 0), 0)
-  return total - paid
+/** Vuelto que se devuelve en efectivo: en USD o en MN (la tarjeta no da vuelto). */
+export interface ChangeInput { method: 'usd' | 'mn'; paid: number }
+
+/**
+ * USD que faltan (positivo) o sobran (negativo) por cubrir. Sin tasa vigente, las partes en MN/tarjeta
+ * no cuentan. El vuelto ya entregado se resta de lo recibido.
+ */
+export function remainingUsd(total: number, inputs: PartInput[], rate: number, change?: ChangeInput): number {
+  const received = inputs.reduce((n, i) => n + (i.method === 'usd' ? i.paid : rate > 0 ? i.paid / rate : 0), 0)
+  const given = change && change.paid > 0 ? (change.method === 'usd' ? change.paid : rate > 0 ? change.paid / rate : 0) : 0
+  return total - (received - given)
 }
 
 export type Settlement =
-  | { ok: true; parts: PaymentPart[] }
+  | { ok: true; parts: PaymentPart[]; change?: PaymentPart }
   | { ok: false; reason: 'empty' | 'rate' | 'short' | 'over'; remaining: number }
 
 /**
- * Valida un pago (posiblemente combinado) y lo convierte en partes guardables.
- * Nunca acepta MN ni tarjeta con una tasa de otro día; exige cubrir el total sin pasarse
- * (el vuelto no se registra, así que lo entregado debe ser lo que se aplica al precio).
+ * Valida un pago (posiblemente combinado, con vuelto) y lo convierte en partes guardables.
+ * Nunca acepta MN ni tarjeta con una tasa de otro día. Lo recibido menos el vuelto debe cubrir el precio
+ * exacto (tolerancia de medio peso por redondeo): si se recibe de más, hay que registrar el vuelto.
  */
-export function settle(total: number, inputs: PartInput[], s: { usdRate: number; usdRateDate: string }, today: string): Settlement {
+export function settle(
+  total: number, inputs: PartInput[], s: { usdRate: number; usdRateDate: string }, today: string, change?: ChangeInput,
+): Settlement {
   const used = inputs.filter((i) => Number.isFinite(i.paid) && i.paid > 0)
   if (used.length === 0) return { ok: false, reason: 'empty', remaining: total }
+  const giving = change && Number.isFinite(change.paid) && change.paid > 0 ? change : undefined
   const fresh = rateIsFresh(s, today)
-  if (!fresh && used.some((i) => i.method !== 'usd')) return { ok: false, reason: 'rate', remaining: total }
+  if (!fresh && (used.some((i) => i.method !== 'usd') || giving?.method === 'mn')) return { ok: false, reason: 'rate', remaining: total }
   const rate = fresh ? s.usdRate : 0
   const normalized = used.map((i) => ({ ...i, paid: i.method === 'usd' ? roundUsd(i.paid) : Math.round(i.paid) }))
-  const remaining = remainingUsd(total, normalized, rate)
+  const chg = giving ? { method: giving.method, paid: giving.method === 'usd' ? roundUsd(giving.paid) : Math.round(giving.paid) } : undefined
+  const remaining = remainingUsd(total, normalized, rate, chg)
   if (remaining > 0 && !isCovered(remaining, rate)) return { ok: false, reason: 'short', remaining }
   if (remaining < 0 && !isCovered(-remaining, rate)) return { ok: false, reason: 'over', remaining }
   const parts: PaymentPart[] = normalized.map((i) => ({
@@ -62,7 +73,10 @@ export function settle(total: number, inputs: PartInput[], s: { usdRate: number;
     ...(i.method === 'usd' ? {} : { rate: s.usdRate }),
     usd: i.method === 'usd' ? i.paid : i.paid / s.usdRate,
   }))
-  return { ok: true, parts }
+  const changePart: PaymentPart | undefined = chg
+    ? { method: chg.method, paid: chg.paid, ...(chg.method === 'usd' ? {} : { rate: s.usdRate }), usd: chg.method === 'usd' ? chg.paid : chg.paid / s.usdRate }
+    : undefined
+  return changePart ? { ok: true, parts, change: changePart } : { ok: true, parts }
 }
 
 export type DueState = 'vencido' | 'hoy' | 'pronto' | 'aldia'
@@ -121,14 +135,35 @@ export interface ShiftSummary {
   sales: { count: number; total: number } // total en USD (valor)
   /** Lo que debe haber físicamente: efectivo USD, efectivo MN, y cobros con tarjeta (MN). */
   expected: { usd: number; mn: number; card: number }
+  /** De dónde sale el esperado de cada cajón de efectivo. */
+  cash: {
+    mn: { opening: number; received: number; change: number; outs: number }
+    usd: { opening: number; received: number; change: number; outs: number }
+  }
   total: number // valor total en USD
 }
 
-export function summarize(movements: Movement[]): ShiftSummary {
+export interface CashExtras {
+  /** Fondo inicial con el que empezó el turno. */
+  opening?: { mn: number; usd: number }
+  /** Gastos y retiros del turno. */
+  outs?: CashOut[]
+}
+
+/**
+ * Resume un turno. El efectivo que debe haber = fondo inicial + lo recibido en efectivo − vuelto − salidas.
+ * La tarjeta no entra al cajón: se reporta aparte.
+ */
+export function summarize(movements: Movement[], extras: CashExtras = {}): ShiftSummary {
+  const o = extras.opening ?? { mn: 0, usd: 0 }
   const s: ShiftSummary = {
     memberships: { count: 0, total: 0 },
     sales: { count: 0, total: 0 },
     expected: { usd: 0, mn: 0, card: 0 },
+    cash: {
+      mn: { opening: o.mn, received: 0, change: 0, outs: 0 },
+      usd: { opening: o.usd, received: 0, change: 0, outs: 0 },
+    },
     total: 0,
   }
   for (const m of movements) {
@@ -137,11 +172,22 @@ export function summarize(movements: Movement[]): ShiftSummary {
     bucket.total = roundUsd(bucket.total + m.amount)
     s.total = roundUsd(s.total + m.amount)
     for (const p of m.parts) {
-      if (p.method === 'usd') s.expected.usd = roundUsd(s.expected.usd + p.paid)
-      else if (p.method === 'mn') s.expected.mn += p.paid
+      if (p.method === 'usd') s.cash.usd.received = roundUsd(s.cash.usd.received + p.paid)
+      else if (p.method === 'mn') s.cash.mn.received += p.paid
       else s.expected.card += p.paid
     }
+    if (m.change) {
+      if (m.change.method === 'usd') s.cash.usd.change = roundUsd(s.cash.usd.change + m.change.paid)
+      else s.cash.mn.change += m.change.paid
+    }
   }
+  for (const out of extras.outs ?? []) {
+    s.cash.mn.outs += out.mn
+    s.cash.usd.outs = roundUsd(s.cash.usd.outs + out.usd)
+  }
+  const net = (c: { opening: number; received: number; change: number; outs: number }) => c.opening + c.received - c.change - c.outs
+  s.expected.mn = net(s.cash.mn)
+  s.expected.usd = roundUsd(net(s.cash.usd))
   return s
 }
 

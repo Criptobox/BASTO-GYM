@@ -31,9 +31,9 @@ export function Enroll() {
     e.preventDefault()
     setTouched(true)
     if (!valid || !split.ready || !g.shiftOpen) return
-    const c = g.enroll({ name, phone, carnet, plan, parts: split.inputs })
-    if (!c) return
-    setDone(c); haptic()
+    const r = g.enroll({ name, phone, carnet, plan, parts: split.inputs, change: split.change })
+    if (!r) return
+    setDone(r.client); haptic()
   }
   function reset() {
     setDone(null); setName(''); setPhone(''); setCarnet(''); setPlan('mes'); setTouched(false); split.reset()

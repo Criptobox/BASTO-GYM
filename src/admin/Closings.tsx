@@ -113,6 +113,9 @@ export function Closings() {
             <p className="mb-3 text-sm text-muted">
               Movimientos del turno{current.s.closedBy && current.s.closedBy !== current.s.worker ? ` · cerrado por ${current.s.closedBy}` : ''}
             </p>
+            <p className="mb-3 rounded-xl border border-line px-3 py-2 text-xs text-muted">
+              Fondo inicial: <b className="text-white">{money.mn(current.s.openingMN ?? 0)}</b> y <b className="text-white">{money.usd(current.s.openingUSD ?? 0)}</b>
+            </p>
             {!current.s.closedAt && current.s.id === g.shift.id && (
               <Button size="sm" variant="outline" className="mb-3" onClick={() => { setMnRaw(''); setUsdRaw(''); setForcing(true) }}>
                 Cerrar este turno
@@ -126,7 +129,7 @@ export function Closings() {
                     <p className="text-sm font-semibold leading-tight">{m.label}</p>
                     <p className="mt-0.5 text-xs text-muted">
                       {m.parts.length > 1 && <span className="mr-1.5 rounded-full border border-amber/50 px-1.5 py-px font-bold text-amber">Mixto</span>}
-                      {how(m)}{m.parts.some((p) => p.rate) ? ` · tasa ${m.parts.find((p) => p.rate)?.rate}` : ''}
+                      {how(m)}{m.change ? ` · vuelto ${label(m.change)}` : ''}{m.parts.some((p) => p.rate) ? ` · tasa ${m.parts.find((p) => p.rate)?.rate}` : ''}
                     </p>
                   </div>
                   <p className="font-bold">{money.usd(m.amount)}</p>
@@ -134,6 +137,20 @@ export function Closings() {
               ))}
               {current.mv.length === 0 && <li className="py-6 text-center text-sm text-muted">Sin movimientos.</li>}
             </ul>
+            {g.cashOuts.filter((o) => o.shiftId === current.s.id).length > 0 && (
+              <>
+                <p className="mb-1 mt-4 text-xs font-bold uppercase tracking-[0.12em] text-faint">Salidas de efectivo</p>
+                <ul className="divide-y divide-line">
+                  {g.cashOuts.filter((o) => o.shiftId === current.s.id).map((o) => (
+                    <li key={o.id} className="flex items-start gap-3 py-2.5">
+                      <span className="w-12 shrink-0 pt-0.5 text-xs text-muted">{formatTime(o.at, g.settings.locale)}</span>
+                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold leading-tight">{o.concept}</p><p className="text-xs text-muted">{o.kind === 'gasto' ? 'Gasto' : 'Retiro'}</p></div>
+                      <p className="text-sm font-bold text-[#ff9a92]">− {[o.mn > 0 && money.mn(o.mn), o.usd > 0 && money.usd(o.usd)].filter(Boolean).join(' + ')}</p>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </Card>
         )}
       </div>

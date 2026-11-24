@@ -36,7 +36,7 @@ export function PaySheet({ client: current, onClose }: { client: Client | null; 
       <Button
         block className="mt-5" disabled={!split.ready}
         onClick={() => {
-          if (!g.pay(client.id, split.inputs)) return
+          if (!g.pay(client.id, split.inputs, split.change)) return
           haptic(); toast(`Cobro registrado · ${client.name.split(' ')[0]}`); split.reset(); onClose()
         }}
       >

@@ -42,8 +42,12 @@ export interface Movement {
   detail?: string
   /** Precio total en USD (los precios están fijados en USD). */
   amount: number
-  /** Cómo se pagó: una o varias partes (USD, tarjeta y/o MN). */
+  /** Cómo se pagó: una o varias partes (USD, tarjeta y/o MN). Lo que se recibió, antes del vuelto. */
   parts: PaymentPart[]
+  /** Vuelto entregado en efectivo (USD o MN), si se recibió de más. */
+  change?: PaymentPart
+  /** Cliente al que se cobró (mensualidades e inscripciones). */
+  clientId?: string
   at: string // ISO datetime
   /** Quién registró el cobro. */
   workerId?: string
@@ -65,12 +69,29 @@ export interface Shift {
   worker: string // nombre, para el historial
   workerId?: string
   openedAt: string
+  /** Efectivo con el que empezó el turno (fondo inicial). */
+  openingMN?: number
+  openingUSD?: number
   closedAt?: string
   closedBy?: string // quién cerró el turno (el dueño, o el administrador)
   countedMN?: number
   countedUSD?: number
   expectedMN?: number
   expectedUSD?: number
+}
+
+/** Salida de efectivo de la caja durante un turno: un gasto del local o un retiro. */
+export interface CashOut {
+  id: string
+  shiftId: string
+  kind: 'gasto' | 'retiro'
+  concept: string
+  /** Efectivo que salió, en cada moneda. */
+  mn: number
+  usd: number
+  at: string
+  workerId?: string
+  worker?: string
 }
 
 export interface Settings {

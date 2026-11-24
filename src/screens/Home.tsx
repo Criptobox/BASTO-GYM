@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, Search, TrendingUp } from 'lucide-react'
 import { useGym } from '../data/store'
-import { dueInfo, normalizeCarnet, pendingClients, summarize } from '../lib/domain'
+import { dueInfo, normalizeCarnet, pendingClients } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
 import { Avatar, Button, Card, inputCls, Pill, Screen, Sheet } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
 import { accentFor, DuePill } from './Payments'
 import { RateForm } from '../components/Payment'
+import { CashOutSheet, OpenShiftSheet } from '../components/Cash'
 import type { Client } from '../lib/types'
 
 export function Home() {
@@ -17,7 +18,9 @@ export function Home() {
   const [q, setQ] = useState('')
   const [paying, setPaying] = useState<Client | null>(null)
   const [rateOpen, setRateOpen] = useState(false)
-  const sum = summarize(g.shiftMovements)
+  const sum = g.shiftSummary
+  const [openSheet, setOpenSheet] = useState(false)
+  const [outSheet, setOutSheet] = useState(false)
 
   const list = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -43,7 +46,7 @@ export function Home() {
         <div className="mb-3 rounded-3xl border border-amber bg-surface p-4">
           <p className="font-extrabold">Todavía no abriste tu turno</p>
           <p className="mb-3 text-sm text-muted">Ábrelo para poder cobrar. Todo lo que registres quedará a tu nombre.</p>
-          <Button block onClick={() => g.openShift()}>Abrir mi turno</Button>
+          <Button block onClick={() => setOpenSheet(true)}>Abrir mi turno</Button>
         </div>
       )}
 
@@ -79,6 +82,11 @@ export function Home() {
             <p className="truncate text-[32px] font-extrabold leading-tight tracking-tight">{money.usdNum(sum.expected.usd)}</p>
           </div>
         </div>
+        {g.shiftOpen && (
+          <button onClick={() => setOutSheet(true)} className="mt-3 rounded-full bg-black/80 px-3.5 py-1.5 text-xs font-bold text-amber active:scale-95">
+            − Registrar gasto o retiro
+          </button>
+        )}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
@@ -134,6 +142,8 @@ export function Home() {
 
       <Button block className="mt-6" disabled={!g.shiftOpen} onClick={() => nav('/tienda')}>Venta en mostrador</Button>
       <PaySheet client={paying} onClose={() => setPaying(null)} />
+      <OpenShiftSheet open={openSheet} onClose={() => setOpenSheet(false)} />
+      <CashOutSheet open={outSheet} onClose={() => setOutSheet(false)} />
       <Sheet open={rateOpen} onClose={() => setRateOpen(false)} title="Tasa del USD de hoy">
         <p className="mb-4 text-sm text-muted">Es el valor del dólar en MN para hoy. Se usa para calcular los cobros en MN y con tarjeta.</p>
         <RateForm onDone={() => setRateOpen(false)} />

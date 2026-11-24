@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react'
-import { normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, type PartInput } from '../lib/domain'
+import { normalizeCarnet, rateIsFresh, renewalDate, settle, summarize, type ChangeInput, type PartInput, type ShiftSummary } from '../lib/domain'
 import { attemptsLeft, failLock, hashPin, randomSalt, secondsLeft, verifyPin, type LockState } from '../lib/pin'
-import type { Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
+import type { CashOut, Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
 import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
 
 /**
@@ -20,6 +20,7 @@ interface State {
   movements: Movement[]
   shifts: Shift[]
   workers: Worker[]
+  cashOuts: CashOut[]
 }
 
 type Action =
@@ -28,13 +29,14 @@ type Action =
   | { type: 'sell'; movement: Movement; items: { id: string; qty: number }[] }
   | { type: 'closeShift'; shiftId: string; by: string; countedMN: number; countedUSD: number; expectedMN: number; expectedUSD: number }
   | { type: 'openShift'; shift: Shift }
+  | { type: 'addCashOut'; out: CashOut }
   | { type: 'addProduct'; product: Product }
   | { type: 'updateProduct'; id: string; patch: Partial<Product> }
   | { type: 'setSettings'; patch: Partial<Settings> }
   | { type: 'addWorker'; worker: Worker }
   | { type: 'updateWorker'; id: string; patch: Partial<Worker> }
 
-const KEY = 'basto-gym:v6'
+const KEY = 'basto-gym:v7'
 const SESSION_KEY = 'basto-gym:session'
 const LOCK_KEY = 'basto-gym:locks'
 
@@ -50,6 +52,7 @@ function initial(): State {
     movements: seedHistory().movements,
     shifts: seedHistory().shifts,
     workers: seedWorkers(),
+    cashOuts: seedHistory().cashOuts,
   }
 }
 
@@ -83,6 +86,8 @@ function reducer(s: State, a: Action): State {
       }
     case 'openShift':
       return { ...s, shifts: [a.shift, ...s.shifts] }
+    case 'addCashOut':
+      return { ...s, cashOuts: [a.out, ...s.cashOuts] }
     case 'addProduct':
       return { ...s, products: [a.product, ...s.products] }
     case 'updateProduct':
@@ -137,6 +142,10 @@ interface Api extends State {
   /** Turno abierto de OTRA persona (impide abrir uno nuevo). */
   otherOpenShift: Shift | null
   shiftMovements: Movement[]
+  /** Salidas de caja del turno de quien está dentro (vacío si no tiene turno). */
+  shiftCashOuts: CashOut[]
+  /** Resumen de la caja del turno de quien está dentro (todo en cero si no tiene turno). */
+  shiftSummary: ShiftSummary
   /** ¿La tasa USD es la de hoy? Sin ella no se puede cobrar en MN ni con tarjeta. */
   rateFresh: boolean
   setRate(rate: number): void
@@ -144,12 +153,15 @@ interface Api extends State {
    * Cobros: `parts` es lo que se entrega en cada método (puede ser uno solo o varios combinados).
    * Devuelve null/false si no se pudo cobrar: turno cerrado, tasa vencida, o el pago no cubre el precio exacto.
    */
-  enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; parts: PartInput[] }): Client | null
-  pay(clientId: string, parts: PartInput[]): boolean
-  sell(items: { product: Product; qty: number }[], parts: PartInput[]): boolean
+  enroll(input: { name: string; phone: string; carnet: string; plan: PlanId; parts: PartInput[]; change?: ChangeInput }): { client: Client; movement: Movement } | null
+  pay(clientId: string, parts: PartInput[], change?: ChangeInput): Movement | null
+  sell(items: { product: Product; qty: number }[], parts: PartInput[], change?: ChangeInput): Movement | null
+  /** Registra un gasto o retiro de efectivo del turno. */
+  addCashOut(input: { kind: CashOut['kind']; concept: string; mn: number; usd: number }): boolean
   /** El dueño cierra su turno; el administrador puede cerrar cualquiera. */
   closeShift(counted: { mn: number; usd: number }): void
-  openShift(): boolean
+  /** Abre el turno con el efectivo que hay en la caja (fondo inicial). */
+  openShift(opening?: { mn: number; usd: number }): boolean
   addProduct(p: Omit<Product, 'id'> & { id?: string }): void
   updateProduct(id: string, patch: Partial<Product>): void
   setSettings(patch: Partial<Settings>): void
@@ -185,6 +197,14 @@ export function GymProvider({ children }: { children: ReactNode }) {
   const shiftMovements = useMemo(
     () => (session && shift.workerId === session.id ? latestMovements : []),
     [latestMovements, session, shift.workerId],
+  )
+
+  const mine = !!session && shift.workerId === session.id
+  const latestCashOuts = useMemo(() => state.cashOuts.filter((o) => o.shiftId === shift.id), [state.cashOuts, shift.id])
+  const shiftCashOuts = useMemo(() => (mine ? latestCashOuts : []), [latestCashOuts, mine])
+  const shiftSummary = useMemo(
+    () => summarize(shiftMovements, mine ? { opening: { mn: shift.openingMN ?? 0, usd: shift.openingUSD ?? 0 }, outs: shiftCashOuts } : {}),
+    [shiftMovements, shiftCashOuts, mine, shift.openingMN, shift.openingUSD],
   )
 
   const mkMovement = useCallback(
@@ -245,54 +265,58 @@ export function GymProvider({ children }: { children: ReactNode }) {
     shiftOpen,
     otherOpenShift,
     shiftMovements,
+    shiftCashOuts,
+    shiftSummary,
     rateFresh: rateIsFresh(state.settings, today()),
     setRate(rate) {
       if (!Number.isFinite(rate) || rate <= 0) return
       dispatch({ type: 'setSettings', patch: { usdRate: rate, usdRateDate: today() } })
     },
-    enroll({ name, phone, carnet, plan, parts }) {
+    enroll({ name, phone, carnet, plan, parts, change }) {
       const t = today()
       const price = state.settings.planPrices[plan]
-      const pay = settle(price, parts, state.settings, t)
+      const pay = settle(price, parts, state.settings, t, change)
       if (!pay.ok || !shiftOpen) return null
       const client: Client = {
         id: crypto.randomUUID(), name: name.trim(), phone: phone.trim(), carnet: normalizeCarnet(carnet),
         plan, startDate: t, nextDue: renewalDate(t, plan, t),
       }
-      dispatch({
-        type: 'enroll', client,
-        movement: mkMovement({
-          kind: 'mensualidad', label: `Inscripción · ${client.name}`,
-          amount: price, parts: pay.parts,
-        }),
+      const movement = mkMovement({
+        kind: 'mensualidad', label: `Inscripción · ${client.name}`,
+        amount: price, parts: pay.parts, change: pay.change, clientId: client.id,
       })
-      return client
+      dispatch({ type: 'enroll', client, movement })
+      return { client, movement }
     },
-    pay(clientId, parts) {
+    pay(clientId, parts, change) {
       const c = state.clients.find((x) => x.id === clientId)
-      if (!c || !shiftOpen) return false
+      if (!c || !shiftOpen) return null
       const price = state.settings.planPrices[c.plan]
-      const pay = settle(price, parts, state.settings, today())
-      if (!pay.ok) return false
-      dispatch({
-        type: 'pay', clientId,
-        nextDue: renewalDate(c.nextDue, c.plan, today()),
-        movement: mkMovement({
-          kind: 'mensualidad', label: `Mensualidad · ${c.name}`,
-          amount: price, parts: pay.parts,
-        }),
+      const pay = settle(price, parts, state.settings, today(), change)
+      if (!pay.ok) return null
+      const movement = mkMovement({
+        kind: 'mensualidad', label: `Mensualidad · ${c.name}`,
+        amount: price, parts: pay.parts, change: pay.change, clientId: c.id,
       })
-      return true
+      dispatch({ type: 'pay', clientId, nextDue: renewalDate(c.nextDue, c.plan, today()), movement })
+      return movement
     },
-    sell(items, parts) {
-      if (!shiftOpen || items.length === 0) return false
+    sell(items, parts, change) {
+      if (!shiftOpen || items.length === 0) return null
       const total = Math.round(items.reduce((n, i) => n + i.product.price * i.qty, 0) * 100) / 100
-      const pay = settle(total, parts, state.settings, today())
-      if (!pay.ok) return false
+      const pay = settle(total, parts, state.settings, today(), change)
+      if (!pay.ok) return null
       const label = items.map((i) => (i.qty > 1 ? `${i.qty}× ` : '') + i.product.name).join(', ')
+      const movement = mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, parts: pay.parts, change: pay.change })
+      dispatch({ type: 'sell', items: items.map((i) => ({ id: i.product.id, qty: i.qty })), movement })
+      return movement
+    },
+    addCashOut({ kind, concept, mn, usd }) {
+      const c = concept.trim()
+      if (!shiftOpen || !session || c.length < 2 || !(mn > 0 || usd > 0) || mn < 0 || usd < 0) return false
       dispatch({
-        type: 'sell', items: items.map((i) => ({ id: i.product.id, qty: i.qty })),
-        movement: mkMovement({ kind: 'venta', label: `Venta · ${label}`, amount: total, parts: pay.parts }),
+        type: 'addCashOut',
+        out: { id: crypto.randomUUID(), shiftId: shift.id, kind, concept: c, mn: Math.round(mn), usd: Math.round(usd * 100) / 100, at: new Date().toISOString(), workerId: session.id, worker: session.name },
       })
       return true
     },
@@ -300,12 +324,14 @@ export function GymProvider({ children }: { children: ReactNode }) {
       if (!shiftIsOpen || !session) return
       // Solo el dueño del turno o un administrador pueden cerrarlo.
       if (session.role !== 'admin' && shift.workerId !== session.id) return
-      const { expected } = summarize(latestMovements) // el esperado sale del turno real, lo cierre quien lo cierre
+      // El esperado sale del turno real (fondo inicial, cobros, vuelto y salidas), lo cierre quien lo cierre.
+      const { expected } = summarize(latestMovements, { opening: { mn: shift.openingMN ?? 0, usd: shift.openingUSD ?? 0 }, outs: latestCashOuts })
       dispatch({ type: 'closeShift', shiftId: shift.id, by: session.name, countedMN: counted.mn, countedUSD: counted.usd, expectedMN: expected.mn, expectedUSD: expected.usd })
     },
-    openShift() {
+    openShift(opening) {
       if (!session || session.role !== 'worker' || shiftIsOpen) return false
-      dispatch({ type: 'openShift', shift: newShift(session) })
+      const o = { mn: Math.max(0, Math.round(opening?.mn ?? 0)), usd: Math.max(0, Math.round((opening?.usd ?? 0) * 100) / 100) }
+      dispatch({ type: 'openShift', shift: newShift(session, o) })
       return true
     },
     addProduct: (p) => dispatch({ type: 'addProduct', product: { ...p, id: p.id ?? crypto.randomUUID() } }),
