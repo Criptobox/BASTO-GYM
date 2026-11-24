@@ -1,101 +1,91 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BASTO GYM">
   <defs>
     <linearGradient id="gold" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0" stop-color="#FFF3A8"/><stop offset="0.22" stop-color="#FFCB35"/>
-      <stop offset="0.6" stop-color="#F29A00"/><stop offset="1" stop-color="#9E5A00"/>
+      <stop offset="0" stop-color="#FFF1A0"/><stop offset="0.2" stop-color="#FFCB2E"/>
+      <stop offset="0.6" stop-color="#F29B00"/><stop offset="1" stop-color="#9A5600"/>
     </linearGradient>
-    <linearGradient id="goldFrame" x1="0.1" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#FFE98A"/><stop offset="0.35" stop-color="#FFB800"/>
-      <stop offset="0.75" stop-color="#E08A00"/><stop offset="1" stop-color="#9A5600"/>
+    <linearGradient id="goldBracket" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE57A"/><stop offset="0.5" stop-color="#FFB400"/><stop offset="1" stop-color="#B86A00"/>
     </linearGradient>
     <linearGradient id="black" x1="0" y1="0" x2="0.25" y2="1">
-      <stop offset="0" stop-color="#5a5d63"/><stop offset="0.25" stop-color="#1d1e21"/><stop offset="1" stop-color="#000"/>
+      <stop offset="0" stop-color="#4d5056"/><stop offset="0.22" stop-color="#18191c"/><stop offset="1" stop-color="#000"/>
     </linearGradient>
-    <linearGradient id="blackFrame" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0" stop-color="#3b3d42"/><stop offset="0.28" stop-color="#101113"/><stop offset="1" stop-color="#000"/>
+    <linearGradient id="blackBracket" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b6e75"/><stop offset="0.45" stop-color="#2a2c30"/><stop offset="1" stop-color="#0a0a0b"/>
     </linearGradient>
     <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.5" stop-color="#C5C8CD"/><stop offset="1" stop-color="#7A7E85"/>
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.5" stop-color="#C6C9CF"/><stop offset="1" stop-color="#6E727A"/>
     </linearGradient>
     <linearGradient id="counter" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#D5D8DD"/><stop offset="1" stop-color="#9DA1A8"/>
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#E4E6EA"/><stop offset="1" stop-color="#A6AAB2"/>
     </linearGradient>
-    <radialGradient id="plateDark" cx="0.5" cy="0.38" r="0.7">
-      <stop offset="0" stop-color="#3a3d43"/><stop offset="0.55" stop-color="#17181b"/><stop offset="1" stop-color="#050506"/>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="plate" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#26282c"/><stop offset="1" stop-color="#070708"/>
     </radialGradient>
     <radialGradient id="flare" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFAD9" stop-opacity="1"/><stop offset="0.3" stop-color="#FFC245" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#FF8A00" stop-opacity="0"/>
+      <stop offset="0" stop-color="#FFFBE0" stop-opacity="1"/><stop offset="0.25" stop-color="#FFC84A" stop-opacity="0.9"/>
+      <stop offset="0.6" stop-color="#FF9A00" stop-opacity="0.35"/><stop offset="1" stop-color="#FF8A00" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
 
-    <path id="ring" fill-rule="evenodd" d="M256 30 L451.7 143 V369 L256 482 L60.3 369 V143 Z M256 60 L425.7 158 V354 L256 452 L86.3 354 V158 Z"/>
-    <path id="hexOut" d="M256 30 L451.7 143 V369 L256 482 L60.3 369 V143 Z"/>
-    <path id="hexMid" d="M256 45 L438.7 150.5 V361.5 L256 467 L73.3 361.5 V150.5 Z"/>
-    <path id="hexIn" d="M256 60 L425.7 158 V354 L256 452 L86.3 354 V158 Z"/>
-    <clipPath id="clipIn"><use href="#hexIn"/></clipPath>
-    <clipPath id="clipLeft"><path d="M0 0 H246 V114 H256 V512 H0 Z"/></clipPath>
-    <clipPath id="clipRight"><path d="M266 0 H512 V512 H256 V114 H266 Z"/></clipPath>
-
-    <path id="B" fill-rule="evenodd" d="M134 150 H238 L262 174 V236 L250 250 L266 264 V342 L242 366 H112 V172 Z
-      M160 188 H214 L224 198 V228 L214 238 H160 Z
-      M160 278 H218 L228 288 V318 L218 328 H160 Z"/>
-    <path id="G" d="M302 150 L404 150 L404 206 L366 206 L366 188 L318 188 L318 328 L366 328 L366 296 L342 296 L342 262 L404 262 L404 344 L382 366 L302 366 L280 344 L280 172 Z"/>
-    <path id="Bcounters" d="M160 188 H214 L224 198 V228 L214 238 H160 Z M160 278 H218 L228 288 V318 L218 328 H160 Z"/>
-    <path id="Gcounter" d="M318 188 H366 V206 H404 V262 H342 V296 H366 V328 H318 Z"/>
-    <clipPath id="clipB"><use href="#B" clip-rule="evenodd"/></clipPath>
-    <clipPath id="clipG"><use href="#G"/></clipPath>
+    <!-- Cuerpo: las letras forman el hexágono (arriba plano a la izquierda, inclinado a la derecha, abajo en V) -->
+    <path id="body" d="M150 150 H262 L414 227 V365 L256 458 L98 365 V205 Z"/>
+    <clipPath id="clipBody"><use href="#body"/></clipPath>
+    <path id="Bshape" fill-rule="evenodd" d="M150 150 H236 L262 176 V236 L248 250 L266 264 V452 L256 458 L98 365 V205 Z"/>
+    <path id="Gshape" d="M262 150 L414 227 V365 L262 454.5 Z"/>
+    <clipPath id="clipB"><use href="#Bshape"/></clipPath>
+    <clipPath id="clipG"><use href="#Gshape"/></clipPath>
+    <!-- Huecos plateados -->
+    <path id="Bc" d="M158 172 H228 L242 186 V224 L228 238 H158 Z M158 290 H232 L248 306 V352 L232 368 H158 Z"/>
+    <path id="Gc" d="M302 214 L372 249.5 V272 H414 V304 H334 V338 H372 V372 H302 Z"/>
   </defs>
 
-  <!-- Marco: mitad negro, mitad oro, con hueco arriba -->
-  <g clip-path="url(#clipLeft)">
-    <use href="#ring" fill="url(#blackFrame)"/>
-    <use href="#hexMid" fill="none" stroke="#fff" stroke-opacity="0.10" stroke-width="2"/>
-  </g>
-  <g clip-path="url(#clipRight)">
-    <use href="#ring" fill="url(#goldFrame)"/>
-    <use href="#hexMid" fill="none" stroke="#FFF6C8" stroke-opacity="0.35" stroke-width="2"/>
-  </g>
-  <!-- Biseles plateados fino -->
-  <use href="#hexOut" fill="none" stroke="url(#silver)" stroke-width="3.5"/>
-  <use href="#hexIn" fill="none" stroke="url(#silver)" stroke-width="2.5"/>
+  <g transform="translate(0 -6)">
+    <!-- "Techo": dos soportes con gancho, negro a la izquierda y dorado a la derecha -->
+    <path id="bkL" d="M58.6 215 V148 L246 39.8 V69.9 L84.6 163 V215 Z" fill="url(#blackBracket)" stroke="url(#silver)" stroke-width="3" stroke-linejoin="round"/>
+    <path id="bkR" d="M453.4 215 V148 L266 39.8 V69.9 L427.4 163 V215 Z" fill="url(#goldBracket)" stroke="#FFF3B8" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- brillo en el canto de cada soporte -->
+    <path d="M70 148 L240 50" stroke="#fff" stroke-opacity="0.35" stroke-width="2" fill="none"/>
+    <path d="M442 148 L272 50" stroke="#fff" stroke-opacity="0.6" stroke-width="2" fill="none"/>
 
-  <!-- Interior oscuro -->
-  <use href="#hexIn" fill="url(#plateDark)"/>
-
-  <!-- Letras: escala 1.04, centradas -->
-  <g transform="translate(256 256) scale(1.04) translate(-254 -258)">
-    <!-- huecos plateados -->
-    <use href="#Bcounters" fill="url(#counter)"/>
-    <g transform="translate(-8 0)"><use href="#Gcounter" fill="url(#counter)"/></g>
-
-    <!-- B negra: borde plateado arriba-izquierda, cuerpo negro metálico -->
-    <use href="#B" fill="#B9BEC6" fill-rule="evenodd"/>
-    <g clip-path="url(#clipB)">
-      <use href="#B" fill="url(#black)" fill-rule="evenodd" transform="translate(3 3)"/>
-      <rect x="112" y="150" width="154" height="30" fill="url(#sheen)" opacity="0.5"/>
-    </g>
+    <!-- Contorno plateado fino de la base (doble línea en V) -->
+    <path d="M58.6 232 V376 L256 490 L453.4 376 V232" fill="none" stroke="url(#silver)" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M74 236 V368 L256 474 L438 368 V236" fill="none" stroke="#fff" stroke-opacity="0.28" stroke-width="2" stroke-linejoin="round"/>
 
     <!-- G dorada -->
-    <g transform="translate(-8 0)">
-      <use href="#G" fill="#FFF6C4"/>
-      <g clip-path="url(#clipG)">
-        <use href="#G" fill="url(#gold)" transform="translate(3 3)"/>
-        <path d="M280 150 L404 150 L280 290 Z" fill="url(#sheen)" opacity="0.7"/>
-      </g>
-      <use href="#G" fill="none" stroke="#3a2200" stroke-opacity="0.5" stroke-width="1.2"/>
+    <use href="#Gshape" fill="#FFF8C9"/>
+    <g clip-path="url(#clipG)">
+      <use href="#Gshape" fill="url(#gold)" transform="translate(5 5)"/>
+      <rect x="262" y="150" width="160" height="110" fill="url(#gloss)" opacity="0.5"/>
+      <use href="#Gshape" fill="none" stroke="#FFF6C0" stroke-opacity="0.42" stroke-width="12"/>
+      <use href="#Gc" fill="url(#counter)"/>
+      <!-- sombra del borde interior del hueco -->
+      <use href="#Gc" fill="none" stroke="#6b3f00" stroke-opacity="0.45" stroke-width="2.5"/>
     </g>
-    <!-- línea de separación entre B y G -->
-    <path d="M266 264 V342" stroke="#000" stroke-opacity="0.6" stroke-width="2"/>
-  </g>
 
-  <!-- Destellos abajo -->
-  <g clip-path="url(#clipIn)">
-    <ellipse cx="256" cy="440" rx="130" ry="12" fill="url(#flare)" opacity="0.9"/>
+    <!-- B negra -->
+    <use href="#Bshape" fill="url(#silver)" fill-rule="evenodd"/>
+    <g clip-path="url(#clipB)">
+      <use href="#Bshape" fill="url(#black)" fill-rule="evenodd" transform="translate(5 5)"/>
+      <rect x="98" y="150" width="170" height="90" fill="url(#gloss)" opacity="0.3"/>
+      <use href="#Bshape" fill="none" stroke="#fff" stroke-opacity="0.16" stroke-width="12" fill-rule="evenodd"/>
+      <use href="#Bc" fill="url(#counter)"/>
+      <use href="#Bc" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="2.5"/>
+    </g>
+    <!-- línea de unión B | G -->
+    <path d="M263 176 V236 L249 250 L267 264 V452" fill="none" stroke="#000" stroke-opacity="0.7" stroke-width="2.2"/>
+    <use href="#body" fill="none" stroke="#000" stroke-opacity="0.55" stroke-width="1.5"/>
+
+    <!-- Destellos -->
+    <g>
+      <ellipse cx="256" cy="486" rx="120" ry="14" fill="url(#flare)" opacity="0.55"/>
+      <circle cx="256" cy="490" r="30" fill="url(#flare)"/>
+      <path d="M256 456 L260.5 484 L256 514 L251.5 484 Z" fill="#FFFBE0"/>
+      <path d="M220 490 L256 485 L292 490 L256 495 Z" fill="#FFFBE0" opacity="0.9"/>
+      <circle cx="104" cy="392" r="16" fill="url(#flare)"/>
+      <circle cx="408" cy="392" r="14" fill="url(#flare)" opacity="0.8"/>
+    </g>
   </g>
-  <circle cx="256" cy="472" r="26" fill="url(#flare)"/>
-  <circle cx="128" cy="396" r="16" fill="url(#flare)"/>
-  <path d="M256 440 L260 468 L256 496 L252 468 Z" fill="#FFF6C8" opacity="0.9"/>
 </svg>
