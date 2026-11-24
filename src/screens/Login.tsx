@@ -141,29 +141,51 @@ function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () =
   )
 }
 
-export function Login() {
+/**
+ * Dos entradas separadas: `/login` es solo para trabajadores; la administración entra por `/admin/acceso`,
+ * a la que se llega con 3 toques seguidos en el logo (no hay ningún botón a la vista).
+ */
+export function Login({ mode = 'worker' }: { mode?: 'worker' | 'admin' }) {
   const g = useGym()
+  const nav = useNavigate()
   const [picked, setPicked] = useState<Worker | null>(null)
   const [logoState, setLogoState] = useState<LogoState>('default')
+  const taps = useRef<number[]>([])
   if (g.session) return <Navigate to={home(g.session.role)} replace />
 
+  const admin = mode === 'admin'
   const people = g.workers
-    .filter((w) => w.active)
-    .sort((a, b) => Number(a.role === 'admin') - Number(b.role === 'admin') || a.name.localeCompare(b.name))
+    .filter((w) => w.active && (w.role === 'admin') === admin)
+    .sort((a, b) => a.name.localeCompare(b.name))
+  const only = admin && people.length === 1 ? people[0] : null
+  const who = picked ?? only
+  const logoTap = () => {
+    if (admin) return
+    const now = Date.now()
+    taps.current = [...taps.current.filter((t) => now - t < 1500), now]
+    if (taps.current.length >= 3) { taps.current = []; nav('/admin/acceso') }
+  }
   return (
     <div className="mx-auto min-h-dvh max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="mb-8 flex items-center gap-4">
-        <LogoMark size={72} state={logoState} />
+        <div onClick={logoTap} className="select-none"><LogoMark size={72} state={logoState} /></div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">Acceso</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{admin ? 'Administración' : 'Acceso'}</p>
           <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
         </div>
       </div>
 
-      {g.needsSetup ? <Setup /> : picked ? <PinStep worker={picked} onBack={() => setPicked(null)} onLogoState={setLogoState} /> : (
+      {g.needsSetup ? (
+        admin ? <Setup /> : (
+          <div className="rounded-3xl border border-amber/50 bg-surface p-5">
+            <h1 tabIndex={-1} className="mb-1 text-2xl font-extrabold tracking-tight">Falta configurar la app</h1>
+            <p className="text-muted">Todavía no hay cuentas. El administrador debe entrar primero y crear su clave y las de los trabajadores.</p>
+          </div>
+        )
+      ) : who ? <PinStep worker={who} onBack={() => (only ? nav('/login') : setPicked(null))} onLogoState={setLogoState} /> : (
         <>
-          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres?</h1>
-          <p className="mb-5 text-muted">Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.</p>
+          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">{admin ? 'Administración' : '¿Quién eres?'}</h1>
+          <p className="mb-5 text-muted">{admin ? 'Elige tu cuenta de administrador.' : 'Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.'}</p>
           <ul className="space-y-3">
             {people.map((w) => (
               <li key={w.id}>
@@ -179,14 +201,16 @@ export function Login() {
                 </button>
               </li>
             ))}
+            {people.length === 0 && <li className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">Todavía no hay trabajadores. Pídele al administrador que los agregue.</li>}
           </ul>
           {DEMO && (
             <aside className="mt-6 rounded-2xl border border-amber/40 bg-amber/10 p-4 text-sm">
               <p className="mb-1 font-bold text-amber">Modo demostración</p>
               <p className="mb-2 text-muted">Datos de ejemplo. Claves de prueba:</p>
               <ul className="space-y-0.5">
-                {DEMO_LOGINS.map((d) => <li key={d.name}><b>{d.name}</b> · <span className="tabular-nums">{d.pin}</span></li>)}
+                {DEMO_LOGINS.filter((d) => (d.name === 'Admin' || d.name === 'Administrador') === admin).map((d) => <li key={d.name}><b>{d.name}</b> · <span className="tabular-nums">{d.pin}</span></li>)}
               </ul>
+              {!admin && <p className="mt-2 text-muted">Administrador: toca 3 veces seguidas el logo.</p>}
             </aside>
           )}
         </>

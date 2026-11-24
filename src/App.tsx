@@ -27,7 +27,7 @@ import type { Worker } from './lib/types'
 function RequireRole({ role }: { role: Worker['role'] }) {
   const g = useGym()
   useIdleLogout(g.logout)
-  if (!g.session) return <Navigate to="/login" replace />
+  if (!g.session) return <Navigate to={role === 'admin' ? '/admin/acceso' : '/login'} replace />
   if (g.session.role !== role) return <Navigate to={g.session.role === 'admin' ? '/admin' : '/'} replace />
   return <Outlet />
 }
@@ -63,6 +63,7 @@ export default function App() {
         <Router {...(DEMO ? {} : { basename: import.meta.env.BASE_URL.replace(/\/$/, '') })}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/admin/acceso" element={<Login mode="admin" />} />
             <Route element={<RequireRole role="worker" />}>
               <Route element={<WorkerShell />}>
                 <Route path="/" element={<Home />} />
