@@ -36,11 +36,11 @@ function Setup() {
       <Field label="Tu nombre" error={touched && !nameOk && 'Escribe tu nombre.'}>
         <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
       </Field>
-      <Field label="Clave (4 a 6 números)" error={touched && !isValidPin(pin) && 'Usa de 4 a 6 números.'}>
-        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin} maxLength={6} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
+      <Field label="Clave (4 números)" error={touched && !isValidPin(pin) && 'Usa 4 números.'}>
+        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin} maxLength={4} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
       </Field>
       <Field label="Repite la clave" error={touched && isValidPin(pin) && pin !== pin2 && 'No coinciden.'}>
-        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin2} maxLength={6} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} />
+        <input className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" value={pin2} maxLength={4} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} />
       </Field>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <Button type="submit" block disabled={busy}>{busy ? 'Creando…' : 'Crear y entrar'}</Button>

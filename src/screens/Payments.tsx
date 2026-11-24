@@ -22,7 +22,7 @@ export const accentFor = (info: DueInfo) => (info.state === 'vencido' ? 'danger'
 
 function Heading({ children, count }: { children: string; count: number }) {
   return (
-    <h2 className="mb-2 mt-6 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">
+    <h2 className="mb-2 mt-7 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-amber after:ml-1 after:h-px after:flex-1 after:bg-gradient-to-r after:from-amber/40 after:to-transparent">
       {children} <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-muted">{count}</span>
     </h2>
   )
@@ -53,7 +53,7 @@ export function Payments() {
     return (
       <li key={c.id}>
         <SwipeRow label="Registrar pago" disabled={!g.shiftOpen} onTrigger={() => setPaying(c)}>
-        <Card accent={accentFor(info)} className={cx('!p-3.5 !pl-5', cp.selected === c.id && 'card-selected')}>
+        <Card glow accent={accentFor(info)} className={cx('!p-3.5 !pl-5', cp.selected === c.id && 'card-selected')}>
           <div className="flex items-center gap-3">
             <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} aria-current={cp.selected === c.id || undefined} className="flex min-w-0 flex-1 items-center gap-3 text-left">
               <Avatar name={c.name} />

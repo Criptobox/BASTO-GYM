@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { FREE_ATTEMPTS, attemptsLeft, failLock, hashPin, isValidPin, randomSalt, secondsLeft, verifyPin } from './pin'
 
 describe('claves', () => {
-  it('acepta solo 4 a 6 dígitos', () => {
-    for (const ok of ['1234', '123456', '0000']) expect(isValidPin(ok)).toBe(true)
-    for (const bad of ['123', '1234567', 'abcd', '12 34', '', '１２３４']) expect(isValidPin(bad)).toBe(false)
+  it('acepta solo exactamente 4 dígitos', () => {
+    for (const ok of ['1234', '0000', '9999']) expect(isValidPin(ok)).toBe(true)
+    for (const bad of ['123', '12345', '123456', 'abcd', '12 34', '', '１２３４']) expect(isValidPin(bad)).toBe(false)
   })
   it('verifica la clave correcta y rechaza la incorrecta', async () => {
     const salt = randomSalt()

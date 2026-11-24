@@ -19,7 +19,7 @@ npm run build    # typecheck + build PWA
 ```
 
 ## Acceso por clave
-- Primer uso: la app pide crear la clave del **administrador** (no hay claves de fábrica). Él da de alta a cada trabajador con su clave (4 a 6 números) en *Trabajadores*.
+- Primer uso: la app pide crear la clave del **administrador** (no hay claves de fábrica). Él da de alta a cada trabajador con su clave (4 números) en *Trabajadores*.
 - Cada trabajador entra con su nombre y clave, **abre su turno** y todo cobro y cierre queda a su nombre (`worker` / `workerId` en cada movimiento y turno).
 - Un trabajador solo ve la caja de **su** turno. Si otro tiene un turno abierto no se puede entrar; el administrador puede cerrarlo desde *Cierres*.
 - 5 claves incorrectas seguidas bloquean la cuenta 30 s (se duplica en cada fallo, máx. 10 min). La sesión se cierra tras 5 min sin actividad.

@@ -77,12 +77,15 @@ export function Home() {
           <button
             key={label} onClick={run} disabled={!g.shiftOpen}
             className={cx(
-              'flex h-28 flex-col items-center justify-center gap-2 rounded-3xl text-base font-extrabold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
-              i === 0 ? 'bg-gold text-amber-ink' : 'border border-line surface-card',
+              'relative flex h-28 flex-col items-center justify-center gap-2.5 overflow-hidden rounded-3xl text-base font-extrabold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
+              i === 0 ? 'bg-gold text-amber-ink' : 'border border-amber/50 surface-card',
             )}
           >
-            <Icon size={30} aria-hidden strokeWidth={2.2} className={i === 0 ? '' : 'text-amber'} />
+            <span aria-hidden className={cx('grid size-12 place-items-center rounded-2xl', i === 0 ? 'bg-black/15' : 'bg-gold text-amber-ink')}>
+              <Icon size={26} strokeWidth={2.3} />
+            </span>
             {label}
+            {i !== 0 && <span aria-hidden className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_12px_2px_rgb(255_194_31/0.45)]" />}
           </button>
         ))}
       </div>
@@ -148,7 +151,7 @@ export function Home() {
         />
       </div>
 
-      <h2 className="mb-3 mt-6 text-xs font-bold uppercase tracking-[0.14em] text-amber">
+      <h2 className="mb-3 mt-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.14em] text-amber after:h-px after:flex-1 after:bg-gradient-to-r after:from-amber/40 after:to-transparent">
         {q ? `Resultados (${list.length})` : 'Por cobrar hoy'}
       </h2>
       <ul className="space-y-3">
@@ -158,7 +161,7 @@ export function Home() {
           return (
             <li key={c.id}>
               <SwipeRow label="Cobrar" disabled={!g.shiftOpen || isFrozen(c) || !(due || q)} onTrigger={() => setPaying(c)}>
-              <Card accent={isFrozen(c) ? undefined : accentFor(info)} className={cx('flex items-center gap-3 !p-3.5 !pl-5', cp.selected === c.id && 'card-selected')}>
+              <Card glow accent={isFrozen(c) ? undefined : accentFor(info)} className={cx('flex items-center gap-3 !p-3.5 !pl-5', cp.selected === c.id && 'card-selected')}>
                 <button onClick={() => cp.open(c.id)} aria-label={`Ver ficha de ${c.name}`} aria-current={cp.selected === c.id || undefined} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                   <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">

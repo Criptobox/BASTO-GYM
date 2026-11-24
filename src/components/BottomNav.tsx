@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { CreditCard, Home, Receipt, ShoppingBag, UserPlus } from 'lucide-react'
 import { cx } from './ui'
+import { LogoMark } from './Logo'
 import { useViewNavigate } from '../lib/nav'
 
 const items = [
@@ -46,6 +47,7 @@ export function SideRail() {
   const go = useViewNavigate(items.map((i) => i.to))
   return (
     <nav aria-label="Principal" className="vt-static sticky top-0 flex h-dvh w-24 shrink-0 flex-col items-center gap-2 border-r border-line bg-panel/60 px-2 py-8">
+      <LogoMark size={48} className="logo-active mb-4" label="BASTO GYM" />
       {items.map(({ to, label, Icon }) => (
         <NavLink
           key={to} to={to} end={to === '/'}

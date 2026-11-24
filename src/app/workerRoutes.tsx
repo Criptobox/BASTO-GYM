@@ -18,16 +18,23 @@ function WorkerShell() {
   const g = useGym()
   const wide = useWide()
   useAppBadge(g.session ? pendingClients(g.clients, g.today).length : 0) // número rojo en el icono de la app instalada
-  return wide ? (
-    <div className="mx-auto flex min-h-dvh max-w-[1180px]">
-      <SideRail />
-      <main className="min-w-0 flex-1"><Outlet /></main>
-    </div>
-  ) : (
-    <div className="mx-auto min-h-dvh max-w-[430px] pb-28">
-      <main><Outlet /></main>
-      <BottomNav />
-    </div>
+  return (
+    <>
+      {/* mismo ambiente que el acceso: fibra de carbono y una franja dorada en la esquina */}
+      <div aria-hidden className="carbon pointer-events-none fixed inset-0 -z-10" />
+      <div aria-hidden className="pointer-events-none fixed -left-4 -top-4 -z-10 h-24 w-56 opacity-40 [clip-path:polygon(0_0,100%_0,0_100%)] [background:linear-gradient(100deg,var(--color-amber),transparent_75%)]" />
+      {wide ? (
+        <div className="mx-auto flex min-h-dvh max-w-[1180px]">
+          <SideRail />
+          <main className="min-w-0 flex-1"><Outlet /></main>
+        </div>
+      ) : (
+        <div className="mx-auto min-h-dvh max-w-[430px] pb-28">
+          <main><Outlet /></main>
+          <BottomNav />
+        </div>
+      )}
+    </>
   )
 }
 

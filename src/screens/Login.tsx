@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Delete, Dumbbell, Lock, User } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
 import { LogoMark, type LogoState } from '../components/Logo'
-import { isValidPin } from '../lib/pin'
+import { isValidPin, PIN_LENGTH } from '../lib/pin'
 import { haptic } from '../lib/nav'
 import { DEMO, DEMO_LOGINS } from '../data/demo'
 import { adminUrl } from '../app/shared'
@@ -56,7 +56,7 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
     setPin(''); setShake((n) => n + 1); setError(message(r))
     if ((r.reason === 'pin' || r.reason === 'locked') && r.retryIn > 0) setWait(r.retryIn)
   }
-  const press = (d: string) => { if (!busy && wait <= 0) setPin((p) => (p.length < 6 ? p + d : p)); setError('') }
+  const press = (d: string) => { if (!busy && wait <= 0) setPin((p) => (p.length < PIN_LENGTH ? p + d : p)); setError('') }
   const del = () => setPin((p) => p.slice(0, -1))
 
   // Teclado físico (computadora).
@@ -71,7 +71,7 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  const dots = Math.max(4, pin.length)
+  const dots = PIN_LENGTH
   const keyCls = 'grid h-16 place-items-center rounded-2xl border border-line surface-card text-2xl font-bold transition active:scale-95 active:bg-surface-2 disabled:opacity-40'
   return (
     <div>
@@ -84,7 +84,7 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
         </div>
       </div>
 
-      <div key={shake} className={`mb-2 flex justify-center gap-3 ${shake ? '[animation:shake_.35s]' : ''}`} role="img" aria-label={`${pin.length} de 4 a 6 dígitos escritos`}>
+      <div key={shake} className={`mb-2 flex justify-center gap-3 ${shake ? '[animation:shake_.35s]' : ''}`} role="img" aria-label={`${pin.length} de ${PIN_LENGTH} dígitos escritos`}>
         {Array.from({ length: dots }, (_, i) => (
           <span key={i} className={`size-4 rounded-full border-2 ${i < pin.length ? 'border-amber bg-gold' : 'border-line'}`} />
         ))}

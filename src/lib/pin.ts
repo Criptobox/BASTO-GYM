@@ -1,4 +1,6 @@
-export const PIN_RE = /^\d{4,6}$/
+/** La clave es siempre de 4 números. */
+export const PIN_LENGTH = 4
+export const PIN_RE = /^\d{4}$/
 export const isValidPin = (p: string) => PIN_RE.test(p)
 
 const hex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('')

@@ -13,6 +13,7 @@ export function Screen({ eyebrow, title, action, narrow, children }: { eyebrow: 
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{eyebrow}</p>
           <h1 tabIndex={-1} className="mt-1 text-[32px] font-extrabold leading-9 tracking-tight">{title}</h1>
+          <span aria-hidden className="mt-2 block h-1 w-10 rounded-full bg-gold" />
         </div>
         {action}
       </header>
@@ -22,9 +23,10 @@ export function Screen({ eyebrow, title, action, narrow, children }: { eyebrow: 
 }
 
 /** `accent` pinta una barra lateral según la urgencia: danger = vencido, gold = vence hoy. */
-export function Card({ className, children, accent }: { className?: string; children: ReactNode; accent?: 'danger' | 'gold' }) {
+export function Card({ className, children, accent, glow }: { className?: string; children: ReactNode; accent?: 'danger' | 'gold'; glow?: boolean }) {
   return (
-    <div className={cx('relative overflow-hidden rounded-3xl border border-line surface-card p-4', accent && 'pl-5', className)}>
+    <div className={cx('relative overflow-hidden rounded-3xl border surface-card p-4', glow ? 'border-amber/50' : 'border-line', accent && 'pl-5', className)}>
+      {glow && <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_14px_2px_rgb(255_194_31/0.5)]" />}
       {accent && (
         <span
           aria-hidden
@@ -77,9 +79,10 @@ export function Avatar({ name, photo, size = 46 }: { name: string; photo?: strin
     <div
       style={{ width: size, height: size }}
       aria-hidden
-      className="grid shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-bold"
+      className="grid shrink-0 place-items-center rounded-full bg-gold font-extrabold text-amber-ink ring-2 ring-amber/40"
+      /* tamaño de letra según el círculo */
     >
-      {initials(name)}
+      <span style={{ fontSize: Math.max(12, Math.round(size * 0.34)) }}>{initials(name)}</span>
     </div>
   )
 }

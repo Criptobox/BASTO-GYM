@@ -8,7 +8,7 @@ import { useWide } from '../lib/media'
 
 const pinInput = (v: string, set: (s: string) => void, label: string) => (
   <input
-    className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" maxLength={6}
+    className={inputCls} type="password" inputMode="numeric" autoComplete="new-password" maxLength={4}
     aria-label={label} value={v} onChange={(e) => set(e.target.value.replace(/\D/g, ''))}
   />
 )
@@ -109,7 +109,7 @@ export function Workers() {
             <Field label="Nombre" error={touched && !nameOk && (taken ? 'Ya existe alguien con ese nombre.' : 'Escribe el nombre.')}>
               <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
             </Field>
-            <Field label="Clave (4 a 6 números)" error={touched && !isValidPin(pin) && 'Usa de 4 a 6 números.'}>
+            <Field label="Clave (4 números)" error={touched && !isValidPin(pin) && 'Usa 4 números.'}>
               {pinInput(pin, setPin, 'Clave del nuevo trabajador')}
             </Field>
             <Button type="submit" block disabled={busy}>Crear trabajador</Button>
@@ -118,8 +118,8 @@ export function Workers() {
       </div>
 
       <Sheet open={!!target} onClose={() => setTarget(null)} title={target ? `Clave de ${target.name}` : 'Clave'}>
-        <p className="mb-4 text-sm text-muted">Escribe la nueva clave (4 a 6 números). La anterior deja de servir y se levanta cualquier bloqueo por intentos.</p>
-        <Field label="Nueva clave" error={pinTouched && !isValidPin(newPin) && 'Usa de 4 a 6 números.'}>
+        <p className="mb-4 text-sm text-muted">Escribe la nueva clave (4 números). La anterior deja de servir y se levanta cualquier bloqueo por intentos.</p>
+        <Field label="Nueva clave" error={pinTouched && !isValidPin(newPin) && 'Usa 4 números.'}>
           {pinInput(newPin, setNewPin, 'Nueva clave')}
         </Field>
         <Button block className="mt-5" disabled={busy} onClick={() => void savePin()}>Guardar clave</Button>
