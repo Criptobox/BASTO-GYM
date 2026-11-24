@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Delete, Dumbbell, Lock, User } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
-import { Avatar } from '../components/ui'
 import { LogoMark, type LogoState } from '../components/Logo'
 import { isValidPin } from '../lib/pin'
 import { haptic } from '../lib/nav'
@@ -73,12 +72,12 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
   })
 
   const dots = Math.max(4, pin.length)
-  const keyCls = 'grid h-16 place-items-center rounded-2xl border border-line bg-surface text-2xl font-bold transition active:scale-95 active:bg-surface-2 disabled:opacity-40'
+  const keyCls = 'grid h-16 place-items-center rounded-2xl border border-line surface-card text-2xl font-bold transition active:scale-95 active:bg-surface-2 disabled:opacity-40'
   return (
     <div>
       <button onClick={onBack} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-muted"><ArrowLeft size={16} aria-hidden /> Cambiar de usuario</button>
       <div className="mb-6 flex items-center gap-3">
-        <Avatar name={worker.name} size={52} />
+        <span className="grid size-[3.25rem] place-items-center rounded-full bg-gold text-xl font-extrabold text-amber-ink ring-2 ring-amber/50">{worker.name.trim().charAt(0).toUpperCase()}</span>
         <div>
           <h1 tabIndex={-1} className="text-2xl font-extrabold tracking-tight">{worker.name}</h1>
           <p className="text-sm text-muted">Escribe tu clave</p>
@@ -124,10 +123,10 @@ export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebro
       <div aria-hidden className="pointer-events-none absolute -left-4 -top-4 h-28 w-64 opacity-70 [clip-path:polygon(0_0,100%_0,0_100%)] [background:linear-gradient(100deg,var(--color-amber),transparent_75%)]" />
       <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-1/4 h-64 w-[150%] rounded-[50%] border-t-2 border-amber/70 shadow-[0_-10px_30px_-6px_rgb(255_194_31/0.35)]" />
       {/* Logo enorme y casi transparente de fondo: decorativo */}
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
-        <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.11] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
+        <LogoMark size={Math.min(520, typeof window === 'undefined' ? 520 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
       </div>
-      <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="relative mx-auto max-w-[430px] px-5 pb-40 pt-[max(2.5rem,env(safe-area-inset-top))] md:max-w-[520px]">
         <div className="mb-9 flex items-center gap-4">
           <div onClick={onLogoTap} className="select-none"><LogoMark size={76} state={logoState} className={logoState === 'default' ? 'logo-active' : ''} /></div>
           <span aria-hidden className="h-16 w-px shrink-0 bg-amber/60" />
@@ -141,7 +140,8 @@ export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebro
             </p>
           </div>
         </div>
-        {children}
+        {/* en pantallas anchas el contenido va en un panel, para que el logo de fondo no estorbe al leer ni al teclear */}
+        <div className="md:rounded-[2rem] md:border md:border-line md:bg-bg/70 md:p-8 md:shadow-[0_30px_60px_-30px_rgb(0_0_0/0.8)] md:backdrop-blur-sm">{children}</div>
       </div>
     </div>
   )

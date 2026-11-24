@@ -154,4 +154,4 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
 body { background-color: var(--color-bg); }
 
 /* Fibra de carbono muy sutil para las pantallas de acceso */
-.carbon { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-ink) 3.5%, transparent) 0 2px, transparent 2px 7px); }
+.carbon { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-ink) 2%, transparent) 0 2px, transparent 2px 8px); }
