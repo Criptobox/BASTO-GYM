@@ -57,6 +57,10 @@ export function Overview() {
   const month = g.today.slice(0, 7)
   const day = (iso: string) => toISODate(new Date(iso))
 
+  const todayMovs = g.movements.filter((m) => day(m.at) === g.today)
+  const sumKind = (k: 'mensualidad' | 'venta') => todayMovs.filter((m) => m.kind === k).reduce((n, m) => n + m.amount, 0)
+  const todayMemb = todayMovs.filter((m) => m.kind === 'mensualidad')
+  const todaySales = todayMovs.filter((m) => m.kind === 'venta')
   const monthTotal = g.movements.filter((m) => day(m.at).startsWith(month)).reduce((n, m) => n + m.amount, 0)
   const active = g.clients.filter((c) => c.nextDue >= g.today).length
   const overdue = g.clients.filter((c) => c.nextDue < g.today).length
@@ -75,7 +79,15 @@ export function Overview() {
     <>
       <AdminHeader eyebrow="Panorama" title="Resumen" />
       <SetupGuide />
-      <div className="grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">Hoy</h2>
+      <div className="mb-6 grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(170px,1fr))]">
+        <Stat label="Recibido hoy" value={money.usd(sumKind('mensualidad') + sumKind('venta'))} />
+        <Stat label={`Suscripciones (${todayMemb.length})`} value={money.usd(sumKind('mensualidad'))} />
+        <Stat label={`Ventas (${todaySales.length})`} value={money.usd(sumKind('venta'))} />
+        <Stat label="Clientes inscritos" value={g.clients.length} />
+      </div>
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">En general</h2>
+      <div className="grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(170px,1fr))]">
         <Stat label="Ingresos del mes" value={money.usd(monthTotal)} />
         <Stat label="Clientes activos" value={active} />
         <Stat label="Pagos vencidos" value={overdue} tone="amber" />

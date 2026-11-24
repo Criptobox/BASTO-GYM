@@ -75,8 +75,8 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
 export function Stat({ label, value, tone }: { label: string; value: string | number; tone?: 'amber' }) {
   return (
     <div className="min-w-0 rounded-2xl border border-line surface-card p-3.5 sm:rounded-3xl sm:p-5">
-      <p className="truncate text-xs text-muted sm:text-sm">{label}</p>
-      <p className={cx('mt-0.5 truncate text-2xl font-extrabold tracking-tight sm:mt-1 sm:text-3xl', tone === 'amber' && 'text-amber')}>{value}</p>
+      <p className="text-xs leading-snug text-muted sm:text-sm">{label}</p>
+      <p className={cx('mt-0.5 whitespace-nowrap text-2xl font-extrabold tracking-tight sm:mt-1 sm:text-[28px]', tone === 'amber' && 'text-amber')}>{value}</p>
     </div>
   )
 }
