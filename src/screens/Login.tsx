@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, Delete, Dumbbell, Lock } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Delete, Dumbbell, Lock, User } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
 import { Avatar } from '../components/ui'
 import { LogoMark, type LogoState } from '../components/Logo'
@@ -102,22 +102,43 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
   )
 }
 
-/** Marco común de las pantallas de acceso: logo, nombre del gimnasio y el logo enorme y translúcido de fondo. */
+/** Siluetas sencillas de gimnasio, para decorar las tarjetas. Son tenues a propósito. */
+const SILHOUETTES = [
+  // disco
+  <svg key="disc" viewBox="0 0 100 100" className="h-full"><circle cx="50" cy="50" r="46" fill="currentColor" /><circle cx="50" cy="50" r="34" fill="none" stroke="var(--color-surface)" strokeWidth="2.5" opacity=".6" /><circle cx="50" cy="50" r="12" fill="var(--color-surface)" opacity=".75" /></svg>,
+  // pesa rusa
+  <svg key="kb" viewBox="0 0 100 100" className="h-full"><path d="M32 40 C30 8 70 8 68 40" fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" /><circle cx="50" cy="64" r="30" fill="currentColor" /></svg>,
+  // mancuerna
+  <svg key="db" viewBox="0 0 100 100" className="h-full"><rect x="2" y="30" width="14" height="40" rx="4" fill="currentColor" /><rect x="18" y="20" width="14" height="60" rx="4" fill="currentColor" /><rect x="32" y="44" width="36" height="12" fill="currentColor" /><rect x="68" y="20" width="14" height="60" rx="4" fill="currentColor" /><rect x="84" y="30" width="14" height="40" rx="4" fill="currentColor" /></svg>,
+]
+
+/** Marco común de las pantallas de acceso: franjas doradas, logo enorme translúcido y la marca arriba. */
 export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebrow: string; logoState: LogoState; onLogoTap?: () => void; children: ReactNode }) {
   const g = useGym()
+  const words = g.settings.gymName.trim().split(/\s+/)
+  const last = words.length > 1 ? words.pop() : null
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <div aria-hidden className="carbon pointer-events-none absolute inset-0" />
+      {/* franja dorada arriba a la izquierda y curva brillante abajo */}
+      <div aria-hidden className="pointer-events-none absolute -left-4 -top-4 h-28 w-64 opacity-70 [clip-path:polygon(0_0,100%_0,0_100%)] [background:linear-gradient(100deg,var(--color-amber),transparent_75%)]" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-1/4 h-64 w-[150%] rounded-[50%] border-t-2 border-amber/70 shadow-[0_-10px_30px_-6px_rgb(255_194_31/0.35)]" />
       {/* Logo enorme y casi transparente de fondo: decorativo */}
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
         <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
       </div>
       <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
-        <div className="mb-8 flex items-center gap-4">
-          <div onClick={onLogoTap} className="select-none"><LogoMark size={72} state={logoState} className={logoState === 'default' ? 'logo-active' : ''} /></div>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
-            <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
+        <div className="mb-9 flex items-center gap-4">
+          <div onClick={onLogoTap} className="select-none"><LogoMark size={76} state={logoState} className={logoState === 'default' ? 'logo-active' : ''} /></div>
+          <span aria-hidden className="h-16 w-px shrink-0 bg-amber/60" />
+          <div className="min-w-0">
+            <p className="text-[12px] font-bold uppercase tracking-[0.3em] text-muted">{eyebrow}</p>
+            <p className="text-[26px] font-extrabold leading-tight tracking-tight">
+              {words.join(' ')}{last && <> <span className="text-gold">{last}</span></>}
+            </p>
+            <p className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+              <Dumbbell size={13} aria-hidden className="shrink-0 rotate-45 text-amber" /> Centro de entrenamiento
+            </p>
           </div>
         </div>
         {children}
@@ -126,20 +147,25 @@ export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebro
   )
 }
 
-/** Tarjeta de un trabajador: borde dorado, avatar con aro, flecha y una pesa al lado. */
-function WorkerCard({ worker, onPick }: { worker: Worker; onPick: () => void }) {
+/** Tarjeta de un trabajador: avatar dorado, flecha, brillo dorado abajo y una silueta de gimnasio. */
+function WorkerCard({ worker, index, onPick }: { worker: Worker; index: number; onPick: () => void }) {
   const locked = !worker.pinHash
   return (
-    <button onClick={onPick} disabled={locked} className="group flex w-full items-center gap-3 transition active:scale-[0.98] disabled:opacity-55">
-      <span className={`flex min-w-0 flex-1 items-center gap-4 rounded-2xl border px-4 py-4 text-left surface-card shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ${locked ? 'border-line' : 'border-amber/70'}`}>
-        <span className={`rounded-full p-[3px] ${locked ? 'ring-2 ring-line' : 'ring-2 ring-amber'}`}><Avatar name={worker.name} size={46} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-lg font-extrabold">{worker.name}</span>
-          <span className="text-sm text-muted">{locked ? 'Sin clave: pídesela al administrador' : 'Toca para entrar'}</span>
+    <button onClick={onPick} disabled={locked} className="group relative block w-full overflow-hidden rounded-2xl text-left transition active:scale-[0.98] disabled:opacity-55">
+      <span className={`relative flex items-center gap-4 rounded-2xl border px-4 py-4 surface-card shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ${locked ? 'border-line' : 'border-amber/70'}`}>
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 right-10 flex items-center text-ink opacity-[0.07] [mask-image:linear-gradient(to_right,transparent,#000_60%)]" style={{ width: '9rem' }}>
+          <span className="ml-auto block h-[120%]">{SILHOUETTES[index % SILHOUETTES.length]}</span>
         </span>
-        {locked ? <Lock size={18} aria-hidden className="text-faint" /> : <ChevronRight size={22} aria-hidden className="text-amber transition group-active:translate-x-0.5" />}
+        {!locked && <span aria-hidden className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_14px_2px_rgb(255_194_31/0.6)]" />}
+        <span className={`relative grid size-[3.1rem] shrink-0 place-items-center rounded-full text-xl font-extrabold ${locked ? 'bg-surface-2 text-muted ring-2 ring-line' : 'bg-gold text-amber-ink ring-2 ring-amber/50 ring-offset-2 ring-offset-transparent'}`}>
+          {worker.name.trim().charAt(0).toUpperCase()}
+        </span>
+        <span className="relative min-w-0 flex-1">
+          <span className="block truncate text-xl font-extrabold">{worker.name}</span>
+          <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted"><User size={15} aria-hidden className="shrink-0" />{locked ? 'Sin clave: pídesela al administrador' : 'Toca para entrar'}</span>
+        </span>
+        {locked ? <Lock size={18} aria-hidden className="relative text-faint" /> : <ChevronRight size={26} strokeWidth={2.6} aria-hidden className="relative text-amber transition group-active:translate-x-0.5" />}
       </span>
-      <Dumbbell size={26} aria-hidden strokeWidth={2.2} className={`shrink-0 rotate-45 ${locked ? 'text-faint' : 'text-amber'}`} />
     </button>
   )
 }
@@ -173,10 +199,11 @@ export function Login() {
         <PinStep worker={picked} onBack={() => setPicked(null)} onLogoState={setLogoState} />
       ) : (
         <>
-          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres<span className="text-gold">?</span></h1>
+          <h1 tabIndex={-1} className="text-[34px] font-extrabold leading-tight tracking-tight">¿Quién eres<span className="text-gold">?</span></h1>
+          <span aria-hidden className="mb-4 mt-2 block h-1 w-12 rounded-full bg-gold" />
           <p className="mb-6 text-muted">Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.</p>
-          <ul className="space-y-3">
-            {people.map((w) => <li key={w.id}><WorkerCard worker={w} onPick={() => setPicked(w)} /></li>)}
+          <ul className="space-y-4">
+            {people.map((w, i) => <li key={w.id}><WorkerCard worker={w} index={i} onPick={() => setPicked(w)} /></li>)}
             {people.length === 0 && <li className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">Todavía no hay trabajadores. Pídele al administrador que los agregue.</li>}
           </ul>
           {DEMO && (
