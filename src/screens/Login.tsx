@@ -125,7 +125,7 @@ function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () =
 
       <div key={shake} className={`mb-2 flex justify-center gap-3 ${shake ? '[animation:shake_.35s]' : ''}`} role="img" aria-label={`${pin.length} de 4 a 6 dígitos escritos`}>
         {Array.from({ length: dots }, (_, i) => (
-          <span key={i} className={`size-4 rounded-full border-2 ${i < pin.length ? 'border-amber bg-amber' : 'border-line'}`} />
+          <span key={i} className={`size-4 rounded-full border-2 ${i < pin.length ? 'border-amber bg-gold' : 'border-line'}`} />
         ))}
       </div>
       <p role="alert" className="mb-4 min-h-10 text-center text-sm text-danger">{wait > 0 && !error.includes('turno') ? `Espera ${wait} s para volver a intentar.` : error}</p>
@@ -134,7 +134,7 @@ function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBack: () =
         {KEYS.map((k) => <button key={k} className={keyCls} disabled={busy || wait > 0} onClick={() => press(k)} aria-label={k}>{k}</button>)}
         <button className={keyCls} onClick={del} aria-label="Borrar" disabled={!pin}><Delete size={22} aria-hidden /></button>
         <button className={keyCls} disabled={busy || wait > 0} onClick={() => press('0')} aria-label="0">0</button>
-        <button className={`${keyCls} !border-amber !bg-amber !text-amber-ink`} disabled={!isValidPin(pin) || busy || wait > 0} onClick={() => void submit()}>Entrar</button>
+        <button className={`${keyCls} !border-amber !bg-gold !text-amber-ink`} disabled={!isValidPin(pin) || busy || wait > 0} onClick={() => void submit()}>Entrar</button>
       </div>
     </div>
   )
@@ -168,7 +168,7 @@ export function Login() {
               <li key={w.id}>
                 <button
                   onClick={() => setPicked(w)} disabled={!w.pinHash}
-                  className="flex w-full items-center gap-4 rounded-3xl border border-line bg-surface p-4 text-left transition active:scale-[0.98] disabled:opacity-50"
+                  className="flex w-full items-center gap-4 rounded-3xl border border-line surface-card p-4 text-left transition active:scale-[0.98] disabled:opacity-50"
                 >
                   <Avatar name={w.name} size={48} />
                   <span className="min-w-0 flex-1">

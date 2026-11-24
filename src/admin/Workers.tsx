@@ -49,7 +49,7 @@ export function Workers() {
         Cada trabajador entra con su propia clave. Todo cobro y cada cierre quedan a nombre de quien los hizo, para saber de quién es cada turno si hay un problema.
       </p>
       <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-3xl border border-line surface-card">
           <table className="rtable w-full md:min-w-[560px]">
             <thead><tr className="border-b border-line"><th className={th}>Nombre</th><th className={th}>Rol</th><th className={th}>Estado</th><th className={th}>Acciones</th></tr></thead>
             <tbody>

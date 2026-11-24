@@ -18,7 +18,7 @@ export function BottomNav() {
       aria-label="Principal"
       className="vt-static fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[430px] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
     >
-      <ul className="flex items-center justify-between rounded-full border border-line bg-surface/95 p-1.5 shadow-2xl backdrop-blur">
+      <ul className="flex items-center justify-between rounded-full border border-white/10 bg-[#141517]/95 p-1.5 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.07)] backdrop-blur">
         {items.map(({ to, label, Icon }) => (
           <li key={to}>
             <NavLink
@@ -27,7 +27,7 @@ export function BottomNav() {
               className={({ isActive }) =>
                 cx(
                   'flex h-14 min-w-[62px] flex-col items-center justify-center gap-0.5 rounded-full px-3 text-[11px] font-bold transition',
-                  isActive ? 'bg-amber text-amber-ink' : 'text-muted',
+                  isActive ? 'bg-gold text-amber-ink' : 'text-muted',
                 )
               }
             >

@@ -41,7 +41,7 @@ export function AdminLayout() {
               className={({ isActive }) =>
                 cx(
                   'flex h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-[15px] font-semibold transition',
-                  isActive ? 'bg-amber text-amber-ink' : 'text-muted hover:bg-surface-2 hover:text-white',
+                  isActive ? 'bg-gold text-amber-ink' : 'text-muted hover:bg-surface-2 hover:text-white',
                 )
               }
             >
@@ -64,7 +64,7 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{eyebrow}</p>
         <h1 tabIndex={-1} className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
       </div>
       {action}
@@ -74,7 +74,7 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
 
 export function Stat({ label, value, tone }: { label: string; value: string | number; tone?: 'amber' }) {
   return (
-    <div className="min-w-0 rounded-3xl border border-line bg-surface p-5">
+    <div className="min-w-0 rounded-3xl border border-line surface-card p-5">
       <p className="text-sm text-muted">{label}</p>
       <p className={cx('mt-1 truncate text-3xl font-extrabold tracking-tight', tone === 'amber' && 'text-amber')}>{value}</p>
     </div>

@@ -41,7 +41,7 @@ export function Overview() {
             {totals.map((t, i) => (
               <div key={days[i]} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                 <span className="text-xs text-muted">{t ? money.usd(t) : ''}</span>
-                <div className="w-full rounded-t-xl bg-amber" style={{ height: `${Math.max((t / max) * 100, t ? 4 : 1)}%`, opacity: i === 6 ? 1 : 0.55 }} />
+                <div className="w-full rounded-t-xl bg-gold" style={{ height: `${Math.max((t / max) * 100, t ? 4 : 1)}%`, filter: i === 6 ? 'none' : 'brightness(0.78) saturate(0.85)' }} />
                 <span className="text-xs text-muted">{formatShortDate(days[i], g.settings.locale)}</span>
               </div>
             ))}

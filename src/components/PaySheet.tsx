@@ -27,7 +27,7 @@ export function PaySheet({ client: current, onClose }: { client: Client | null; 
           <p className="text-sm text-muted">{dueInfo(client.nextDue, g.today).text}</p>
         </div>
       </div>
-      <div className="mb-5 rounded-2xl bg-amber p-4 text-amber-ink">
+      <div className="mb-5 rounded-2xl bg-gold p-4 text-amber-ink">
         <p className="text-sm font-medium">Precio del plan</p>
         <p className="text-4xl font-extrabold tracking-tight">{money.usd(price)}</p>
         <p className="mt-1 text-sm font-medium">Nuevo vencimiento: {formatDate(next, g.settings.locale)}</p>

@@ -8,7 +8,7 @@ export function Screen({ eyebrow, title, action, children }: { eyebrow: string; 
     <div className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-6">
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{eyebrow}</p>
           <h1 tabIndex={-1} className="mt-1 text-[32px] font-extrabold leading-9 tracking-tight">{title}</h1>
         </div>
         {action}
@@ -18,8 +18,19 @@ export function Screen({ eyebrow, title, action, children }: { eyebrow: string; 
   )
 }
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cx('rounded-3xl border border-line bg-surface p-4', className)}>{children}</div>
+/** `accent` pinta una barra lateral según la urgencia: danger = vencido, gold = vence hoy. */
+export function Card({ className, children, accent }: { className?: string; children: ReactNode; accent?: 'danger' | 'gold' }) {
+  return (
+    <div className={cx('relative overflow-hidden rounded-3xl border border-line surface-card p-4', accent && 'pl-5', className)}>
+      {accent && (
+        <span
+          aria-hidden
+          className={cx('absolute inset-y-0 left-0 w-1.5', accent === 'danger' ? 'bg-gradient-to-b from-[#ff8a80] to-[#d63b35]' : 'bg-gold !shadow-none')}
+        />
+      )}
+      {children}
+    </div>
+  )
 }
 
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'solid' | 'outline' | 'dark'; size?: 'md' | 'sm'; block?: boolean }
@@ -30,7 +41,7 @@ export function Button({ variant = 'solid', size = 'md', block, className, ...p 
       className={cx(
         'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100',
         size === 'md' ? 'h-14 px-6 text-base' : 'h-11 px-4 text-sm',
-        variant === 'solid' && 'bg-amber text-amber-ink',
+        variant === 'solid' && 'bg-gold text-amber-ink',
         variant === 'outline' && 'border border-amber text-amber',
         variant === 'dark' && 'bg-amber-ink text-amber',
         block && 'w-full',
@@ -40,14 +51,15 @@ export function Button({ variant = 'solid', size = 'md', block, className, ...p 
   )
 }
 
-export function Pill({ tone = 'muted', children }: { tone?: 'amber' | 'white' | 'muted'; children: ReactNode }) {
+export function Pill({ tone = 'muted', children }: { tone?: 'amber' | 'white' | 'muted' | 'danger'; children: ReactNode }) {
   return (
     <span
       className={cx(
         'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold',
-        tone === 'amber' && 'bg-amber text-amber-ink',
+        tone === 'amber' && 'bg-gold text-amber-ink',
         tone === 'white' && 'bg-white text-black',
         tone === 'muted' && 'border border-line bg-surface-2 text-muted',
+        tone === 'danger' && 'border border-[rgb(255_90_82/0.4)] bg-[rgb(255_90_82/0.14)] text-[#ff9a92]',
       )}
     >
       {children}
@@ -82,7 +94,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
 }
 
 export const inputCls =
-  'h-14 w-full rounded-2xl border border-line bg-surface px-4 text-base text-white placeholder:text-faint focus:border-amber focus:outline-none'
+  'h-14 w-full rounded-2xl border border-line bg-[#131417] px-4 text-base text-white shadow-[inset_0_2px_6px_rgb(0_0_0/0.35)] placeholder:text-faint focus:border-amber focus:shadow-[inset_0_2px_6px_rgb(0_0_0/0.35),0_0_0_3px_rgb(255_194_31/0.2)] focus:outline-none'
 
 /**
  * Hoja inferior con <dialog> nativo: el navegador aporta capa superior, foco contenido,
@@ -165,7 +177,7 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
           onClick={() => onChange(o.id)}
           className={cx(
             'h-11 rounded-full border px-5 text-sm font-semibold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100',
-            value === o.id ? 'border-amber bg-amber text-amber-ink' : 'border-line text-white',
+            value === o.id ? 'border-amber bg-gold text-amber-ink' : 'border-line text-white',
           )}
         >
           {o.label}

@@ -52,7 +52,7 @@ export function Store() {
           className="relative grid size-12 shrink-0 place-items-center rounded-2xl border border-amber text-amber disabled:opacity-40"
         >
           <ShoppingBag size={20} aria-hidden />
-          {count > 0 && <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-amber text-[11px] font-extrabold text-amber-ink">{count}</span>}
+          {count > 0 && <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-gold text-[11px] font-extrabold text-amber-ink">{count}</span>}
         </button>
       }
     >
@@ -65,7 +65,7 @@ export function Store() {
         {CATS.map((c) => (
           <button
             key={c} role="tab" aria-selected={cat === c} onClick={() => setCat(c)}
-            className={cx('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold', cat === c ? 'border-amber bg-amber text-amber-ink' : 'border-line text-white')}
+            className={cx('h-10 shrink-0 rounded-full border px-4 text-sm font-semibold', cat === c ? 'border-amber bg-gold text-amber-ink' : 'border-line text-white')}
           >
             {c}
           </button>
@@ -93,7 +93,7 @@ export function Store() {
                     <div className="mt-2 flex items-center justify-between">
                       <button aria-label={`Quitar uno de ${p.name}`} onClick={() => add(p, -1)} className="grid size-9 place-items-center rounded-full border border-amber text-amber"><Minus size={16} /></button>
                       <span className="w-4 text-center font-bold">{inCart}</span>
-                      <button aria-label={`Agregar uno de ${p.name}`} onClick={() => add(p, 1)} disabled={inCart >= p.stock} className="grid size-9 place-items-center rounded-full bg-amber text-amber-ink disabled:opacity-40"><Plus size={16} /></button>
+                      <button aria-label={`Agregar uno de ${p.name}`} onClick={() => add(p, 1)} disabled={inCart >= p.stock} className="grid size-9 place-items-center rounded-full bg-gold text-amber-ink disabled:opacity-40"><Plus size={16} /></button>
                     </div>
                   ) : (
                     <button onClick={() => add(p, 1)} aria-label={`Agregar ${p.name}`} className="mt-2 h-10 w-full whitespace-nowrap rounded-full border border-amber text-sm font-bold text-amber active:scale-95">+ Agregar</button>

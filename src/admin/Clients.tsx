@@ -23,7 +23,7 @@ export function Clients() {
           <input type="search" aria-label="Buscar cliente" placeholder="Nombre, carnet o teléfono" value={q} onChange={(e) => setQ(e.target.value)} className={`${inputCls} !h-12 pl-11`} />
         </div>
       } />
-      <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
+      <div className="overflow-x-auto rounded-3xl border border-line surface-card">
         <table className="rtable w-full md:min-w-[620px]">
           <thead><tr className="border-b border-line"><th className={th}>Cliente</th><th className={th}>Carnet</th><th className={th}>Teléfono</th><th className={th}>Plan</th><th className={th}>Vence</th><th className={th}>Estado</th></tr></thead>
           <tbody>

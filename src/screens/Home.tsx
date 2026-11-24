@@ -6,6 +6,7 @@ import { dueInfo, normalizeCarnet, pendingClients, summarize } from '../lib/doma
 import { formatTime, makeMoney, plural } from '../lib/format'
 import { Avatar, Button, Card, inputCls, Pill, Screen, Sheet } from '../components/ui'
 import { PaySheet } from '../components/PaySheet'
+import { accentFor, DuePill } from './Payments'
 import { RateForm } from '../components/Payment'
 import type { Client } from '../lib/types'
 
@@ -49,7 +50,7 @@ export function Home() {
       {/* Tasa del día: lo primero que se necesita para cobrar en MN */}
       {g.rateFresh ? (
         <div className="flex items-center gap-4 rounded-3xl border border-amber/50 bg-surface p-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-amber text-amber-ink"><TrendingUp size={22} aria-hidden /></span>
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gold text-amber-ink"><TrendingUp size={22} aria-hidden /></span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">Tasa del día</p>
             <p className="whitespace-nowrap text-lg font-extrabold tracking-tight">1 USD = {g.settings.usdRate} MN</p>
@@ -66,7 +67,7 @@ export function Home() {
         </div>
       )}
 
-      <div className="mt-3 rounded-3xl bg-amber p-5 text-amber-ink">
+      <div className="mt-3 rounded-3xl bg-gold p-5 text-amber-ink">
         <p className="text-sm font-semibold">En caja ahora (efectivo)</p>
         <div className="mt-2 grid grid-cols-2 gap-4">
           <div className="min-w-0">
@@ -111,15 +112,15 @@ export function Home() {
           const due = info.state === 'vencido' || info.state === 'hoy'
           return (
             <li key={c.id}>
-              <Card className="flex items-center gap-3 !p-3.5">
+              <Card accent={accentFor(info)} className="flex items-center gap-3 !p-3.5 !pl-5">
                 <Avatar name={c.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{c.name}</p>
-                  <p className="text-sm text-muted">{info.text}</p>
+                  <div className="mt-1"><DuePill info={info} /></div>
                 </div>
                 {due || q ? (
                   <Button variant="outline" size="sm" disabled={!g.shiftOpen} onClick={() => setPaying(c)}>Cobrar</Button>
-                ) : <Pill>Al día</Pill>}
+                ) : null}
               </Card>
             </li>
           )

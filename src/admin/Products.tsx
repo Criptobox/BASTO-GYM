@@ -74,7 +74,7 @@ export function Products() {
       </div>
       {error && <p role="alert" className="mt-4 rounded-2xl border border-danger/50 bg-danger/10 px-4 py-3 text-sm text-danger">{error}</p>}
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-3xl border border-line surface-card">
           <table className="rtable w-full md:min-w-[620px]">
             <thead><tr className="border-b border-line"><th className={th}>Producto</th><th className={th}>Precio (USD)</th><th className={th}>Stock</th><th className={th}>Estado</th></tr></thead>
             <tbody>

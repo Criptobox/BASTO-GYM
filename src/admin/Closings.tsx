@@ -42,7 +42,7 @@ export function Closings() {
         <div role="radiogroup" aria-label="Periodo" className="flex gap-2">
           {RANGES.map((r) => (
             <button key={r.id} role="radio" aria-checked={range === r.id} onClick={() => setRange(r.id)}
-              className={cx('h-11 rounded-full border px-5 text-sm font-semibold', range === r.id ? 'border-amber bg-amber text-amber-ink' : 'border-line')}>{r.label}</button>
+              className={cx('h-11 rounded-full border px-5 text-sm font-semibold', range === r.id ? 'border-amber bg-gold text-amber-ink' : 'border-line')}>{r.label}</button>
           ))}
         </div>
       } />
@@ -52,7 +52,7 @@ export function Closings() {
         <Stat label="Cierres con diferencia" value={totals.d} tone="amber" />
       </div>
       <div className="mt-4 grid items-start gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="overflow-x-auto rounded-3xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-3xl border border-line surface-card">
           <table className="rtable w-full md:min-w-[620px]">
             <thead><tr className="border-b border-line"><th className={th}>Fecha</th><th className={th}>Trabajador</th><th className={th}>Mensualidades</th><th className={th}>Ventas</th><th className={th}>Caja</th></tr></thead>
             <tbody>
