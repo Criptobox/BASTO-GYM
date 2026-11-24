@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Delete } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Delete, Dumbbell, Lock } from 'lucide-react'
 import { useGym, type LoginResult } from '../data/store'
 import { Avatar } from '../components/ui'
 import { LogoMark, type LogoState } from '../components/Logo'
@@ -107,13 +107,14 @@ export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebro
   const g = useGym()
   return (
     <div className="relative min-h-dvh overflow-hidden">
+      <div aria-hidden className="carbon pointer-events-none absolute inset-0" />
       {/* Logo enorme y casi transparente de fondo: decorativo */}
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 opacity-[0.13] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_25%,#000_80%,transparent_100%)]">
         <LogoMark size={Math.min(640, typeof window === 'undefined' ? 560 : Math.round(window.innerWidth * 1.35))} state="default" label="" />
       </div>
       <div className="relative mx-auto max-w-[430px] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="mb-8 flex items-center gap-4">
-          <div onClick={onLogoTap} className="select-none"><LogoMark size={72} state={logoState} /></div>
+          <div onClick={onLogoTap} className="select-none"><LogoMark size={72} state={logoState} className={logoState === 'default' ? 'logo-active' : ''} /></div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{eyebrow}</p>
             <p className="text-xl font-extrabold leading-tight tracking-tight">{g.settings.gymName}</p>
@@ -125,29 +126,20 @@ export function LoginShell({ eyebrow, logoState, onLogoTap, children }: { eyebro
   )
 }
 
-/** Una pesa por trabajador: discos a los lados y la barra en medio con su nombre. */
-function DumbbellCard({ worker, onPick }: { worker: Worker; onPick: () => void }) {
+/** Tarjeta de un trabajador: borde dorado, avatar con aro, flecha y una pesa al lado. */
+function WorkerCard({ worker, onPick }: { worker: Worker; onPick: () => void }) {
   const locked = !worker.pinHash
-  const plate = (h: string, w = 'w-3.5') => <span aria-hidden className={`${h} ${w} shrink-0 rounded-md ${locked ? 'bg-surface-2' : 'bg-gold'}`} />
-  const side = (flip: boolean) => (
-    <span aria-hidden className={`flex shrink-0 items-center gap-1 ${flip ? 'flex-row-reverse' : ''}`}>
-      {plate('h-[4.5rem]')}{plate('h-14')}<span className={`h-4 w-2 shrink-0 rounded-sm ${locked ? 'bg-line' : 'bg-line'}`} />
-    </span>
-  )
   return (
-    <button
-      onClick={onPick} disabled={locked}
-      className="flex w-full items-center transition active:scale-[0.98] disabled:opacity-55"
-    >
-      {side(false)}
-      <span className="relative flex min-w-0 flex-1 items-center gap-4 rounded-xl border border-line surface-card px-4 py-4 text-left">
-        <Avatar name={worker.name} size={48} />
+    <button onClick={onPick} disabled={locked} className="group flex w-full items-center gap-3 transition active:scale-[0.98] disabled:opacity-55">
+      <span className={`flex min-w-0 flex-1 items-center gap-4 rounded-2xl border px-4 py-4 text-left surface-card shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ${locked ? 'border-line' : 'border-amber/70'}`}>
+        <span className={`rounded-full p-[3px] ${locked ? 'ring-2 ring-line' : 'ring-2 ring-amber'}`}><Avatar name={worker.name} size={46} /></span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-lg font-extrabold">{worker.name}</span>
           <span className="text-sm text-muted">{locked ? 'Sin clave: pídesela al administrador' : 'Toca para entrar'}</span>
         </span>
+        {locked ? <Lock size={18} aria-hidden className="text-faint" /> : <ChevronRight size={22} aria-hidden className="text-amber transition group-active:translate-x-0.5" />}
       </span>
-      {side(true)}
+      <Dumbbell size={26} aria-hidden strokeWidth={2.2} className={`shrink-0 rotate-45 ${locked ? 'text-faint' : 'text-amber'}`} />
     </button>
   )
 }
@@ -181,10 +173,10 @@ export function Login() {
         <PinStep worker={picked} onBack={() => setPicked(null)} onLogoState={setLogoState} />
       ) : (
         <>
-          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres?</h1>
+          <h1 tabIndex={-1} className="mb-1 text-3xl font-extrabold tracking-tight">¿Quién eres<span className="text-gold">?</span></h1>
           <p className="mb-6 text-muted">Elige tu nombre para entrar. Cada cobro y cada cierre queda a nombre de quien lo hizo.</p>
-          <ul className="space-y-4">
-            {people.map((w) => <li key={w.id}><DumbbellCard worker={w} onPick={() => setPicked(w)} /></li>)}
+          <ul className="space-y-3">
+            {people.map((w) => <li key={w.id}><WorkerCard worker={w} onPick={() => setPicked(w)} /></li>)}
             {people.length === 0 && <li className="rounded-3xl border border-dashed border-line p-6 text-center text-muted">Todavía no hay trabajadores. Pídele al administrador que los agregue.</li>}
           </ul>
           {DEMO && (
