@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useGym } from '../data/store'
 import { shiftDifference, cashDifference, type CashStatus } from '../lib/domain'
 import { formatTime, makeMoney, plural } from '../lib/format'
-import { Button, Card, Field, inputCls, Pill, Screen, Sheet } from '../components/ui'
+import { Button, Card, Field, Pill, Screen, Section, Sheet, inputCls } from '../components/ui'
 import { LogoMark } from '../components/Logo'
 import { CashOutSheet, OpenShiftSheet } from '../components/Cash'
 
@@ -84,7 +84,7 @@ export function Close() {
         <Card><p className="text-sm text-muted">Ventas</p><p className="text-2xl font-extrabold tracking-tight">{money.usd(sum.sales.total)}</p><p className="text-xs text-muted">{plural(sum.sales.count, 'venta', 'ventas')}</p></Card>
       </div>
 
-      <Card className="mt-3">
+      <Card glow className="mt-3">
         <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 text-xs font-bold uppercase tracking-[0.1em] text-faint">
           <span>Lo que debería haber</span><span className="min-w-[4.5rem] text-right">MN</span><span className="min-w-[4.5rem] text-right">USD</span>
         </div>
@@ -98,11 +98,8 @@ export function Close() {
         <p className="mt-2 text-xs text-muted">Además, cobrado con tarjeta: <b className="text-ink">{money.mn(sum.expected.card)}</b> (no va en la caja).</p>
       </Card>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-amber">Salidas de efectivo</h2>
-        <Button size="xs" variant="outline" onClick={() => setOutSheet(true)}>+ Registrar</Button>
-      </div>
-      <ul className="mt-2 space-y-2">
+      <Section className="mt-3" step={1} title="Salidas de efectivo" action={<Button size="xs" variant="outline" onClick={() => setOutSheet(true)}>+ Registrar</Button>}>
+      <ul className="space-y-2">
         {g.shiftCashOuts.map((o) => (
           <li key={o.id}>
             <Card className="flex items-center gap-3 !rounded-2xl !p-3">
@@ -116,8 +113,10 @@ export function Close() {
         ))}
         {g.shiftCashOuts.length === 0 && <li className="rounded-2xl border border-dashed border-line p-4 text-center text-sm text-muted">Sin salidas en este turno.</li>}
       </ul>
+      </Section>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      <Section className="mt-3" step={2} title="Cuenta el efectivo">
+      <div className="grid grid-cols-2 gap-3">
         <Field label="MN contados">
           <input className={inputCls} inputMode="decimal" placeholder="0" value={rawMN} onChange={(e) => setRawMN(e.target.value.replace(/[^\d.,]/g, ''))} />
         </Field>
@@ -126,7 +125,7 @@ export function Close() {
         </Field>
       </div>
 
-      <div className="mt-3 space-y-2 rounded-2xl border border-amber p-4" aria-live="polite">
+      <div className="mt-3 space-y-2 rounded-2xl border border-amber/60 bg-amber/5 p-4" aria-live="polite">
         <div className="flex items-center justify-between"><span className="font-bold">Diferencia MN</span>
           {dMN ? <Pill tone={tone(dMN.status)}>{dMN.status === 'cuadra' ? 'Cuadra' : `${STATUS[dMN.status]} ${money.mn(dMN.amount)}`}</Pill> : <span className="text-sm text-muted">Cuenta el efectivo</span>}
         </div>
@@ -135,6 +134,7 @@ export function Close() {
         </div>
       </div>
       <p className="mt-3 text-center text-sm text-muted">Si no tienes MN o USD, escribe 0. Al cerrar, el turno ya no se puede modificar.</p>
+      </Section>
 
       <Button block className="mt-5" disabled={!ready} onClick={() => setConfirm(true)}>Cerrar turno</Button>
       <CashOutSheet open={outSheet} onClose={() => setOutSheet(false)} />

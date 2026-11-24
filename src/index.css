@@ -48,7 +48,9 @@ h1:focus { outline: none; } /* foco programático al cambiar de pantalla */
 dialog.sheet {
   margin: auto auto 0; padding: 0; width: 100%; max-width: 430px; max-height: 88dvh;
   border: 1px solid var(--color-line); border-bottom: 0; border-radius: 32px 32px 0 0;
-  background: var(--color-surface); color: var(--color-ink);
+  background: linear-gradient(180deg, var(--card-a), var(--color-surface) 220px); color: var(--color-ink);
+  border-top-color: color-mix(in srgb, var(--color-amber) 55%, transparent);
+  box-shadow: 0 -12px 40px -10px rgb(0 0 0 / 0.6), inset 0 1px 0 var(--card-hi);
   overflow-y: auto; overscroll-behavior: contain;
   transform: translateY(100%);
   transition-property: transform, display, overlay;

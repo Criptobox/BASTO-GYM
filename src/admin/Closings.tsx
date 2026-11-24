@@ -1,3 +1,4 @@
+import { Receipt } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
@@ -5,7 +6,7 @@ import { shiftDifference, summarize, type CashStatus } from '../lib/domain'
 import type { Movement, PaymentPart } from '../lib/types'
 import { useWide } from '../lib/media'
 import { formatTime, makeMoney } from '../lib/format'
-import { Button, Card, Field, cx, inputCls, Pill, Sheet, useToast } from '../components/ui'
+import { Button, Card, Field, IconTitle, Pill, Sheet, cx, inputCls, useToast } from '../components/ui'
 import { AdminHeader, Stat, StatGrid, td, th } from './AdminLayout'
 
 type Range = 'hoy' | 'semana' | 'mes'
@@ -109,7 +110,7 @@ export function Closings() {
 
         {current && (
           <Card className="!p-5">
-            <h2 className="text-lg font-extrabold">Detalle · {current.s.worker}, {formatShortDate(toISODate(new Date(current.s.openedAt)), g.settings.locale)}</h2>
+            <IconTitle icon={<Receipt size={17} />} className="text-lg">Detalle · {current.s.worker}, {formatShortDate(toISODate(new Date(current.s.openedAt)), g.settings.locale)}</IconTitle>
             <p className="mb-3 text-sm text-muted">
               Movimientos del turno{current.s.closedBy && current.s.closedBy !== current.s.worker ? ` · cerrado por ${current.s.closedBy}` : ''}
             </p>

@@ -27,7 +27,22 @@ export function seedClients(): Client[] {
     mk('c3', 'Luis Martínez', '55 5555 6666', '88123034567', t),
     mk('c4', 'Sofía Pérez', '55 7777 8888', '95032145678', addDays(t, 26)),
     mk('c5', 'Jorge Hernández', '55 9999 0000', '85070756789', addDays(t, 12), 'anio'),
+    ...(DEMO ? demoCrowd(t, mk) : []),
   ]
+}
+
+/** Solo en la demo: 30 clientes más, con vencimientos repartidos, para ver la app con el gimnasio lleno. */
+function demoCrowd(t: string, mk: (id: string, name: string, phone: string, carnet: string, nextDue: string, plan?: Client['plan']) => Client): Client[] {
+  const names = [
+    'María Fernández', 'José Rodríguez', 'Yanet Castillo', 'Alejandro Díaz', 'Liset Moreno', 'Raúl Herrera',
+    'Dayana Suárez', 'Osmany Pérez', 'Yamilé Torres', 'Ernesto Rivero', 'Claudia Ramos', 'Yoandri Gómez',
+    'Lázaro Valdés', 'Marisleydis Cruz', 'Reinier Fuentes', 'Yudith Álvarez', 'Frank Morales', 'Leidy Hidalgo',
+    'Adrián Cabrera', 'Arianna Soto', 'Dariel Medina', 'Niurka Delgado', 'Yasmany León', 'Rosa Benítez',
+    'Pedro Ortiz', 'Laura Quintana', 'Michel Sánchez', 'Elena Vázquez', 'Ronald Peña', 'Daylin Rojas',
+  ]
+  // Repartidos entre vencidos (de 1 a 45 días), hoy, próximos y al día.
+  const offsets = [-45, -32, -20, -14, -9, -6, -4, -3, -1, 0, 0, 1, 2, 3, 3, 5, 8, 10, 12, 15, 17, 19, 21, 23, 25, 26, 27, 28, 29, 30]
+  return names.map((n, i) => mk(`d${i + 1}`, n, `5${String(2000000 + i * 7919).slice(0, 7)}`, String(80000000000 + i * 1234567).slice(0, 11), addDays(t, offsets[i]), i % 9 === 0 ? 'semana' : i % 13 === 0 ? 'anio' : 'mes'))
 }
 
 export const seedProducts: Product[] = [

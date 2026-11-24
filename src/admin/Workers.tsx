@@ -1,7 +1,8 @@
+import { UserPlus } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
 import { isValidPin } from '../lib/pin'
-import { Avatar, Button, Card, Field, inputCls, Pill, Sheet, useToast } from '../components/ui'
+import { Avatar, Button, Card, Field, IconTitle, Pill, Sheet, inputCls, useToast } from '../components/ui'
 import type { Worker } from '../lib/types'
 import { AdminHeader, td, th } from './AdminLayout'
 import { useWide } from '../lib/media'
@@ -104,7 +105,7 @@ export function Workers() {
         </div>
 
         <Card className="!p-5">
-          <h2 className="mb-4 text-lg font-extrabold">Nuevo trabajador</h2>
+          <IconTitle icon={<UserPlus size={17} />} className="mb-4 text-lg">Nuevo trabajador</IconTitle>
           <form onSubmit={add} noValidate className="space-y-4">
             <Field label="Nombre" error={touched && !nameOk && (taken ? 'Ya existe alguien con ese nombre.' : 'Escribe el nombre.')}>
               <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />

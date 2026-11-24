@@ -6,7 +6,7 @@ import { useReceipt } from '../components/Receipt'
 import type { Movement } from '../lib/types'
 import { addPlan, formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
-import { Button, Card, Field, inputCls, Screen, Segmented, Sheet, useLatest } from '../components/ui'
+import { Button, Card, Field, Screen, Section, Sheet, cx, inputCls, useLatest } from '../components/ui'
 import { haptic } from '../lib/nav'
 import type { Client, PlanId } from '../lib/types'
 
@@ -47,6 +47,8 @@ export function Enroll() {
   return (
     <Screen narrow eyebrow="Recepción" title="Nuevo cliente">
       <form onSubmit={submit} className="space-y-4" noValidate>
+        <Section step={1} title="Datos del cliente">
+        <div className="space-y-4">
         <Field label="Nombre completo" error={err(name.trim().length < 3, 'Escribe el nombre completo.')}>
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" autoCapitalize="words" placeholder="Nombre y apellidos" />
         </Field>
@@ -59,14 +61,30 @@ export function Enroll() {
         <Field label="Teléfono (WhatsApp)" error={err(!phoneOk, 'Ingresa un teléfono válido.')}>
           <input className={inputCls} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" placeholder="Número de teléfono" />
         </Field>
-
-        <div>
-          <p className="mb-2 text-sm text-muted">Plan</p>
-          <Segmented label="Plan" value={plan} onChange={setPlan} options={PLANS.map((p) => ({ id: p.id, label: p.label }))} />
         </div>
-        <PaymentSplit split={split} totalUsd={price} />
+        </Section>
 
-        <Card className="grid grid-cols-3 gap-2 !rounded-2xl !p-4">
+        <Section step={2} title="Plan">
+          <div role="radiogroup" aria-label="Plan" className="grid grid-cols-2 gap-2.5">
+            {PLANS.map((p) => (
+              <button
+                key={p.id} type="button" role="radio" aria-checked={plan === p.id} aria-label={p.label} onClick={() => setPlan(p.id)}
+                className={cx('relative overflow-hidden rounded-2xl border px-3 py-3 text-left transition active:scale-[0.97]', plan === p.id ? 'border-amber bg-amber/10' : 'border-line bg-field')}
+              >
+                <span className="block text-sm font-bold">{p.label}</span>
+                <span className={cx('block text-xl font-extrabold tracking-tight', plan === p.id ? 'text-gold' : '')}>{money.usd(g.settings.planPrices[p.id])}</span>
+                <span className="block text-xs text-muted">{p.days}</span>
+                {plan === p.id && <span aria-hidden className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-gold text-[11px] font-extrabold text-amber-ink">✓</span>}
+              </button>
+            ))}
+          </div>
+        </Section>
+
+        <Section step={3} title="Pago">
+          <PaymentSplit split={split} totalUsd={price} />
+        </Section>
+
+        <Card glow className="grid grid-cols-3 gap-2 !rounded-2xl !p-4">
           <div><p className="text-xs text-muted">Inicio</p><p className="text-sm font-bold">{formatDate(g.today, g.settings.locale)}</p></div>
           <div><p className="text-xs text-muted">Próximo pago</p><p className="text-sm font-bold text-amber">{formatDate(next, g.settings.locale)}</p></div>
           <div><p className="text-xs text-muted">Total</p><p className="text-sm font-bold">{money.usd(price)}</p></div>

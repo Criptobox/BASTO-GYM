@@ -1,10 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Camera, Dumbbell, Minus, Plus } from 'lucide-react'
+import { Camera, Dumbbell, Minus, PackagePlus, Plus } from 'lucide-react'
 import { useGym } from '../data/store'
 import { deleteProductPhoto, remoteMedia, uploadProductPhoto } from '../data/media'
 import { blobToDataURL, kb, PRODUCT_PHOTO, toWebP } from '../lib/image'
 import { makeMoney } from '../lib/format'
-import { Button, Card, Field, inputCls, Pill } from '../components/ui'
+import { Button, Card, Field, IconTitle, Pill, inputCls } from '../components/ui'
 import type { Product } from '../lib/types'
 import { AdminHeader, Stat, StatGrid, td, th } from './AdminLayout'
 import { useWide } from '../lib/media'
@@ -104,7 +104,7 @@ export function Products() {
                       <p className="truncate font-bold leading-tight">{p.name}</p>
                       <p className="truncate text-xs text-muted">{p.variant} · {p.category}</p>
                     </div>
-                    <p className="font-extrabold">{money.usd(p.price)}</p>
+                    <p className="font-extrabold text-gold">{money.usd(p.price)}</p>
                   </div>
                   <div className="mt-2 flex items-center justify-between pl-14">
                     {estado(p)}
@@ -127,7 +127,7 @@ export function Products() {
                       <div className="min-w-0"><p className="font-semibold">{p.name}</p><p className="text-xs text-muted">{p.variant} · {p.category}</p></div>
                     </div>
                   </td>
-                  <td className={td}>{money.usd(p.price)}</td>
+                  <td className={`${td} font-bold text-amber`}>{money.usd(p.price)}</td>
                   <td className={td}>
                     {stepper(p)}
                   </td>
@@ -140,7 +140,7 @@ export function Products() {
         )}
 
         <Card className="!p-5">
-          <h2 className="mb-4 text-lg font-extrabold">Nuevo producto</h2>
+          <IconTitle icon={<PackagePlus size={17} />} className="mb-4 text-lg">Nuevo producto</IconTitle>
           <form onSubmit={submit} noValidate className="space-y-4">
             <button type="button" onClick={() => fileRef.current?.click()} disabled={busy}
               className="relative grid h-32 w-full place-items-center overflow-hidden rounded-2xl border border-dashed border-amber text-amber disabled:opacity-60">

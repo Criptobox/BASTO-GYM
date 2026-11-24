@@ -56,6 +56,8 @@ export function PinStep({ worker, onBack, onLogoState }: { worker: Worker; onBac
     setPin(''); setShake((n) => n + 1); setError(message(r))
     if ((r.reason === 'pin' || r.reason === 'locked') && r.retryIn > 0) setWait(r.retryIn)
   }
+  // La clave es siempre de 4 números: al escribir el cuarto, entra sola (el botón Entrar sigue ahí).
+  useEffect(() => { if (pin.length === PIN_LENGTH) void submit() }, [pin]) // eslint-disable-line react-hooks/exhaustive-deps
   const press = (d: string) => { if (!busy && wait <= 0) setPin((p) => (p.length < PIN_LENGTH ? p + d : p)); setError('') }
   const del = () => setPin((p) => p.slice(0, -1))
 

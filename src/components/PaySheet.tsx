@@ -4,7 +4,7 @@ import { formatDate } from '../lib/dates'
 import { makeMoney } from '../lib/format'
 import type { Client } from '../lib/types'
 import { useGym } from '../data/store'
-import { Avatar, Button, Sheet, useLatest, useToast } from './ui'
+import { Avatar, Button, Sheet, useLatest, useToast, Glow } from './ui'
 import { PaymentSplit, usePaymentSplit } from './Payment'
 import { useReceipt } from './Receipt'
 import { haptic } from '../lib/nav'
@@ -29,10 +29,11 @@ export function PaySheet({ client: current, onClose }: { client: Client | null; 
           <p className="text-sm text-muted">{dueInfo(client.nextDue, g.today).text}</p>
         </div>
       </div>
-      <div className="mb-4 rounded-2xl bg-gold p-4 text-amber-ink">
-        <p className="text-sm font-medium">Precio del plan</p>
-        <p className="text-4xl font-extrabold tracking-tight">{money.usd(price)}</p>
-        <p className="mt-1 text-sm font-medium">Nuevo vencimiento: {formatDate(next, g.settings.locale)}</p>
+      <div className="relative mb-4 overflow-hidden rounded-2xl border border-amber/50 surface-card p-4">
+        <Glow />
+        <p className="text-sm font-medium text-muted">Precio del plan</p>
+        <p className="text-4xl font-extrabold tracking-tight text-gold">{money.usd(price)}</p>
+        <p className="mt-1 text-sm font-medium text-muted">Nuevo vencimiento: <b className="text-ink">{formatDate(next, g.settings.locale)}</b></p>
       </div>
       <PaymentSplit split={split} totalUsd={price} />
       <Button

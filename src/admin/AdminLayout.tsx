@@ -27,9 +27,9 @@ export function AdminLayout() {
   return (
     <div className="relative min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
       <Backdrop />
-      <aside className="vt-static border-b border-line bg-panel lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
+      <aside className="vt-static relative border-b border-line bg-panel lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-3 px-6 pt-6 lg:pt-8">
-          <LogoMark size={44} />
+          <LogoMark size={44} className="logo-active" />
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-amber">{session?.name ?? 'Administrador'}</p>
             <p className="truncate text-xl font-extrabold leading-tight tracking-tight">{settings.gymName}</p>
@@ -55,7 +55,7 @@ export function AdminLayout() {
           </button>
         </nav>
       </aside>
-      <main className="min-w-0 px-5 py-8 lg:px-10">
+      <main className="relative min-w-0 px-5 py-8 lg:px-10">
         <Outlet />
       </main>
     </div>
@@ -68,6 +68,7 @@ export function AdminHeader({ eyebrow, title, action }: { eyebrow: string; title
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gold">{eyebrow}</p>
         <h1 tabIndex={-1} className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
+        <span aria-hidden className="mt-2 block h-1 w-10 rounded-full bg-gold" />
       </div>
       {action}
     </header>

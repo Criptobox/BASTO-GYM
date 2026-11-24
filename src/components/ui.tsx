@@ -276,3 +276,34 @@ export function Split({ side, empty, children }: { side: ReactNode; empty: strin
     </div>
   )
 }
+
+/** Brillo dorado fino en el borde de abajo, como en las tarjetas del acceso. */
+export function Glow() {
+  return <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_14px_2px_rgb(255_194_31/0.45)]" />
+}
+
+/** Bloque con título numerado (paso 1, 2, 3…) o con icono, para ordenar formularios largos. */
+export function Section({ title, step, icon, action, children, className }: { title: string; step?: number; icon?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <section className={cx('relative overflow-hidden rounded-3xl border border-line surface-card p-4', className)}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.14em] text-amber">
+          <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-lg bg-gold text-[13px] font-extrabold text-amber-ink">{step ?? icon}</span>
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Título de tarjeta con su icono en un cuadro dorado (mismo lenguaje que los botones de Inicio). */
+export function IconTitle({ icon, children, className }: { icon: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <h2 className={cx('flex items-center gap-2.5 font-bold', className)}>
+      <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-xl bg-gold text-amber-ink">{icon}</span>
+      {children}
+    </h2>
+  )
+}

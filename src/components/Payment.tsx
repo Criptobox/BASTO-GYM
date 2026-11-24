@@ -1,3 +1,4 @@
+import { Banknote, CreditCard, DollarSign } from 'lucide-react'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useGym } from '../data/store'
 import { METHODS, isCovered, partUsd, remainingUsd, settle, type ChangeInput, type PartInput, type Settlement } from '../lib/domain'
@@ -128,19 +129,20 @@ export function PaymentSplit({ split, totalUsd }: { split: PaymentSplitState; to
   const short = !settlement.ok && settlement.reason === 'short'
   const showChange = split.overpay > 0.005 && !isCovered(split.overpay, g.rateFresh ? rate : 0)
   const quick = [
-    { m: 'usd' as const, label: 'Todo en USD' },
-    { m: 'tarjeta' as const, label: 'Todo con tarjeta' },
-    { m: 'mn' as const, label: 'Todo en MN' },
+    { m: 'usd' as const, label: 'Todo en USD', Icon: DollarSign },
+    { m: 'tarjeta' as const, label: 'Todo con tarjeta', Icon: CreditCard },
+    { m: 'mn' as const, label: 'Todo en MN', Icon: Banknote },
   ]
   return (
     <div>
       <p className="mb-2 text-sm text-muted">Cómo se paga · total {money.usd(totalUsd)}{g.rateFresh ? ` (≈ ${money.mn(Math.round(totalUsd * rate))})` : ''}</p>
-      <div className="mb-3 flex flex-wrap gap-2">
-        {quick.map(({ m, label }) => (
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        {quick.map(({ m, label, Icon }) => (
           <button
             key={m} type="button" onClick={() => split.payAll(m)} disabled={m !== 'usd' && !g.rateFresh}
-            className="h-10 rounded-full border border-amber/60 px-4 text-sm font-semibold text-amber transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+            className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-amber/50 surface-card px-1 py-3 text-xs font-bold leading-tight transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
           >
+            <span aria-hidden className="grid size-9 place-items-center rounded-xl bg-gold text-amber-ink"><Icon size={18} strokeWidth={2.4} /></span>
             {label}
           </button>
         ))}
@@ -161,7 +163,7 @@ export function PaymentSplit({ split, totalUsd }: { split: PaymentSplitState; to
           const aria = id === 'usd' ? 'Monto en USD' : id === 'tarjeta' ? 'Monto con tarjeta, en MN' : 'Monto en MN'
           return (
             <li key={id} className={`flex items-center gap-2 rounded-2xl border p-2 pl-3 ${active ? 'border-amber/60 bg-amber/5' : 'border-line'} ${off ? 'opacity-40' : ''}`}>
-              <span className="w-[4.2rem] shrink-0 text-sm font-bold">{ROW[id].label}</span>
+              <span className="flex w-[5.3rem] shrink-0 items-center gap-1.5 text-sm font-bold">{(() => { const I = id === 'usd' ? DollarSign : id === 'tarjeta' ? CreditCard : Banknote; return <I size={16} aria-hidden className="shrink-0 text-amber" /> })()}{ROW[id].label}</span>
               <div className="relative min-w-0 flex-1">
                 <input
                   className="h-11 w-full rounded-xl border border-line bg-field pl-3 pr-11 text-right text-base font-semibold tabular-nums text-ink placeholder:text-faint focus:border-amber focus:outline-none"

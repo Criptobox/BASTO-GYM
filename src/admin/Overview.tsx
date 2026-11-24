@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import { Check } from 'lucide-react'
+import { BarChart3, CalendarClock, Check } from 'lucide-react'
 import { useGym } from '../data/store'
 import { addDays, formatShortDate, toISODate } from '../lib/dates'
 import { alertToday, dueInfo, pendingClients, upcomingClients } from '../lib/domain'
 import { makeMoney } from '../lib/format'
-import { Avatar, Button, Card, Pill } from '../components/ui'
+import { Avatar, Button, Card, IconTitle, Pill } from '../components/ui'
 import { AdminHeader, Stat } from './AdminLayout'
 
 /** Primer uso: lo mínimo que el administrador debe dejar listo para que recepción pueda cobrar. */
@@ -51,6 +51,50 @@ function SetupGuide() {
   )
 }
 
+/** Cuánto cobró cada trabajador hoy y en los últimos 7 días, y si tiene el turno abierto ahora. */
+function ByWorker() {
+  const g = useGym()
+  const money = makeMoney(g.settings)
+  const day = (iso: string) => toISODate(new Date(iso))
+  const weekStart = addDays(g.today, -6)
+  const shiftWorker = new Map(g.shifts.map((s) => [s.id, { id: s.workerId, name: s.worker }]))
+  const rows = g.workers
+    .filter((w) => w.role === 'worker')
+    .map((w) => {
+      const mine = g.movements.filter((m) => (m.workerId ?? shiftWorker.get(m.shiftId)?.id) === w.id || (!m.workerId && !shiftWorker.get(m.shiftId)?.id && (m.worker ?? shiftWorker.get(m.shiftId)?.name) === w.name))
+      const today = mine.filter((m) => day(m.at) === g.today)
+      const week = mine.filter((m) => day(m.at) >= weekStart)
+      const open = g.shifts.some((s) => !s.closedAt && (s.workerId === w.id || s.worker === w.name))
+      return { w, today, week, open, sum: (l: typeof mine) => l.reduce((n, m) => n + m.amount, 0) }
+    })
+    .sort((a, b) => b.sum(b.week) - a.sum(a.week))
+  if (rows.length === 0) return null
+  return (
+    <>
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">Por trabajador</h2>
+      <ul className="mb-6 grid gap-2 sm:gap-3 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+        {rows.map(({ w, today, week, open, sum }) => (
+          <li key={w.id} className="flex items-center gap-3 rounded-2xl border border-line surface-card p-3.5 sm:rounded-3xl sm:p-4">
+            <Avatar name={w.name} size={44} />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-2 truncate font-bold">
+                {w.name}
+                {open && <span className="rounded-full bg-ok/15 px-2 py-0.5 text-[11px] font-bold text-ok">Turno abierto</span>}
+                {!w.active && <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-bold text-muted">Inactivo</span>}
+              </p>
+              <p className="text-xs text-muted">Hoy {today.length} {today.length === 1 ? 'cobro' : 'cobros'} · 7 días {money.usd(sum(week))}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted">Hoy</p>
+              <p className="whitespace-nowrap text-xl font-extrabold tracking-tight text-gold">{money.usd(sum(today))}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
 export function Overview() {
   const g = useGym()
   const money = makeMoney(g.settings)
@@ -86,6 +130,7 @@ export function Overview() {
         <Stat label={`Ventas (${todaySales.length})`} value={money.usd(sumKind('venta'))} />
         <Stat label="Clientes inscritos" value={g.clients.length} />
       </div>
+      <ByWorker />
       <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-amber">En general</h2>
       <div className="grid gap-2 sm:gap-4 [grid-template-columns:repeat(auto-fit,minmax(170px,1fr))]">
         <Stat label="Ingresos del mes" value={money.usd(monthTotal)} />
@@ -98,7 +143,7 @@ export function Overview() {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="!p-6">
-          <h2 className="font-bold">Ingresos · últimos 7 días</h2>
+          <IconTitle icon={<BarChart3 size={17} />}>Ingresos · últimos 7 días</IconTitle>
           <div className="mt-6 flex h-52 items-end gap-3" role="img" aria-label={`Ingresos diarios de los últimos 7 días: ${totals.map(money.usd).join(', ')}`}>
             {totals.map((t, i) => (
               <div key={days[i]} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
@@ -111,7 +156,7 @@ export function Overview() {
         </Card>
 
         <Card className="!p-6">
-          <h2 className="font-bold">Vencen en los próximos 7 días</h2>
+          <IconTitle icon={<CalendarClock size={17} />}>Vencen en los próximos 7 días</IconTitle>
           <ul className="mt-4 space-y-3">
             {soon.map((c) => (
               <li key={c.id} className="flex items-center gap-3">

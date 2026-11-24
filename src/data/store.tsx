@@ -3,6 +3,7 @@ import { dueInfo, isFrozen, normalizeCarnet, rateIsFresh, renewalDate, settle, s
 import { attemptsLeft, failLock, hashPin, randomSalt, secondsLeft, verifyPin, type LockState } from '../lib/pin'
 import type { AlertLog, CashOut, Client, Movement, PlanId, Product, Settings, Shift, Worker } from '../lib/types'
 import { defaultSettings, newShift, seedAlerts, seedClients, seedHistory, seedProducts, seedWorkers, today } from './seed'
+import { DEMO } from './demo'
 
 /**
  * Estado local persistido en localStorage. Todas las escrituras pasan por las
@@ -39,7 +40,8 @@ type Action =
   | { type: 'addWorker'; worker: Worker }
   | { type: 'updateWorker'; id: string; patch: Partial<Worker> }
 
-const KEY = 'basto-gym:v8'
+// La demo guarda aparte (y desde cero) para no mezclarse con datos reales.
+const KEY = DEMO ? 'basto-gym:demo-v1' : 'basto-gym:v8'
 const SESSION_KEY = 'basto-gym:session'
 const LOCK_KEY = 'basto-gym:locks'
 

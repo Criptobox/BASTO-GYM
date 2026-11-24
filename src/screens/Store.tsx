@@ -81,15 +81,15 @@ export function Store() {
           return (
             <li key={p.id}>
               <Card className={cx('flex h-full flex-col !p-3', out && 'opacity-60')}>
-                <div className="relative grid aspect-[4/3] place-items-center rounded-2xl bg-surface-2 text-amber">
+                <div className="relative grid aspect-[4/3] place-items-center rounded-2xl bg-[radial-gradient(circle_at_50%_45%,rgb(255_194_31/0.16),transparent_65%)] bg-field text-amber">
                   {p.photo ? <img src={p.photo} alt={p.name} loading="lazy" className="size-full rounded-2xl object-cover" /> : <Dumbbell size={30} aria-hidden />}
                   {p.isNew && <span className="absolute left-2 top-2"><Pill tone="amber">Nuevo</Pill></span>}
-                  {!out && p.stock <= 5 && <span className="absolute right-2 top-2"><Pill tone="white">Quedan {p.stock}</Pill></span>}
+                  {!out && p.stock <= 5 && <span className="absolute right-2 top-2 rounded-full border border-amber/60 bg-bg/80 px-2.5 py-0.5 text-[11px] font-bold text-amber">Quedan {p.stock}</span>}
                 </div>
                 <p className="mt-2.5 text-[15px] font-bold leading-tight">{p.name}</p>
                 <p className="text-sm text-muted">{p.variant}</p>
                 <div className="mt-auto pt-3">
-                  <span className="block text-lg font-extrabold">{money.usd(p.price)}</span>
+                  <span className="block text-lg font-extrabold text-gold">{money.usd(p.price)}</span>
                   {g.rateFresh && <span className="block text-xs text-muted">{money.mn(toMN(p.price, g.settings.usdRate))}</span>}
                   {out ? <div className="mt-2"><Pill tone="white">Agotado</Pill></div> : inCart ? (
                     <div className="mt-2 flex items-center justify-between">

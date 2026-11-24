@@ -1,7 +1,8 @@
+import { Dumbbell, Palette, Shield, Tag, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { useGym } from '../data/store'
 import { PLANS } from '../lib/domain'
-import { Card, Field, inputCls, ThemeSwitch } from '../components/ui'
+import { Card, Field, IconTitle, ThemeSwitch, inputCls } from '../components/ui'
 import { RateForm } from '../components/Payment'
 import { LogoMark, type LogoState } from '../components/Logo'
 import { AdminHeader } from './AdminLayout'
@@ -39,7 +40,7 @@ export function SettingsPage() {
       <AdminHeader eyebrow="Configuración" title="Ajustes" />
       <div className="grid max-w-3xl gap-4">
         <Card className="!p-6 space-y-4">
-          <h2 className="font-bold">Tasa del USD de hoy</h2>
+          <IconTitle icon={<TrendingUp size={17} />}>Tasa del USD de hoy</IconTitle>
           <p className="text-sm text-muted">
             {g.rateFresh ? `Fijada hoy: 1 USD = ${g.settings.usdRate} MN.` : 'Todavía no se fijó hoy. Sin ella no se puede cobrar en MN ni con tarjeta.'}{' '}
             Los trabajadores también la pueden fijar desde Inicio.
@@ -47,17 +48,17 @@ export function SettingsPage() {
           <RateForm />
         </Card>
         <Card className="!p-6 space-y-4">
-          <h2 className="font-bold">Gimnasio</h2>
+          <IconTitle icon={<Dumbbell size={17} />}>Gimnasio</IconTitle>
           <Field label="Nombre del gimnasio"><input className={inputCls} value={g.settings.gymName} onChange={(e) => g.setSettings({ gymName: e.target.value })} /></Field>
           <Field label="Prefijo telefónico del país (sin +)"><input className={inputCls} inputMode="numeric" value={g.settings.countryCode} onChange={(e) => g.setSettings({ countryCode: e.target.value.replace(/\D/g, '') })} /></Field>
         </Card>
         <Card className="!p-6">
-          <h2 className="mb-1 font-bold">Apariencia</h2>
+          <IconTitle icon={<Palette size={17} />} className="mb-2">Apariencia</IconTitle>
           <p className="mb-4 text-sm text-muted">Automático sigue el modo claro u oscuro del teléfono. Se guarda en este dispositivo.</p>
           <ThemeSwitch />
         </Card>
         <Card className="!p-6">
-          <h2 className="mb-1 font-bold">Logo y estados</h2>
+          <IconTitle icon={<Shield size={17} />} className="mb-2">Logo y estados</IconTitle>
           <p className="mb-5 text-sm text-muted">Así se ve el logo en cada situación de la app. El icono instalado en el teléfono lleva el número de pagos pendientes.</p>
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {LOGO_STATES.map((s) => (
@@ -75,7 +76,7 @@ export function SettingsPage() {
           </div>
         </Card>
         <Card className="!p-6">
-          <h2 className="mb-4 font-bold">Precio de los planes (USD)</h2>
+          <IconTitle icon={<Tag size={17} />} className="mb-4">Precio de los planes (USD)</IconTitle>
           <div className="grid grid-cols-2 gap-4">
             {PLANS.map((p) => (
               <DecimalField key={p.id} label={`${p.label} (${p.days})`} value={g.settings.planPrices[p.id]}
