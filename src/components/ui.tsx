@@ -69,12 +69,15 @@ export function Avatar({ name, photo, size = 46 }: { name: string; photo?: strin
   )
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({ label, error, children }: { label: string; error?: string | false; children: ReactNode }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm text-muted">{label}</span>
-      {children}
-    </label>
+    <div>
+      <label className="block">
+        <span className="mb-2 block text-sm text-muted">{label}</span>
+        {children}
+      </label>
+      {error && <p role="alert" className="mt-1.5 text-sm text-danger">{error}</p>}
+    </div>
   )
 }
 

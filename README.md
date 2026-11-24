@@ -4,7 +4,7 @@ App de gestión de gimnasio (PWA). React + Vite + Tailwind; Supabase previsto pa
 
 ## Estado
 - ✅ Pantallas del trabajador: Inicio, Inscribir, Pagos, Tienda, Cierre de caja.
-- ⏳ Panel del administrador (escritorio).
+- ✅ Panel del administrador (`/admin`): Resumen, Clientes, Productos, Cierres y Ajustes. Sin login todavía.
 - ⏳ Supabase: hoy los datos viven en `localStorage` (`src/data/store.tsx`), con datos de ejemplo.
 
 ## Desarrollo

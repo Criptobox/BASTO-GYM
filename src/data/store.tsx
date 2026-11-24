@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
 import { renewalDate, summarize } from '../lib/domain'
 import type { Client, Method, Movement, PlanId, Product, Settings, Shift } from '../lib/types'
-import { defaultSettings, newShift, seedClients, seedProducts, today } from './seed'
+import { defaultSettings, newShift, seedClients, seedHistory, seedProducts, today } from './seed'
 
 /**
  * Estado local persistido en localStorage. Todas las escrituras pasan por las
@@ -22,20 +22,24 @@ type Action =
   | { type: 'sell'; movement: Movement; items: { id: string; qty: number }[] }
   | { type: 'closeShift'; shiftId: string; countedCash: number; expectedCash: number }
   | { type: 'openShift'; shift: Shift }
+  | { type: 'addProduct'; product: Product }
+  | { type: 'updateProduct'; id: string; patch: Partial<Product> }
+  | { type: 'setSettings'; patch: Partial<Settings> }
 
-const KEY = 'basto-gym:v1'
+const KEY = 'basto-gym:v2'
 
 function initial(): State {
   try {
     const raw = localStorage.getItem(KEY)
     if (raw) return JSON.parse(raw) as State
   } catch { /* almacenamiento no disponible */ }
+  const h = seedHistory()
   return {
     settings: defaultSettings,
     clients: seedClients(),
     products: seedProducts,
-    movements: [],
-    shifts: [newShift(defaultSettings.worker)],
+    movements: h.movements,
+    shifts: [newShift(defaultSettings.worker), ...h.shifts],
   }
 }
 
@@ -69,6 +73,12 @@ function reducer(s: State, a: Action): State {
       }
     case 'openShift':
       return { ...s, shifts: [a.shift, ...s.shifts] }
+    case 'addProduct':
+      return { ...s, products: [a.product, ...s.products] }
+    case 'updateProduct':
+      return { ...s, products: s.products.map((p) => (p.id === a.id ? { ...p, ...a.patch } : p)) }
+    case 'setSettings':
+      return { ...s, settings: { ...s.settings, ...a.patch } }
   }
 }
 
@@ -82,6 +92,9 @@ interface Api extends State {
   sell(items: { product: Product; qty: number }[], method: Method): void
   closeShift(countedCash: number): void
   openShift(): void
+  addProduct(p: Omit<Product, 'id'>): void
+  updateProduct(id: string, patch: Partial<Product>): void
+  setSettings(patch: Partial<Settings>): void
 }
 
 const Ctx = createContext<Api | null>(null)
@@ -156,6 +169,9 @@ export function GymProvider({ children }: { children: ReactNode }) {
     openShift() {
       dispatch({ type: 'openShift', shift: newShift(state.settings.worker) })
     },
+    addProduct: (p) => dispatch({ type: 'addProduct', product: { ...p, id: crypto.randomUUID() } }),
+    updateProduct: (id, patch) => dispatch({ type: 'updateProduct', id, patch }),
+    setSettings: (patch) => dispatch({ type: 'setSettings', patch }),
   }
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>
 }

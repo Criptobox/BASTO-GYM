@@ -47,7 +47,7 @@ export function Enroll() {
   function reset() {
     setDone(null); setName(''); setPhone(''); setEmail(''); setPhoto(undefined); setPlan('mes'); setTouched(false)
   }
-  const err = (bad: boolean, msg: string) => touched && bad && <p role="alert" className="mt-1.5 text-sm text-danger">{msg}</p>
+  const err = (bad: boolean, msg: string) => touched && bad && msg
 
   return (
     <Screen eyebrow="Recepción" title="Nuevo cliente">
@@ -68,17 +68,14 @@ export function Enroll() {
         </button>
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
 
-        <Field label="Nombre completo">
+        <Field label="Nombre completo" error={err(name.trim().length < 3, 'Escribe el nombre completo.')}>
           <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" placeholder="Ej. María Fernanda López" />
-          {err(name.trim().length < 3, 'Escribe el nombre completo.')}
         </Field>
-        <Field label="Teléfono (WhatsApp)">
+        <Field label="Teléfono (WhatsApp)" error={err(!phoneOk, 'Ingresa un teléfono de 10 dígitos.')}>
           <input className={inputCls} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="55 1234 5678" />
-          {err(!phoneOk, 'Ingresa un teléfono de 10 dígitos.')}
         </Field>
-        <Field label="Correo (opcional)">
+        <Field label="Correo (opcional)" error={err(!emailOk, 'El correo no parece válido.')}>
           <input className={inputCls} type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" />
-          {err(!emailOk, 'El correo no parece válido.')}
         </Field>
 
         <div>

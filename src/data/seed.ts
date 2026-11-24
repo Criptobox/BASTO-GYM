@@ -1,5 +1,5 @@
 import { addDays, toISODate } from '../lib/dates'
-import type { Client, Product, Settings, Shift } from '../lib/types'
+import type { Client, Movement, Product, Settings, Shift } from '../lib/types'
 
 export const today = () => toISODate(new Date())
 
@@ -39,4 +39,40 @@ export const seedProducts: Product[] = [
 
 export function newShift(worker: string): Shift {
   return { id: crypto.randomUUID(), worker, openedAt: new Date().toISOString() }
+}
+
+const at = (date: string, h: number, m = 0) => {
+  const [y, mo, d] = date.split('-').map(Number)
+  return new Date(y, mo - 1, d, h, m).toISOString()
+}
+
+/** Turnos cerrados de ejemplo para el historial del administrador. */
+export function seedHistory(): { shifts: Shift[]; movements: Movement[] } {
+  const t = today()
+  const shifts: Shift[] = []
+  const movements: Movement[] = []
+  const spec: [number, number, number, string, number][] = [
+    // díasAtrás, horaInicio, horaFin, trabajador, diferenciaEfectivo
+    [1, 14, 21, 'Jorge', -100],
+    [1, 8, 14, 'Daniela', 0],
+    [2, 14, 21, 'Jorge', 50],
+    [2, 8, 14, 'Daniela', 0],
+    [4, 8, 14, 'Daniela', 0],
+  ]
+  spec.forEach(([ago, h0, h1, worker, delta], i) => {
+    const date = addDays(t, -ago)
+    const id = `h${i}`
+    const mv = (n: number, kind: Movement['kind'], label: string, amount: number, method: Movement['method'], hh: number, mm: number) =>
+      movements.push({ id: `${id}-${n}`, shiftId: id, kind, label, amount, method, at: at(date, hh, mm) })
+    mv(1, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 600, 'efectivo', h0 + 1, 10)
+    mv(2, 'venta', 'Venta · Proteína Whey 2 lb', 899, 'tarjeta', h0 + 2, 30)
+    mv(3, 'mensualidad', 'Mensualidad · Cliente de ejemplo', 600, 'transferencia', h0 + 3, 5)
+    mv(4, 'venta', 'Venta · Agua 600 ml', 20, 'efectivo', h0 + 4, 45)
+    const expected = 620
+    shifts.push({
+      id, worker, openedAt: at(date, h0), closedAt: at(date, h1),
+      expectedCash: expected, countedCash: expected + delta,
+    })
+  })
+  return { shifts, movements }
 }
