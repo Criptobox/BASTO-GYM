@@ -110,20 +110,21 @@ export function Home() {
         </div>
       )}
 
-      <div className="mt-3 rounded-3xl bg-gold p-5 text-amber-ink">
-        <p className="text-sm font-semibold">En caja ahora (efectivo)</p>
+      <div className="relative mt-3 overflow-hidden rounded-3xl border border-amber/50 surface-card p-5">
+        <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_14px_2px_rgb(255_194_31/0.5)]" />
+        <p className="text-sm font-semibold text-muted">En caja ahora (efectivo)</p>
         <div className="mt-2 grid grid-cols-2 gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.1em]">MN</p>
-            <p className="truncate text-[32px] font-extrabold leading-tight tracking-tight">{money.mnNum(sum.expected.mn)}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.1em] text-amber">MN</p>
+            <p className="truncate text-[32px] font-extrabold leading-tight tracking-tight text-gold">{money.mnNum(sum.expected.mn)}</p>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.1em]">USD</p>
-            <p className="truncate text-[32px] font-extrabold leading-tight tracking-tight">{money.usdNum(sum.expected.usd)}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.1em] text-amber">USD</p>
+            <p className="truncate text-[32px] font-extrabold leading-tight tracking-tight text-gold">{money.usdNum(sum.expected.usd)}</p>
           </div>
         </div>
         {g.shiftOpen && (
-          <button onClick={() => setOutSheet(true)} className="mt-3 rounded-full bg-black/80 px-3.5 py-1.5 text-xs font-bold text-[#ffc21f] active:scale-95">
+          <button onClick={() => setOutSheet(true)} className="mt-3 rounded-full border border-amber/60 px-3.5 py-1.5 text-xs font-bold text-amber active:scale-95">
             − Registrar gasto o retiro
           </button>
         )}

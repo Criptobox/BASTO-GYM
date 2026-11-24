@@ -122,7 +122,7 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
 }
 @utility surface-card {
   background-image: linear-gradient(165deg, var(--card-a) 0%, var(--card-b) 100%);
-  box-shadow: inset 0 1px 0 var(--card-hi), 0 12px 28px -14px var(--card-shadow);
+  box-shadow: inset 0 1px 0 var(--card-hi), inset 0 -1px 0 var(--card-lo), 0 16px 32px -16px var(--card-shadow), 0 2px 4px -1px var(--card-shadow);
 }
 
 /* Cliente seleccionado en la lista (tableta/escritorio) */
@@ -133,20 +133,20 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
 }
 
 /* ---------- Paleta clara ---------- */
-:root { --card-a: #1f2125; --card-b: #141517; --card-hi: rgb(255 255 255 / 0.055); --card-shadow: rgb(0 0 0 / 0.75); }
+:root { --card-a: #232529; --card-b: #15161a; --card-hi: rgb(255 255 255 / 0.1); --card-lo: rgb(0 0 0 / 0.45); --card-shadow: rgb(0 0 0 / 0.8); }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --color-bg: #f3f2ee; --color-surface: #ffffff; --color-surface-2: #ebeae5; --color-line: #d8d6cf;
     --color-muted: #55575e; --color-faint: #6d6f76; --color-amber: #9a6200; --color-danger: #c8341f; --color-ok: #17803f;
     --color-ink: #121316; --color-field: #f7f6f2; --color-panel: #ffffff; --color-danger-soft: #b3281a;
-    --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.9); --card-shadow: rgb(60 50 20 / 0.28);
+    --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.95); --card-lo: rgb(60 50 20 / 0.08); --card-shadow: rgb(60 50 20 / 0.3);
   }
 }
 :root[data-theme="light"] {
   --color-bg: #f3f2ee; --color-surface: #ffffff; --color-surface-2: #ebeae5; --color-line: #d8d6cf;
   --color-muted: #55575e; --color-faint: #6d6f76; --color-amber: #9a6200; --color-danger: #c8341f; --color-ok: #17803f;
   --color-ink: #121316; --color-field: #f7f6f2; --color-panel: #ffffff; --color-danger-soft: #b3281a;
-  --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.9); --card-shadow: rgb(60 50 20 / 0.28);
+  --card-a: #ffffff; --card-b: #f8f7f3; --card-hi: rgb(255 255 255 / 0.95); --card-lo: rgb(60 50 20 / 0.08); --card-shadow: rgb(60 50 20 / 0.3);
 }
 
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --gold-t1: #b87800; --gold-t2: #a16500; --gold-t3: #8a5400; } }

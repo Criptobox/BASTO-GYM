@@ -92,23 +92,24 @@ export function Payments() {
   return (
     <Screen eyebrow="Registro de pagos" title="Quién debe pagar">
      <Split side={cp.panel} empty="Toca un cliente para ver su ficha, avisarle o registrar su pago.">
-      <div className="relative overflow-hidden rounded-3xl bg-gold p-5 text-amber-ink">
-        <span aria-hidden className="absolute -right-6 -top-6 grid size-28 place-items-center rounded-full bg-black/10">
-          <BellRing size={44} className="translate-x-[-6px] translate-y-[8px] opacity-40" />
+      <div className="relative overflow-hidden rounded-3xl border border-amber/50 surface-card p-5">
+        <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-amber to-transparent shadow-[0_0_14px_2px_rgb(255_194_31/0.5)]" />
+        <span aria-hidden className="absolute -right-6 -top-6 grid size-28 place-items-center rounded-full bg-amber/10">
+          <BellRing size={44} className="translate-x-[-6px] translate-y-[8px] text-amber opacity-70" />
         </span>
-        <p className="text-sm font-semibold">Pagos pendientes</p>
-        <p className="text-[44px] font-extrabold leading-tight tracking-tight">
+        <p className="text-sm font-semibold text-muted">Pagos pendientes</p>
+        <p className="text-[44px] font-extrabold leading-tight tracking-tight text-gold">
           {pending.length} {pending.length === 1 ? 'cliente' : 'clientes'}
         </p>
         <div className="mt-1 flex flex-wrap gap-2">
-          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-[#ff9a92]">{overdue} {overdue === 1 ? 'vencido' : 'vencidos'}</span>
-          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-[#ffc21f]">{dueToday} {dueToday === 1 ? 'vence' : 'vencen'} hoy</span>
-          <span className="rounded-full bg-black/80 px-3 py-1 text-xs font-bold text-white/85">{upcoming.length} por vencer</span>
+          <span className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-bold text-danger-soft">{overdue} {overdue === 1 ? 'vencido' : 'vencidos'}</span>
+          <span className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-bold text-amber">{dueToday} {dueToday === 1 ? 'vence' : 'vencen'} hoy</span>
+          <span className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-bold text-muted">{upcoming.length} por vencer</span>
         </div>
-        <p className="mt-3 text-sm font-semibold">
+        <p className="mt-3 text-sm font-semibold text-muted">
           Avisados hoy: {alerted.length} de {alertable.length}
         </p>
-        <Button variant="dark" size="sm" className="mt-3" disabled={notAlerted.length === 0} onClick={() => setBulk(true)}>
+        <Button size="sm" className="mt-3" disabled={notAlerted.length === 0} onClick={() => setBulk(true)}>
           {notAlerted.length === 0 ? <><Check size={16} aria-hidden /> Todos avisados</> : <><MessageCircle size={16} aria-hidden /> Alertar a {notAlerted.length === alertable.length ? 'todos' : `los ${notAlerted.length} que faltan`}</>}
         </Button>
       </div>

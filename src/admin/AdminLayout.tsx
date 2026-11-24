@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { BarChart3, LogOut, Package, Receipt, Settings, UserCog, Users } from 'lucide-react'
 import { LogoMark } from '../components/Logo'
+import { Backdrop } from '../components/Backdrop'
 import { useGym } from '../data/store'
 import { cx } from '../components/ui'
 import { useRouteReset, useViewNavigate } from '../lib/nav'
@@ -24,7 +25,8 @@ export function AdminLayout() {
     document.querySelector('[aria-label="Administración"] [aria-current="page"]')?.scrollIntoView({ inline: 'center', block: 'nearest' })
   }, [pathname])
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
+    <div className="relative min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
+      <Backdrop />
       <aside className="vt-static border-b border-line bg-panel lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-3 px-6 pt-6 lg:pt-8">
           <LogoMark size={44} />
